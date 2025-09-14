@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Integration Example - Universal Search Component</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        .section-content {
+            padding: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .interactive-demo {
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .demo-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        input, select, textarea {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .results {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .query-display {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .performance-tip {
+            background: #e8f5e8;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MySQL Integration Example</h1>
+            <div class="subtitle">MySQL-specific patterns with FULLTEXT search, spatial queries, and JSON operations</div>
+        </div>
+
+        <!-- Database Schema Setup -->
+        <div class="section">
+            <div class="section-header">MySQL Database Schema</div>
+            <div class="section-content">
+                <p>MySQL setup with FULLTEXT indexing and spatial search capabilities:</p>
+                
+                <div class="code-block">
+-- Create database and table with FULLTEXT search support
+CREATE DATABASE search_demo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE search_demo;
+
+CREATE TABLE products (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    category VARCHAR(100),
+    tags JSON,
+    price DECIMAL(10,2),
+    location POINT SRID 4326,  -- Spatial data for location-based search
+    search_vector TEXT,  -- Computed search field
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- FULLTEXT indexes for different search strategies
+    FULLTEXT KEY ft_name (name),
+    FULLTEXT KEY ft_description (description),
+    FULLTEXT KEY ft_combined (name, description),
+    
+    -- Spatial index for location search
+    SPATIAL KEY idx_location (location),
+    
+    -- Regular indexes for filtering
+    KEY idx_category (category),
+    KEY idx_price (price),
+    KEY idx_created_at (created_at)
+) ENGINE=InnoDB;
+
+-- Sample data insertion
+INSERT INTO products (name, description, category, tags, price, location, search_vector) VALUES
+('MacBook Pro M3', 'High-performance laptop for developers and creators', 'Electronics', 
+ '["laptop", "apple", "programming", "design"]', 2999.00, 
+ ST_GeomFromText('POINT(-122.4194 37.7749)', 4326),  -- San Francisco
+ 'MacBook Pro M3 High-performance laptop for developers and creators Electronics'),
+('iPhone 15 Pro', 'Latest smartphone with advanced camera system', 'Electronics', 
+ '["smartphone", "apple", "photography", "mobile"]', 1199.00, 
+ ST_GeomFromText('POINT(-122.4194 37.7749)', 4326),
+ 'iPhone 15 Pro Latest smartphone with advanced camera system Electronics'),
+('Dell XPS 13', 'Ultrabook with excellent display and portability', 'Electronics', 
+ '["laptop", "dell", "ultrabook", "portable"]', 1299.00, 
+ ST_GeomFromText('POINT(-87.6298 41.8781)', 4326),  -- Chicago
+ 'Dell XPS 13 Ultrabook with excellent display and portability Electronics');
+
+-- Create FULLTEXT index on computed search_vector
+ALTER TABLE products ADD FULLTEXT KEY ft_search_vector (search_vector);
+                </div>
+
+                <div class="performance-tip">
+                    <strong>MySQL Performance Tip:</strong> FULLTEXT indexes in MySQL use different ranking algorithms than PostgreSQL. Use MATCH() AGAINST() with IN BOOLEAN MODE for complex queries and relevance scoring.
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Configuration -->
+        <div class="section">
+            <div class="section-header">Connection Configuration</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('direct-connection')">Direct Connection</div>
+                    <div class="tab" onclick="showTab('proxy-service')">Proxy Service</div>
+                    <div class="tab" onclick="showTab('pool-config')">Connection Pool</div>
+                </div>
+
+                <div id="direct-connection" class="tab-content active">
+                    <div class="warning">
+                        <strong>Security Warning:</strong> Direct database connections expose credentials in client code. Use only for development/testing.
+                    </div>
+                    
+                    <div class="code-block">
+// MySQL direct connection configuration
+const mysqlConfig = {
+    dataSource: {
+        type: 'sql',
+        sql: {
+            connectionString: 'mysql://username:password@localhost:3306/search_demo',
+            tableName: 'products',
+            searchFields: ['name', 'description', 'category'],
+            whereClause: "price BETWEEN 100 AND 5000",
+            orderBy: 'MATCH(search_vector) AGAINST(? IN BOOLEAN MODE) DESC, created_at DESC',
+            limit: 20
+        }
+    }
+};
+
+// Environment variable pattern (recommended)
+const secureConfig = {
+    dataSource: {
+        type: 'sql',
+        sql: {
+            connectionString: process.env.MYSQL_CONNECTION_STRING,
+            tableName: process.env.MYSQL_TABLE_NAME || 'products',
+            searchFields: ['name', 'description', 'category'],
+            whereClause: "category = ? AND price <= ?",
+            orderBy: 'relevance_score DESC',
+            limit: parseInt(process.env.SEARCH_LIMIT) || 50
+        }
+    }
+};
+                    </div>
+                </div>
+
+                <div id="proxy-service" class="tab-content">
+                    <div class="success">
+                        <strong>Production Pattern:</strong> Proxy service keeps credentials secure and provides additional security layers.
+                    </div>
+                    
+                    <div class="code-block">
+// Secure proxy service configuration
+const proxyConfig = {
+    dataSource: {
+        type: 'sql',
+        sql: {
+            proxyEndpoint: 'https://api.yourservice.com/search/mysql',
+            tableName: 'products',
+            searchFields: ['name', 'description', 'category'],
+            whereClause: "active = 1 AND price > 0",
+            orderBy: 'relevance_score DESC, price ASC',
+            limit: 25
+        }
+    }
+};
+
+// Express.js proxy service implementation
+const mysql = require('mysql2/promise');
+const express = require('express');
+
+const pool = mysql.createPool({
+    host: process.env.MYSQL_HOST,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+    connectionLimit: 10,
+    charset: 'utf8mb4'
+});
+
+app.post('/search/mysql', async (req, res) => {
+    try {
+        const { query, tableName, searchFields, whereClause, orderBy, limit } = req.body;
+        
+        // Parameterized query with FULLTEXT search
+        const sql = `
+            SELECT id, name, description, category, price, 
+                   MATCH(search_vector) AGAINST(? IN BOOLEAN MODE) as relevance_score,
+                   JSON_EXTRACT(tags, '$[*]') as tag_list
+            FROM ?? 
+            WHERE MATCH(search_vector) AGAINST(? IN BOOLEAN MODE) 
+                  AND ${whereClause}
+            ORDER BY ${orderBy}
+            LIMIT ?
+        `;
+        
+        const [results] = await pool.execute(sql, [query, tableName, query, limit]);
+        res.json(results);
+        
+    } catch (error) {
+        console.error('MySQL search error:', error);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
+                    </div>
+                </div>
+
+                <div id="pool-config" class="tab-content">
+                    <div class="code-block">
+// MySQL connection pool configuration
+const poolConfig = {
+    host: process.env.MYSQL_HOST || 'localhost',
+    port: process.env.MYSQL_PORT || 3306,
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+    connectionLimit: 10,
+    acquireTimeout: 60000,
+    timeout: 60000,
+    reconnect: true,
+    charset: 'utf8mb4',
+    ssl: {
+        rejectUnauthorized: false  // Configure based on your SSL setup
+    }
+};
+
+// Connection health check
+const healthCheck = async () => {
+    try {
+        const connection = await pool.getConnection();
+        await connection.ping();
+        connection.release();
+        return { status: 'healthy', timestamp: new Date().toISOString() };
+    } catch (error) {
+        return { status: 'unhealthy', error: error.message };
+    }
+};
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Query Patterns -->
+        <div class="section">
+            <div class="section-header">MySQL Query Patterns</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showQueryTab('fulltext-search')">FULLTEXT Search</div>
+                    <div class="tab" onclick="showQueryTab('spatial-search')">Spatial Search</div>
+                    <div class="tab" onclick="showQueryTab('json-search')">JSON Search</div>
+                    <div class="tab" onclick="showQueryTab('hybrid-search')">Hybrid Search</div>
+                </div>
+
+                <div id="fulltext-search" class="tab-content active">
+                    <p>MySQL FULLTEXT search with Boolean mode and relevance scoring:</p>
+                    <div class="code-block">
+-- Basic FULLTEXT search with relevance scoring
+SELECT id, name, description, 
+       MATCH(name, description) AGAINST(? IN BOOLEAN MODE) as relevance_score
+FROM products 
+WHERE MATCH(name, description) AGAINST(? IN BOOLEAN MODE)
+ORDER BY relevance_score DESC, created_at DESC
+LIMIT ?;
+
+-- Boolean operators in search
+-- +word (must contain), -word (must not contain), "phrase" (exact phrase)
+SELECT * FROM products 
+WHERE MATCH(search_vector) AGAINST('+laptop -apple "high performance"' IN BOOLEAN MODE);
+
+-- Natural language search with minimum score threshold
+SELECT *, MATCH(search_vector) AGAINST(? IN NATURAL LANGUAGE MODE) as score
+FROM products 
+WHERE MATCH(search_vector) AGAINST(? IN NATURAL LANGUAGE MODE)
+HAVING score > 0.5
+ORDER BY score DESC;
+                    </div>
+                </div>
+
+                <div id="spatial-search" class="tab-content">
+                    <p>MySQL spatial search for location-based queries:</p>
+                    <div class="code-block">
+-- Find products within radius (in meters)
+SELECT id, name, price, 
+       ST_Distance_Sphere(location, ST_GeomFromText('POINT(-122.4194 37.7749)', 4326)) as distance_meters
+FROM products 
+WHERE ST_Distance_Sphere(location, ST_GeomFromText('POINT(? ?)', 4326)) <= ?
+ORDER BY distance_meters ASC
+LIMIT ?;
+
+-- Bounding box search for rectangular areas
+SELECT id, name, location
+FROM products 
+WHERE ST_Within(location, 
+    ST_GeomFromText('POLYGON((
+        -122.5 37.7, -122.3 37.7, 
+        -122.3 37.8, -122.5 37.8, 
+        -122.5 37.7))', 4326)
+);
+
+-- Combined text and location search
+SELECT *, 
+       MATCH(search_vector) AGAINST(? IN BOOLEAN MODE) as text_score,
+       ST_Distance_Sphere(location, ST_GeomFromText('POINT(? ?)', 4326)) as distance
+FROM products 
+WHERE MATCH(search_vector) AGAINST(? IN BOOLEAN MODE)
+   AND ST_Distance_Sphere(location, ST_GeomFromText('POINT(? ?)', 4326)) <= 50000
+ORDER BY (text_score * 0.7) + ((50000 - distance) / 50000 * 0.3) DESC;
+                    </div>
+                </div>
+
+                <div id="json-search" class="tab-content">
+                    <p>MySQL JSON column search and manipulation:</p>
+                    <div class="code-block">
+-- Search within JSON arrays (tags)
+SELECT id, name, tags, JSON_EXTRACT(tags, '$[*]') as tag_list
+FROM products 
+WHERE JSON_CONTAINS(tags, JSON_QUOTE(?))
+   OR JSON_SEARCH(tags, 'one', ?) IS NOT NULL;
+
+-- Complex JSON path queries
+SELECT id, name, JSON_EXTRACT(tags, '$[0]') as first_tag
+FROM products 
+WHERE JSON_LENGTH(tags) > 2
+   AND JSON_EXTRACT(tags, '$[*]') LIKE '%laptop%';
+
+-- Update JSON fields
+UPDATE products 
+SET tags = JSON_ARRAY_APPEND(tags, '$', ?)
+WHERE id = ?;
+
+-- Search with JSON conditions
+SELECT * FROM products 
+WHERE JSON_CONTAINS(tags, '["apple", "laptop"]')
+   AND MATCH(search_vector) AGAINST(? IN BOOLEAN MODE);
+                    </div>
+                </div>
+
+                <div id="hybrid-search" class="tab-content">
+                    <p>Combined search patterns with multiple MySQL features:</p>
+                    <div class="code-block">
+-- Multi-dimensional search: text + location + price + JSON
+SELECT id, name, description, price,
+       MATCH(search_vector) AGAINST(? IN BOOLEAN MODE) as text_relevance,
+       ST_Distance_Sphere(location, ST_GeomFromText('POINT(? ?)', 4326)) as distance,
+       CASE 
+           WHEN price BETWEEN ? AND ? THEN 1.0
+           ELSE 0.5
+       END as price_score,
+       CASE 
+           WHEN JSON_CONTAINS(tags, JSON_QUOTE(?)) THEN 1.0
+           ELSE 0.0
+       END as tag_match
+FROM products 
+WHERE MATCH(search_vector) AGAINST(? IN BOOLEAN MODE)
+   AND ST_Distance_Sphere(location, ST_GeomFromText('POINT(? ?)', 4326)) <= ?
+   AND price >= ?
+ORDER BY (text_relevance * 0.4) + 
+         ((50000 - distance) / 50000 * 0.3) + 
+         (price_score * 0.2) + 
+         (tag_match * 0.1) DESC
+LIMIT ?;
+
+-- Faceted search with aggregations
+SELECT category, 
+       COUNT(*) as count,
+       AVG(price) as avg_price,
+       MIN(price) as min_price,
+       MAX(price) as max_price
+FROM products 
+WHERE MATCH(search_vector) AGAINST(? IN BOOLEAN MODE)
+GROUP BY category
+ORDER BY count DESC;
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Demo -->
+        <div class="section">
+            <div class="section-header">Interactive MySQL Demo</div>
+            <div class="section-content">
+                <div class="info">
+                    This demo simulates MySQL FULLTEXT search patterns with mock data. In production, connect to your MySQL database.
+                </div>
+                
+                <div class="interactive-demo">
+                    <div class="demo-controls">
+                        <div class="form-group">
+                            <label for="search-query">Search Query:</label>
+                            <input type="text" id="search-query" placeholder="laptop programming" value="laptop">
+                        </div>
+                        <div class="form-group">
+                            <label for="search-mode">Search Mode:</label>
+                            <select id="search-mode">
+                                <option value="boolean">Boolean Mode</option>
+                                <option value="natural">Natural Language</option>
+                                <option value="wildcard">Wildcard Search</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="category-filter">Category Filter:</label>
+                            <select id="category-filter">
+                                <option value="">All Categories</option>
+                                <option value="Electronics">Electronics</option>
+                                <option value="Books">Books</option>
+                                <option value="Clothing">Clothing</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="price-range">Max Price:</label>
+                            <input type="number" id="price-range" placeholder="2000" value="3000">
+                        </div>
+                    </div>
+                    
+                    <button onclick="performMySQLSearch()">Execute MySQL Search</button>
+                    
+                    <div id="generated-query" class="query-display" style="display: none;"></div>
+                    <div id="search-results" class="results" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Optimization -->
+        <div class="section">
+            <div class="section-header">MySQL Performance Optimization</div>
+            <div class="section-content">
+                <div class="performance-tip">
+                    <h4>MySQL-specific optimization strategies:</h4>
+                    <ul>
+                        <li><strong>FULLTEXT Index Types:</strong> Use different ft_min_word_len and ft_max_word_len settings</li>
+                        <li><strong>Query Cache:</strong> Enable query_cache_type for repeated searches</li>
+                        <li><strong>Index Merge:</strong> MySQL can combine multiple indexes automatically</li>
+                        <li><strong>Spatial Optimization:</strong> Use appropriate SRID for your geographic data</li>
+                    </ul>
+                </div>
+                
+                <div class="code-block">
+-- Performance analysis queries
+EXPLAIN SELECT * FROM products 
+WHERE MATCH(search_vector) AGAINST('laptop' IN BOOLEAN MODE);
+
+-- Index usage statistics
+SELECT TABLE_NAME, INDEX_NAME, SEQ_IN_INDEX, COLUMN_NAME, CARDINALITY
+FROM information_schema.STATISTICS 
+WHERE TABLE_SCHEMA = 'search_demo' AND TABLE_NAME = 'products';
+
+-- Query performance monitoring
+SELECT DIGEST_TEXT, COUNT_STAR, AVG_TIMER_WAIT/1000000000 as avg_time_sec
+FROM performance_schema.events_statements_summary_by_digest
+WHERE DIGEST_TEXT LIKE '%products%'
+ORDER BY COUNT_STAR DESC;
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock data for demo
+        const mockProducts = [
+            {
+                id: 1,
+                name: 'MacBook Pro M3',
+                description: 'High-performance laptop for developers and creators',
+                category: 'Electronics',
+                price: 2999.00,
+                tags: ['laptop', 'apple', 'programming', 'design'],
+                location: { lat: 37.7749, lng: -122.4194 },
+                relevance_score: 0
+            },
+            {
+                id: 2,
+                name: 'iPhone 15 Pro',
+                description: 'Latest smartphone with advanced camera system',
+                category: 'Electronics',
+                price: 1199.00,
+                tags: ['smartphone', 'apple', 'photography', 'mobile'],
+                location: { lat: 37.7749, lng: -122.4194 },
+                relevance_score: 0
+            },
+            {
+                id: 3,
+                name: 'Dell XPS 13',
+                description: 'Ultrabook with excellent display and portability',
+                category: 'Electronics',
+                price: 1299.00,
+                tags: ['laptop', 'dell', 'ultrabook', 'portable'],
+                location: { lat: 41.8781, lng: -87.6298 },
+                relevance_score: 0
+            },
+            {
+                id: 4,
+                name: 'Programming in Python',
+                description: 'Complete guide to Python programming for beginners',
+                category: 'Books',
+                price: 49.99,
+                tags: ['book', 'programming', 'python', 'education'],
+                location: { lat: 40.7128, lng: -74.0060 },
+                relevance_score: 0
+            },
+            {
+                id: 5,
+                name: 'Gaming Laptop ASUS ROG',
+                description: 'High-performance gaming laptop with RTX graphics',
+                category: 'Electronics',
+                price: 1899.00,
+                tags: ['laptop', 'gaming', 'asus', 'graphics'],
+                location: { lat: 34.0522, lng: -118.2437 },
+                relevance_score: 0
+            }
+        ];
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showQueryTab(tabName) {
+            // Hide all query tab contents
+            document.querySelectorAll('#fulltext-search, #spatial-search, #json-search, #hybrid-search').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Update tab active states
+            const tabs = document.querySelectorAll('.section:nth-child(4) .tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function performMySQLSearch() {
+            const query = document.getElementById('search-query').value.trim();
+            const searchMode = document.getElementById('search-mode').value;
+            const categoryFilter = document.getElementById('category-filter').value;
+            const maxPrice = parseFloat(document.getElementById('price-range').value) || 10000;
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            // Generate MySQL query based on selected mode
+            let sqlQuery = '';
+            let searchPattern = query;
+            
+            switch (searchMode) {
+                case 'boolean':
+                    searchPattern = query.split(' ').map(term => `+${term}`).join(' ');
+                    sqlQuery = `SELECT id, name, description, price, category,
+       MATCH(search_vector) AGAINST('${searchPattern}' IN BOOLEAN MODE) as relevance_score,
+       JSON_EXTRACT(tags, '$[*]') as tag_list
+FROM products 
+WHERE MATCH(search_vector) AGAINST('${searchPattern}' IN BOOLEAN MODE)`;
+                    break;
+                case 'natural':
+                    sqlQuery = `SELECT id, name, description, price, category,
+       MATCH(search_vector) AGAINST('${query}' IN NATURAL LANGUAGE MODE) as relevance_score
+FROM products 
+WHERE MATCH(search_vector) AGAINST('${query}' IN NATURAL LANGUAGE MODE)`;
+                    break;
+                case 'wildcard':
+                    sqlQuery = `SELECT id, name, description, price, category,
+       CASE WHEN name LIKE '%${query}%' OR description LIKE '%${query}%' THEN 1.0 ELSE 0.5 END as relevance_score
+FROM products 
+WHERE name LIKE '%${query}%' OR description LIKE '%${query}%'`;
+                    break;
+            }
+            
+            // Add filters
+            const conditions = [];
+            if (categoryFilter) {
+                conditions.push(`category = '${categoryFilter}'`);
+            }
+            if (maxPrice < 10000) {
+                conditions.push(`price <= ${maxPrice}`);
+            }
+            
+            if (conditions.length > 0) {
+                sqlQuery += ` AND ${conditions.join(' AND ')}`;
+            }
+            
+            sqlQuery += `
+ORDER BY relevance_score DESC, price ASC
+LIMIT 10;`;
+            
+            // Display generated query
+            document.getElementById('generated-query').innerHTML = sqlQuery;
+            document.getElementById('generated-query').style.display = 'block';
+            
+            // Simulate search results
+            const results = simulateMySQLSearch(query, searchMode, categoryFilter, maxPrice);
+            displayResults(results);
+        }
+        
+        function simulateMySQLSearch(query, searchMode, categoryFilter, maxPrice) {
+            let results = [...mockProducts];
+            
+            // Filter by category
+            if (categoryFilter) {
+                results = results.filter(item => item.category === categoryFilter);
+            }
+            
+            // Filter by price
+            results = results.filter(item => item.price <= maxPrice);
+            
+            // Calculate relevance scores
+            const queryTerms = query.toLowerCase().split(' ');
+            
+            results.forEach(item => {
+                let score = 0;
+                const searchText = `${item.name} ${item.description} ${item.category} ${item.tags.join(' ')}`.toLowerCase();
+                
+                queryTerms.forEach(term => {
+                    const termCount = (searchText.match(new RegExp(term, 'g')) || []).length;
+                    
+                    switch (searchMode) {
+                        case 'boolean':
+                            score += termCount > 0 ? termCount * 2 : 0;  // Boolean mode rewards exact matches
+                            break;
+                        case 'natural':
+                            score += termCount * 1.5;  // Natural language mode with moderate scoring
+                            break;
+                        case 'wildcard':
+                            score += termCount > 0 ? 1 : 0;  // Simple binary scoring for wildcards
+                            break;
+                    }
+                });
+                
+                item.relevance_score = score;
+            });
+            
+            // Sort by relevance score
+            results.sort((a, b) => b.relevance_score - a.relevance_score);
+            
+            // Filter out zero-score results
+            results = results.filter(item => item.relevance_score > 0);
+            
+            return results.slice(0, 10);
+        }
+        
+        function displayResults(results) {
+            const resultsDiv = document.getElementById('search-results');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="result-item">No results found. Try adjusting your search criteria.</div>';
+            } else {
+                resultsDiv.innerHTML = results.map(item => `
+                    <div class="result-item">
+                        <h4>${item.name}</h4>
+                        <p><strong>Description:</strong> ${item.description}</p>
+                        <p><strong>Category:</strong> ${item.category} | <strong>Price:</strong> $${item.price.toFixed(2)}</p>
+                        <p><strong>Tags:</strong> ${item.tags.join(', ')}</p>
+                        <p><strong>Relevance Score:</strong> ${item.relevance_score.toFixed(2)}</p>
+                        <p><strong>Location:</strong> ${item.location.lat.toFixed(4)}, ${item.location.lng.toFixed(4)}</p>
+                    </div>
+                `).join('');
+            }
+            
+            resultsDiv.style.display = 'block';
+        }
+        
+        // Initialize with sample search on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-run a sample search after 2 seconds
+            setTimeout(() => {
+                performMySQLSearch();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

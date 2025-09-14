@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Response Format Handling Examples - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .format-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .format-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .response-sample {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .transform-code {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .output-sample {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #1976d2;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .use-case {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .test-output {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Response Format Handling Examples</h1>
+    <p>This guide demonstrates how to handle different API response formats and transform them into standardized search results.</p>
+
+    <div class="example-section">
+        <h2>Standard JSON Array Response</h2>
+        <div class="format-card">
+            <div class="format-title">Simple Array Format</div>
+            <div class="use-case">Common in: REST APIs, simple endpoints</div>
+            
+            <div class="response-sample">[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com",
+    "department": "Engineering"
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith", 
+    "email": "jane@example.com",
+    "department": "Design"
+  }
+]</div>
+
+            <div class="transform-code">responseTransform: (data) => {
+  if (!Array.isArray(data)) return [];
+  
+  return data.map(user => ({
+    label: user.name,
+    value: user.id,
+    metadata: {
+      subtitle: user.email,
+      category: user.department,
+      details: `${user.name} - ${user.department}`
+    }
+  }));
+}</div>
+
+            <div class="output-sample">Output: 2 search results with names as labels, IDs as values</div>
+            <button onclick="testTransform('simple')">Test Transform</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Nested JSON Response</h2>
+        <div class="format-card">
+            <div class="format-title">Wrapped Data Format</div>
+            <div class="use-case">Common in: Enterprise APIs, paginated responses</div>
+            
+            <div class="response-sample">{
+  "status": "success",
+  "data": {
+    "results": [
+      {
+        "id": "prod-123",
+        "attributes": {
+          "name": "MacBook Pro",
+          "price": 2399,
+          "category": {
+            "name": "Laptops",
+            "slug": "laptops"
+          }
+        },
+        "meta": {
+          "inStock": true,
+          "rating": 4.8
+        }
+      }
+    ],
+    "pagination": {
+      "total": 25,
+      "page": 1
+    }
+  }
+}</div>
+
+            <div class="transform-code">responseTransform: (response) => {
+  // Navigate to nested data
+  const results = response?.data?.results;
+  if (!Array.isArray(results)) return [];
+  
+  return results.map(item => ({
+    label: item.attributes.name,
+    value: item.id,
+    metadata: {
+      subtitle: `$${item.attributes.price} - ${item.attributes.category.name}`,
+      category: item.attributes.category.name,
+      details: `Rating: ${item.meta.rating}/5 - ${item.meta.inStock ? 'In Stock' : 'Out of Stock'}`,
+      inStock: item.meta.inStock,
+      price: item.attributes.price
+    }
+  }));
+}</div>
+
+            <div class="output-sample">Output: Products with price and availability info</div>
+            <button onclick="testTransform('nested')">Test Transform</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>JSON:API Format</h2>
+        <div class="format-card">
+            <div class="format-title">JSON:API Specification</div>
+            <div class="use-case">Common in: Ruby on Rails APIs, standardized APIs</div>
+            
+            <div class="response-sample">{
+  "data": [
+    {
+      "type": "articles",
+      "id": "1",
+      "attributes": {
+        "title": "JSON:API paints my house",
+        "body": "The shortest article. Ever.",
+        "created": "2015-05-22T14:56:29.000Z"
+      },
+      "relationships": {
+        "author": {
+          "data": {"type": "people", "id": "9"}
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "people",
+      "id": "9",
+      "attributes": {
+        "firstName": "Dan",
+        "lastName": "Gebhardt"
+      }
+    }
+  ]
+}</div>
+
+            <div class="transform-code">responseTransform: (response) => {
+  const data = response?.data;
+  const included = response?.included || [];
+  
+  if (!Array.isArray(data)) return [];
+  
+  // Create lookup for included resources
+  const includedLookup = included.reduce((acc, item) => {
+    acc[`${item.type}:${item.id}`] = item;
+    return acc;
+  }, {});
+  
+  return data.map(item => {
+    // Resolve relationships
+    let authorName = 'Unknown Author';
+    if (item.relationships?.author?.data) {
+      const authorKey = `${item.relationships.author.data.type}:${item.relationships.author.data.id}`;
+      const author = includedLookup[authorKey];
+      if (author) {
+        authorName = `${author.attributes.firstName} ${author.attributes.lastName}`;
+      }
+    }
+    
+    return {
+      label: item.attributes.title,
+      value: item.id,
+      metadata: {
+        subtitle: `By ${authorName}`,
+        category: item.type,
+        details: item.attributes.body.substring(0, 100) + '...',
+        created: item.attributes.created
+      }
+    };
+  });
+}</div>
+
+            <div class="output-sample">Output: Articles with resolved author relationships</div>
+            <button onclick="testTransform('jsonapi')">Test Transform</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>GraphQL Response</h2>
+        <div class="format-card">
+            <div class="format-title">GraphQL Data Format</div>
+            <div class="use-case">Common in: GraphQL APIs, modern React apps</div>
+            
+            <div class="response-sample">{
+  "data": {
+    "search": {
+      "edges": [
+        {
+          "node": {
+            "id": "user:1",
+            "name": "Alice Johnson",
+            "avatar": {
+              "url": "https://example.com/avatar1.jpg"
+            },
+            "profile": {
+              "title": "Senior Developer",
+              "company": "TechCorp"
+            }
+          },
+          "cursor": "YXJyYXljb25uZWN0aW9uOjA="
+        }
+      ],
+      "pageInfo": {
+        "hasNextPage": true,
+        "endCursor": "YXJyYXljb25uZWN0aW9uOjA="
+      }
+    }
+  }
+}</div>
+
+            <div class="transform-code">responseTransform: (response) => {
+  const edges = response?.data?.search?.edges;
+  if (!Array.isArray(edges)) return [];
+  
+  return edges.map(edge => {
+    const node = edge.node;
+    return {
+      label: node.name,
+      value: node.id,
+      metadata: {
+        subtitle: `${node.profile.title} at ${node.profile.company}`,
+        category: 'User',
+        details: node.profile.title,
+        avatar: node.avatar.url,
+        cursor: edge.cursor
+      }
+    };
+  });
+}</div>
+
+            <div class="output-sample">Output: Users with profile information and pagination cursors</div>
+            <button onclick="testTransform('graphql')">Test Transform</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Error Response Handling</h2>
+        <div class="format-card">
+            <div class="format-title">Error Response Formats</div>
+            <div class="use-case">Handle various error response structures</div>
+            
+            <div class="response-sample">// Standard error format
+{
+  "error": {
+    "code": "SEARCH_FAILED",
+    "message": "Search service temporarily unavailable",
+    "details": "Please try again in a few moments"
+  }
+}
+
+// Rails-style errors
+{
+  "errors": [
+    {"field": "query", "code": "too_short", "message": "Query must be at least 3 characters"}
+  ]
+}
+
+// Simple error
+{
+  "success": false,
+  "message": "Invalid search parameters"
+}</div>
+
+            <div class="transform-code">responseTransform: (response) => {
+  // Check for various error formats
+  if (response.error) {
+    throw new Error(response.error.message || 'Search failed');
+  }
+  
+  if (response.errors && Array.isArray(response.errors)) {
+    const errorMessages = response.errors.map(err => err.message).join(', ');
+    throw new Error(errorMessages);
+  }
+  
+  if (response.success === false) {
+    throw new Error(response.message || 'Search failed');
+  }
+  
+  // Handle empty results
+  const data = response.data || response.results || response;
+  if (!Array.isArray(data) || data.length === 0) {
+    return [];
+  }
+  
+  // Transform successful results
+  return data.map(item => ({
+    label: item.name || item.title || 'No label',
+    value: item.id || Math.random(),
+    metadata: {
+      subtitle: item.description || '',
+      category: 'Result'
+    }
+  }));
+}</div>
+
+            <div class="output-sample">Output: Proper error handling with informative messages</div>
+            <button onclick="testTransform('error')">Test Error Handling</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Test Transformations</h2>
+        <div id="test-output" class="test-output">Click a "Test Transform" button to see the transformation in action.</div>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Sample response data for testing
+        const sampleResponses = {
+            simple: [
+                {
+                    "id": 1,
+                    "name": "John Doe",
+                    "email": "john@example.com",
+                    "department": "Engineering"
+                },
+                {
+                    "id": 2,
+                    "name": "Jane Smith", 
+                    "email": "jane@example.com",
+                    "department": "Design"
+                }
+            ],
+            
+            nested: {
+                "status": "success",
+                "data": {
+                    "results": [
+                        {
+                            "id": "prod-123",
+                            "attributes": {
+                                "name": "MacBook Pro",
+                                "price": 2399,
+                                "category": {
+                                    "name": "Laptops",
+                                    "slug": "laptops"
+                                }
+                            },
+                            "meta": {
+                                "inStock": true,
+                                "rating": 4.8
+                            }
+                        },
+                        {
+                            "id": "prod-124",
+                            "attributes": {
+                                "name": "iPad Air",
+                                "price": 599,
+                                "category": {
+                                    "name": "Tablets",
+                                    "slug": "tablets"
+                                }
+                            },
+                            "meta": {
+                                "inStock": false,
+                                "rating": 4.6
+                            }
+                        }
+                    ],
+                    "pagination": {
+                        "total": 25,
+                        "page": 1
+                    }
+                }
+            },
+            
+            jsonapi: {
+                "data": [
+                    {
+                        "type": "articles",
+                        "id": "1",
+                        "attributes": {
+                            "title": "JSON:API paints my house",
+                            "body": "The shortest article. Ever. This is an example of how JSON:API works.",
+                            "created": "2015-05-22T14:56:29.000Z"
+                        },
+                        "relationships": {
+                            "author": {
+                                "data": {"type": "people", "id": "9"}
+                            }
+                        }
+                    }
+                ],
+                "included": [
+                    {
+                        "type": "people",
+                        "id": "9",
+                        "attributes": {
+                            "firstName": "Dan",
+                            "lastName": "Gebhardt"
+                        }
+                    }
+                ]
+            },
+            
+            graphql: {
+                "data": {
+                    "search": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": "user:1",
+                                    "name": "Alice Johnson",
+                                    "avatar": {
+                                        "url": "https://example.com/avatar1.jpg"
+                                    },
+                                    "profile": {
+                                        "title": "Senior Developer",
+                                        "company": "TechCorp"
+                                    }
+                                },
+                                "cursor": "YXJyYXljb25uZWN0aW9uOjA="
+                            },
+                            {
+                                "node": {
+                                    "id": "user:2",
+                                    "name": "Bob Wilson",
+                                    "avatar": {
+                                        "url": "https://example.com/avatar2.jpg"
+                                    },
+                                    "profile": {
+                                        "title": "Product Manager",
+                                        "company": "StartupXYZ"
+                                    }
+                                },
+                                "cursor": "YXJyYXljb25uZWN0aW9uOjE="
+                            }
+                        ],
+                        "pageInfo": {
+                            "hasNextPage": true,
+                            "endCursor": "YXJyYXljb25uZWN0aW9uOjE="
+                        }
+                    }
+                }
+            },
+            
+            error: {
+                "error": {
+                    "code": "SEARCH_FAILED",
+                    "message": "Search service temporarily unavailable",
+                    "details": "Please try again in a few moments"
+                }
+            }
+        };
+
+        // Transform functions for each format
+        const transformers = {
+            simple: (data) => {
+                if (!Array.isArray(data)) return [];
+                
+                return data.map(user => ({
+                    label: user.name,
+                    value: user.id,
+                    metadata: {
+                        subtitle: user.email,
+                        category: user.department,
+                        details: `${user.name} - ${user.department}`
+                    }
+                }));
+            },
+            
+            nested: (response) => {
+                const results = response?.data?.results;
+                if (!Array.isArray(results)) return [];
+                
+                return results.map(item => ({
+                    label: item.attributes.name,
+                    value: item.id,
+                    metadata: {
+                        subtitle: `$${item.attributes.price} - ${item.attributes.category.name}`,
+                        category: item.attributes.category.name,
+                        details: `Rating: ${item.meta.rating}/5 - ${item.meta.inStock ? 'In Stock' : 'Out of Stock'}`,
+                        inStock: item.meta.inStock,
+                        price: item.attributes.price
+                    }
+                }));
+            },
+            
+            jsonapi: (response) => {
+                const data = response?.data;
+                const included = response?.included || [];
+                
+                if (!Array.isArray(data)) return [];
+                
+                const includedLookup = included.reduce((acc, item) => {
+                    acc[`${item.type}:${item.id}`] = item;
+                    return acc;
+                }, {});
+                
+                return data.map(item => {
+                    let authorName = 'Unknown Author';
+                    if (item.relationships?.author?.data) {
+                        const authorKey = `${item.relationships.author.data.type}:${item.relationships.author.data.id}`;
+                        const author = includedLookup[authorKey];
+                        if (author) {
+                            authorName = `${author.attributes.firstName} ${author.attributes.lastName}`;
+                        }
+                    }
+                    
+                    return {
+                        label: item.attributes.title,
+                        value: item.id,
+                        metadata: {
+                            subtitle: `By ${authorName}`,
+                            category: item.type,
+                            details: item.attributes.body.substring(0, 100) + '...',
+                            created: item.attributes.created
+                        }
+                    };
+                });
+            },
+            
+            graphql: (response) => {
+                const edges = response?.data?.search?.edges;
+                if (!Array.isArray(edges)) return [];
+                
+                return edges.map(edge => {
+                    const node = edge.node;
+                    return {
+                        label: node.name,
+                        value: node.id,
+                        metadata: {
+                            subtitle: `${node.profile.title} at ${node.profile.company}`,
+                            category: 'User',
+                            details: node.profile.title,
+                            avatar: node.avatar.url,
+                            cursor: edge.cursor
+                        }
+                    };
+                });
+            },
+            
+            error: (response) => {
+                if (response.error) {
+                    throw new Error(response.error.message || 'Search failed');
+                }
+                return [];
+            }
+        };
+
+        function testTransform(format) {
+            const testOutput = document.getElementById('test-output');
+            const response = sampleResponses[format];
+            const transformer = transformers[format];
+            
+            try {
+                testOutput.innerHTML = `
+                    <h4>Testing ${format} format transformation:</h4>
+                    <div style="margin: 10px 0;">
+                        <strong>Input Response:</strong>
+                        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">${JSON.stringify(response, null, 2)}</pre>
+                    </div>
+                `;
+                
+                const result = transformer(response);
+                
+                testOutput.innerHTML += `
+                    <div style="margin: 10px 0;">
+                        <strong>Transformed Result:</strong>
+                        <pre style="background: #e8f5e8; padding: 10px; border-radius: 4px; font-size: 12px; overflow-x: auto;">${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <strong>Summary:</strong> ${result.length} search result(s) generated
+                    </div>
+                `;
+                
+                showStatus(`${format} transformation completed successfully`, 'success');
+            } catch (error) {
+                testOutput.innerHTML += `
+                    <div style="margin: 10px 0;">
+                        <strong>Error:</strong>
+                        <div style="background: #ffebee; color: #d32f2f; padding: 10px; border-radius: 4px;">${error.message}</div>
+                    </div>
+                `;
+                
+                showStatus(`${format} transformation failed: ${error.message}`, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Key Authentication Example - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .security-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .config-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .auth-method {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .auth-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .demo-controls {
+            margin: 20px 0;
+        }
+        .demo-controls label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+        }
+        .demo-controls input, .demo-controls select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .search-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            z-index: 1000;
+            display: none;
+        }
+        .search-result {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .search-result:hover {
+            background: #f0f0f0;
+        }
+        .result-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .result-meta {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .api-key-input {
+            font-family: monospace;
+            background: #f8f8f8;
+        }
+        .request-log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Key Authentication Examples</h1>
+    <p>Learn how to configure the Universal Search Component to work with APIs that require API key authentication.</p>
+
+    <div class="security-warning">
+        <strong>⚠️ Security Notice:</strong> Never expose API keys in client-side code in production. This example is for demonstration purposes. In production, use a proxy service to handle API keys securely.
+    </div>
+
+    <div class="example-section">
+        <h2>API Key Authentication Methods</h2>
+        
+        <div class="auth-method">
+            <div class="auth-title">1. Header-based API Key</div>
+            <p>Most common and secure method - API key sent in request headers.</p>
+            <div class="config-display">{
+  dataSource: {
+    type: 'api',
+    api: {
+      endpoint: 'https://api.example.com/search',
+      method: 'GET',
+      queryParam: 'q',
+      headers: {
+        'X-API-Key': 'your-api-key-here',
+        'Content-Type': 'application/json'
+      },
+      authentication: {
+        type: 'apikey',
+        credentials: {
+          key: 'your-api-key-here',
+          headerName: 'X-API-Key'
+        }
+      }
+    }
+  }
+}</div>
+        </div>
+
+        <div class="auth-method">
+            <div class="auth-title">2. Query Parameter API Key</div>
+            <p>Less secure but sometimes required - API key sent as URL parameter.</p>
+            <div class="config-display">{
+  dataSource: {
+    type: 'api',
+    api: {
+      endpoint: 'https://api.example.com/search',
+      method: 'GET',
+      requestTransform: (query) => ({
+        url: `${endpoint}?q=${encodeURIComponent(query)}&api_key=${apiKey}`,
+        method: 'GET'
+      }),
+      authentication: {
+        type: 'apikey',
+        credentials: {
+          key: 'your-api-key-here',
+          paramName: 'api_key'
+        }
+      }
+    }
+  }
+}</div>
+        </div>
+
+        <div class="auth-method">
+            <div class="auth-title">3. Authorization Header</div>
+            <p>Alternative header format using standard Authorization header.</p>
+            <div class="config-display">{
+  dataSource: {
+    type: 'api',
+    api: {
+      endpoint: 'https://api.example.com/search',
+      method: 'GET',
+      headers: {
+        'Authorization': 'ApiKey your-api-key-here',
+        'Content-Type': 'application/json'
+      },
+      authentication: {
+        type: 'apikey',
+        credentials: {
+          key: 'your-api-key-here',
+          scheme: 'ApiKey'
+        }
+      }
+    }
+  }
+}</div>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Interactive Demo</h2>
+        <div class="demo-controls">
+            <label for="api-endpoint">API Endpoint:</label>
+            <input type="url" id="api-endpoint" value="https://api.github.com/search/repositories" placeholder="https://api.example.com/search">
+            
+            <label for="api-key">API Key:</label>
+            <input type="password" id="api-key" class="api-key-input" placeholder="Enter your API key (optional for GitHub)">
+            
+            <label for="auth-method">Authentication Method:</label>
+            <select id="auth-method">
+                <option value="header">X-API-Key Header</option>
+                <option value="auth-header">Authorization Header</option>
+                <option value="query-param">Query Parameter</option>
+                <option value="none">No Authentication</option>
+            </select>
+            
+            <label for="query-param-name">Query Parameter Name:</label>
+            <input type="text" id="query-param-name" value="q" placeholder="q">
+            
+            <button onclick="updateConfiguration()">Update Configuration</button>
+            <button onclick="testAuthentication()">Test Authentication</button>
+        </div>
+
+        <div class="search-container">
+            <div style="position: relative;">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search GitHub repositories... (try 'react' or 'vue')"
+                    aria-label="Search repositories"
+                    autocomplete="off"
+                >
+                <div id="search-dropdown" class="search-dropdown" role="listbox" aria-label="Search results"></div>
+            </div>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Configuration</h2>
+        <div class="config-display" id="config-display"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Request Log</h2>
+        <div id="request-log" class="request-log">No requests made yet...</div>
+    </div>
+
+    <div class="example-section">
+        <h2>Security Best Practices</h2>
+        <div class="config-display">// ✅ DO: Use proxy service for API keys
+const secureConfig = {
+  dataSource: {
+    type: 'api',
+    api: {
+      endpoint: '/api/proxy/search', // Your backend proxy
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      requestTransform: (query) => ({
+        url: '/api/proxy/search',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          query,
+          service: 'external-api'
+        })
+      })
+    }
+  }
+};
+
+// ❌ DON'T: Expose API keys in client code
+const insecureConfig = {
+  dataSource: {
+    api: {
+      headers: {
+        'X-API-Key': 'sk-live-abcd1234...' // Never do this!
+      }
+    }
+  }
+};
+
+// ✅ DO: Use environment-based configuration
+const apiKey = process.env.REACT_APP_API_KEY; // Build-time only
+const dynamicKey = await getApiKeyFromSecureSource(); // Runtime from secure endpoint
+
+// ✅ DO: Implement key rotation
+const authConfig = {
+  authentication: {
+    type: 'apikey',
+    credentials: {
+      keyProvider: async () => {
+        return await refreshApiKey(); // Fetch fresh key
+      },
+      refreshInterval: 3600000 // 1 hour
+    }
+  }
+};</div>
+    </div>
+
+    <script>
+        let currentConfig = {
+            dataSource: {
+                type: 'api',
+                api: {
+                    endpoint: 'https://api.github.com/search/repositories',
+                    method: 'GET',
+                    queryParam: 'q',
+                    headers: {
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'Universal-Search-Component'
+                    },
+                    requestTransform: (query) => {
+                        const endpoint = document.getElementById('api-endpoint').value;
+                        const queryParam = document.getElementById('query-param-name').value;
+                        const authMethod = document.getElementById('auth-method').value;
+                        const apiKey = document.getElementById('api-key').value;
+                        
+                        let url = `${endpoint}?${queryParam}=${encodeURIComponent(query)}`;
+                        let headers = { ...currentConfig.dataSource.api.headers };
+                        
+                        // Apply authentication based on method
+                        if (apiKey && authMethod !== 'none') {
+                            switch (authMethod) {
+                                case 'header':
+                                    headers['X-API-Key'] = apiKey;
+                                    break;
+                                case 'auth-header':
+                                    headers['Authorization'] = `ApiKey ${apiKey}`;
+                                    break;
+                                case 'query-param':
+                                    url += `&api_key=${encodeURIComponent(apiKey)}`;
+                                    break;
+                            }
+                        }
+                        
+                        logRequest('GET', url, headers);
+                        
+                        return {
+                            url,
+                            method: 'GET',
+                            headers
+                        };
+                    },
+                    responseTransform: (data) => {
+                        logResponse(data);
+                        
+                        // Handle GitHub API response format
+                        const items = data.items || data.results || data;
+                        if (!Array.isArray(items)) return [];
+                        
+                        return items.slice(0, 10).map(repo => ({
+                            label: repo.name || repo.full_name || 'No name',
+                            value: repo.id || repo.url,
+                            metadata: {
+                                subtitle: repo.description || 'No description',
+                                category: repo.language || 'Unknown',
+                                details: `⭐ ${repo.stargazers_count || 0} stars • ${repo.forks_count || 0} forks`,
+                                url: repo.html_url
+                            }
+                        }));
+                    }
+                }
+            },
+            queryHandling: {
+                minLength: 2,
+                debounceMs: 500,
+                triggerOn: 'change'
+            },
+            actionHandling: {
+                onSelect: (result) => {
+                    showStatus(`Selected: ${result.label}`, 'success');
+                    if (result.metadata.url) {
+                        showStatus(`Repository: ${result.metadata.url}`, 'success');
+                    }
+                    hideDropdown();
+                },
+                onError: (error) => {
+                    showStatus(`Error: ${error.message}`, 'error');
+                },
+                onLoading: (isLoading) => {
+                    if (isLoading) {
+                        showDropdown([{ type: 'loading', content: 'Searching repositories...' }]);
+                    }
+                }
+            }
+        };
+
+        let debounceTimer;
+
+        function displayConfig() {
+            const configElement = document.getElementById('config-display');
+            configElement.textContent = JSON.stringify(currentConfig, null, 2);
+        }
+
+        function logRequest(method, url, headers) {
+            const log = document.getElementById('request-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            // Hide sensitive headers in log
+            const safeHeaders = { ...headers };
+            Object.keys(safeHeaders).forEach(key => {
+                if (key.toLowerCase().includes('api') || key.toLowerCase().includes('auth')) {
+                    safeHeaders[key] = '[HIDDEN]';
+                }
+            });
+            
+            const logEntry = `[${timestamp}] ${method} ${url}\nHeaders: ${JSON.stringify(safeHeaders, null, 2)}\n\n`;
+            log.textContent = logEntry + log.textContent;
+        }
+
+        function logResponse(data) {
+            const log = document.getElementById('request-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const responseInfo = {
+                itemCount: data.items?.length || (Array.isArray(data) ? data.length : 0),
+                totalCount: data.total_count || 'unknown',
+                rateLimit: data.rate_limit || 'not provided'
+            };
+            
+            const logEntry = `[${timestamp}] Response: ${JSON.stringify(responseInfo, null, 2)}\n\n`;
+            log.textContent = log.textContent.replace(/(\[.*?\] GET[\s\S]*?)\n\n/, `$1\n${logEntry}`);
+        }
+
+        async function performSearch(query) {
+            if (query.length < currentConfig.queryHandling.minLength) {
+                hideDropdown();
+                return;
+            }
+
+            try {
+                currentConfig.actionHandling.onLoading(true);
+                
+                const requestConfig = currentConfig.dataSource.api.requestTransform(query);
+                
+                const response = await fetch(requestConfig.url, {
+                    method: requestConfig.method,
+                    headers: requestConfig.headers
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        throw new Error('Authentication failed - check your API key');
+                    } else if (response.status === 403) {
+                        throw new Error('Access forbidden - insufficient permissions');
+                    } else if (response.status === 429) {
+                        throw new Error('Rate limit exceeded - please wait before trying again');
+                    } else {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                }
+
+                const data = await response.json();
+                const transformedResults = currentConfig.dataSource.api.responseTransform(data);
+                
+                if (transformedResults.length === 0) {
+                    showDropdown([{ type: 'message', content: 'No repositories found' }]);
+                } else {
+                    showDropdown(transformedResults);
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                currentConfig.actionHandling.onError(error);
+                hideDropdown();
+            }
+        }
+
+        function showDropdown(results) {
+            const dropdown = document.getElementById('search-dropdown');
+            dropdown.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultElement = document.createElement('div');
+                
+                if (result.type === 'loading') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                    resultElement.style.padding = '12px';
+                    resultElement.style.textAlign = 'center';
+                    resultElement.style.color = '#666';
+                } else if (result.type === 'message') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                    resultElement.style.padding = '12px';
+                    resultElement.style.textAlign = 'center';
+                    resultElement.style.color = '#666';
+                } else {
+                    resultElement.className = 'search-result';
+                    resultElement.innerHTML = `
+                        <div class="result-label">${escapeHtml(result.label)}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.subtitle || '')}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.details || '')}</div>
+                    `;
+                    
+                    resultElement.addEventListener('click', () => {
+                        currentConfig.actionHandling.onSelect(result);
+                    });
+                }
+                
+                dropdown.appendChild(resultElement);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateConfiguration() {
+            // Configuration is updated dynamically in requestTransform
+            displayConfig();
+            showStatus('Configuration updated successfully', 'success');
+        }
+
+        async function testAuthentication() {
+            const endpoint = document.getElementById('api-endpoint').value;
+            const apiKey = document.getElementById('api-key').value;
+            const authMethod = document.getElementById('auth-method').value;
+            
+            try {
+                showStatus('Testing authentication...', 'success');
+                
+                let headers = {
+                    'Accept': 'application/json',
+                    'User-Agent': 'Universal-Search-Component'
+                };
+                
+                let testUrl = `${endpoint}?q=test`;
+                
+                if (apiKey && authMethod !== 'none') {
+                    switch (authMethod) {
+                        case 'header':
+                            headers['X-API-Key'] = apiKey;
+                            break;
+                        case 'auth-header':
+                            headers['Authorization'] = `ApiKey ${apiKey}`;
+                            break;
+                        case 'query-param':
+                            testUrl += `&api_key=${encodeURIComponent(apiKey)}`;
+                            break;
+                    }
+                }
+                
+                const response = await fetch(testUrl, { headers });
+                
+                if (response.ok) {
+                    showStatus(`Authentication successful (${response.status})`, 'success');
+                } else if (response.status === 401) {
+                    showStatus('Authentication failed - invalid API key', 'error');
+                } else if (response.status === 403) {
+                    showStatus('Access forbidden - check API key permissions', 'error');
+                } else {
+                    showStatus(`Test returned ${response.status}: ${response.statusText}`, 'error');
+                }
+                
+            } catch (error) {
+                showStatus(`Authentication test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, currentConfig.queryHandling.debounceMs);
+        });
+
+        document.getElementById('search-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                hideDropdown();
+            }
+        });
+
+        // Initialize
+        displayConfig();
+    </script>
+</body>
+</html>

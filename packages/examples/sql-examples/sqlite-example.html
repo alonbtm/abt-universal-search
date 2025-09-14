@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQLite Integration Example - Universal Search Component</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            background: #8e44ad;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        .section-content {
+            padding: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .interactive-demo {
+            border: 2px solid #9b59b6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .demo-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        input, select, textarea {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #8e44ad;
+        }
+        .results {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .query-display {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            margin: 10px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .tab.active {
+            color: #9b59b6;
+            border-bottom-color: #9b59b6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .performance-tip {
+            background: #e8f5e8;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .browser-demo {
+            background: #f0f8ff;
+            border: 2px solid #4169e1;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQLite Integration Example</h1>
+            <div class="subtitle">Local SQLite database with FTS5, JSON1, and in-browser demos</div>
+        </div>
+
+        <!-- SQLite Advantages -->
+        <div class="section">
+            <div class="section-header">Why SQLite for Search Applications?</div>
+            <div class="section-content">
+                <div class="success">
+                    <h4>SQLite Benefits:</h4>
+                    <ul>
+                        <li><strong>Zero Configuration:</strong> No server setup, embedded database</li>
+                        <li><strong>FTS5 Support:</strong> Advanced full-text search with ranking</li>
+                        <li><strong>JSON Support:</strong> Built-in JSON functions for complex data</li>
+                        <li><strong>Web Assembly:</strong> Can run directly in browsers via sql.js</li>
+                        <li><strong>File-based:</strong> Perfect for desktop applications and development</li>
+                        <li><strong>ACID Compliant:</strong> Reliable transactions and data integrity</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database Schema Setup -->
+        <div class="section">
+            <div class="section-header">SQLite Database Schema</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('basic-schema')">Basic Schema</div>
+                    <div class="tab" onclick="showTab('fts5-schema')">FTS5 Setup</div>
+                    <div class="tab" onclick="showTab('json-schema')">JSON Extensions</div>
+                    <div class="tab" onclick="showTab('indexes-schema')">Indexes & Performance</div>
+                </div>
+
+                <div id="basic-schema" class="tab-content active">
+                    <p>Basic SQLite table structure for search applications:</p>
+                    <div class="code-block">
+-- Create main table with comprehensive data types
+CREATE TABLE documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT,
+    category TEXT,
+    tags TEXT,  -- JSON array as text
+    metadata TEXT,  -- JSON object as text
+    author TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    status TEXT DEFAULT 'active',
+    priority INTEGER DEFAULT 0,
+    file_path TEXT,
+    file_size INTEGER
+);
+
+-- Sample data insertion
+INSERT INTO documents (title, content, category, tags, metadata, author, priority) VALUES
+('Python Programming Guide', 'Complete guide to Python programming with examples and best practices', 
+ 'Technology', '["python", "programming", "tutorial"]', 
+ '{"language": "en", "level": "beginner", "pages": 120}', 'John Doe', 5),
+('SQLite Database Tutorial', 'Learn SQLite database fundamentals and advanced features like FTS5', 
+ 'Technology', '["database", "sqlite", "sql"]', 
+ '{"language": "en", "level": "intermediate", "pages": 85}', 'Jane Smith', 4),
+('Web Development Basics', 'HTML, CSS, and JavaScript fundamentals for web development', 
+ 'Technology', '["web", "html", "css", "javascript"]', 
+ '{"language": "en", "level": "beginner", "pages": 200}', 'Bob Johnson', 3);
+
+-- Create trigger to update timestamp
+CREATE TRIGGER update_documents_timestamp 
+    AFTER UPDATE ON documents
+BEGIN
+    UPDATE documents SET updated_at = datetime('now') WHERE id = NEW.id;
+END;
+                    </div>
+                </div>
+
+                <div id="fts5-schema" class="tab-content">
+                    <p>SQLite FTS5 (Full-Text Search) virtual table setup:</p>
+                    <div class="code-block">
+-- Enable FTS5 extension and create virtual table
+-- FTS5 provides advanced full-text search capabilities
+CREATE VIRTUAL TABLE documents_fts USING fts5(
+    title, 
+    content, 
+    category,
+    tags,
+    author,
+    content_type UNINDEXED,  -- Include but don't index
+    tokenize='porter unicode61 remove_diacritics 2'
+);
+
+-- Populate FTS5 table from main table
+INSERT INTO documents_fts(rowid, title, content, category, tags, author, content_type)
+SELECT id, title, content, category, tags, author, 'document' 
+FROM documents;
+
+-- Create trigger to keep FTS5 in sync
+CREATE TRIGGER documents_fts_insert AFTER INSERT ON documents BEGIN
+    INSERT INTO documents_fts(rowid, title, content, category, tags, author, content_type)
+    VALUES (NEW.id, NEW.title, NEW.content, NEW.category, NEW.tags, NEW.author, 'document');
+END;
+
+CREATE TRIGGER documents_fts_update AFTER UPDATE ON documents BEGIN
+    UPDATE documents_fts 
+    SET title=NEW.title, content=NEW.content, category=NEW.category, 
+        tags=NEW.tags, author=NEW.author
+    WHERE rowid=NEW.id;
+END;
+
+CREATE TRIGGER documents_fts_delete AFTER DELETE ON documents BEGIN
+    DELETE FROM documents_fts WHERE rowid=OLD.id;
+END;
+
+-- FTS5 search examples
+-- Basic search with BM25 ranking
+SELECT d.id, d.title, d.category, 
+       fts.bm25(documents_fts) as rank
+FROM documents_fts 
+JOIN documents d ON documents_fts.rowid = d.id
+WHERE documents_fts MATCH 'python programming'
+ORDER BY rank;
+
+-- Column-specific search
+SELECT * FROM documents_fts 
+WHERE documents_fts MATCH 'title:python OR content:database';
+
+-- Phrase search
+SELECT * FROM documents_fts 
+WHERE documents_fts MATCH '"web development"';
+                    </div>
+                </div>
+
+                <div id="json-schema" class="tab-content">
+                    <p>SQLite JSON1 extension for handling JSON data:</p>
+                    <div class="code-block">
+-- JSON1 extension queries (built into SQLite 3.38+)
+-- Search within JSON arrays (tags)
+SELECT id, title, json_extract(tags, '$') as all_tags
+FROM documents 
+WHERE json_extract(tags, '$') LIKE '%python%';
+
+-- Extract specific JSON metadata fields
+SELECT id, title, 
+       json_extract(metadata, '$.level') as difficulty_level,
+       json_extract(metadata, '$.pages') as page_count,
+       json_extract(metadata, '$.language') as language
+FROM documents 
+WHERE json_extract(metadata, '$.level') = 'beginner';
+
+-- Search within JSON arrays using json_each
+SELECT d.id, d.title, value as tag
+FROM documents d, json_each(d.tags) 
+WHERE value LIKE '%prog%';
+
+-- Complex JSON queries with json_tree
+SELECT d.id, d.title, j.key, j.value
+FROM documents d, json_tree(d.metadata) j
+WHERE j.type = 'text' AND j.value LIKE '%en%';
+
+-- Update JSON fields
+UPDATE documents 
+SET metadata = json_set(metadata, '$.updated_by', 'admin')
+WHERE id = 1;
+
+-- Add to JSON array
+UPDATE documents 
+SET tags = json_insert(tags, '$[' || json_array_length(tags) || ']', 'updated')
+WHERE id = 1;
+                    </div>
+                </div>
+
+                <div id="indexes-schema" class="tab-content">
+                    <p>SQLite indexing strategies for search performance:</p>
+                    <div class="code-block">
+-- Regular indexes for non-FTS searches
+CREATE INDEX idx_documents_category ON documents(category);
+CREATE INDEX idx_documents_author ON documents(author);
+CREATE INDEX idx_documents_created_at ON documents(created_at);
+CREATE INDEX idx_documents_status_priority ON documents(status, priority DESC);
+
+-- Composite indexes for common search patterns
+CREATE INDEX idx_search_composite ON documents(category, status, created_at DESC);
+
+-- Partial indexes for active documents only
+CREATE INDEX idx_active_documents ON documents(title, category) 
+WHERE status = 'active';
+
+-- Expression indexes for JSON data
+CREATE INDEX idx_json_level ON documents(json_extract(metadata, '$.level'));
+CREATE INDEX idx_json_pages ON documents(json_extract(metadata, '$.pages'));
+
+-- Analyze tables for query optimizer
+ANALYZE;
+
+-- Check index usage with EXPLAIN QUERY PLAN
+EXPLAIN QUERY PLAN
+SELECT * FROM documents 
+WHERE category = 'Technology' AND status = 'active'
+ORDER BY created_at DESC;
+
+-- Vacuum and optimize database
+PRAGMA optimize;
+VACUUM;
+
+-- Database statistics
+SELECT 
+    name as table_name,
+    sql as create_statement
+FROM sqlite_master 
+WHERE type = 'index';
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Patterns -->
+        <div class="section">
+            <div class="section-header">SQLite Connection Patterns</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showConnectionTab('node-js')">Node.js</div>
+                    <div class="tab" onclick="showConnectionTab('browser')">Browser (sql.js)</div>
+                    <div class="tab" onclick="showConnectionTab('python')">Python</div>
+                    <div class="tab" onclick="showConnectionTab('config')">Configuration</div>
+                </div>
+
+                <div id="node-js" class="tab-content active">
+                    <p>SQLite integration in Node.js applications:</p>
+                    <div class="code-block">
+// Node.js with better-sqlite3 (recommended)
+const Database = require('better-sqlite3');
+
+// Connection configuration
+const dbConfig = {
+    dataSource: {
+        type: 'sql',
+        sql: {
+            connectionString: './data/search.db',  // File path for SQLite
+            tableName: 'documents',
+            searchFields: ['title', 'content', 'category'],
+            whereClause: "status = 'active'",
+            orderBy: 'created_at DESC',
+            limit: 50
+        }
+    }
+};
+
+// Database connection and search implementation
+class SQLiteSearchService {
+    constructor(dbPath) {
+        this.db = new Database(dbPath, { 
+            readonly: false,
+            fileMustExist: false,
+            timeout: 5000,
+            verbose: console.log  // Enable logging in development
+        });
+        
+        // Enable FTS5 and JSON1 extensions
+        this.db.pragma('journal_mode = WAL');
+        this.db.pragma('synchronous = NORMAL');
+        this.db.pragma('cache_size = 1000');
+    }
+    
+    search(query, options = {}) {
+        const { limit = 20, category = null, usesFTS = true } = options;
+        
+        if (usesFTS) {
+            // FTS5 search with ranking
+            const stmt = this.db.prepare(`
+                SELECT d.id, d.title, d.content, d.category, d.author,
+                       fts.bm25(documents_fts) as rank,
+                       snippet(documents_fts, 1, '<mark>', '</mark>', '...', 32) as snippet
+                FROM documents_fts fts
+                JOIN documents d ON fts.rowid = d.id
+                WHERE documents_fts MATCH ? 
+                  AND d.status = 'active'
+                  AND (? IS NULL OR d.category = ?)
+                ORDER BY rank
+                LIMIT ?
+            `);
+            return stmt.all(query, category, category, limit);
+        } else {
+            // Regular LIKE search
+            const stmt = this.db.prepare(`
+                SELECT id, title, content, category, author
+                FROM documents 
+                WHERE (title LIKE ? OR content LIKE ?)
+                  AND status = 'active'
+                  AND (? IS NULL OR category = ?)
+                ORDER BY 
+                    CASE WHEN title LIKE ? THEN 1 ELSE 2 END,
+                    created_at DESC
+                LIMIT ?
+            `);
+            const likeQuery = `%${query}%`;
+            return stmt.all(likeQuery, likeQuery, category, category, likeQuery, limit);
+        }
+    }
+    
+    close() {
+        this.db.close();
+    }
+}
+
+// Usage example
+const searchService = new SQLiteSearchService('./search.db');
+const results = searchService.search('python programming', { 
+    category: 'Technology', 
+    limit: 10 
+});
+console.log(results);
+                    </div>
+                </div>
+
+                <div id="browser" class="tab-content">
+                    <p>SQLite in web browsers using sql.js (WebAssembly):</p>
+                    <div class="code-block">
+// Browser implementation with sql.js
+// First, include sql.js in your HTML: 
+// &lt;script src="https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/sql-wasm.js"&gt;&lt;/script&gt;
+
+class BrowserSQLiteService {
+    constructor() {
+        this.db = null;
+        this.initPromise = this.initialize();
+    }
+    
+    async initialize() {
+        // Load sql.js with WebAssembly
+        const SQL = await initSqlJs({
+            locateFile: file => `https://cdn.jsdelivr.net/npm/sql.js@1.8.0/dist/${file}`
+        });
+        
+        // Create in-memory database or load from file
+        this.db = new SQL.Database();
+        
+        // Create schema
+        this.db.run(`
+            CREATE TABLE documents (
+                id INTEGER PRIMARY KEY,
+                title TEXT,
+                content TEXT,
+                category TEXT,
+                tags TEXT,
+                created_at TEXT
+            );
+            
+            CREATE VIRTUAL TABLE documents_fts USING fts5(
+                title, content, category, tokenize='porter'
+            );
+        `);
+        
+        // Insert sample data
+        this.insertSampleData();
+        
+        return this.db;
+    }
+    
+    insertSampleData() {
+        const stmt = this.db.prepare(`
+            INSERT INTO documents (title, content, category, tags) 
+            VALUES (?, ?, ?, ?)
+        `);
+        
+        const sampleData = [
+            ['JavaScript Fundamentals', 'Learn JavaScript basics and advanced concepts', 'Programming', '["javascript", "web"]'],
+            ['SQLite Tutorial', 'Complete guide to SQLite database', 'Database', '["sqlite", "sql"]'],
+            ['React Components', 'Building reusable React components', 'Programming', '["react", "javascript"]']
+        ];
+        
+        sampleData.forEach(row => {
+            stmt.run(row);
+            // Also insert into FTS table
+            this.db.run('INSERT INTO documents_fts(title, content, category) VALUES (?, ?, ?)', 
+                       [row[0], row[1], row[2]]);
+        });
+        
+        stmt.free();
+    }
+    
+    async search(query, options = {}) {
+        await this.initPromise;
+        
+        const { limit = 10, usesFTS = true } = options;
+        
+        if (usesFTS) {
+            const stmt = this.db.prepare(`
+                SELECT d.title, d.content, d.category 
+                FROM documents_fts fts
+                JOIN documents d ON fts.rowid = d.id
+                WHERE documents_fts MATCH ?
+                LIMIT ?
+            `);
+            
+            const results = [];
+            stmt.bind([query, limit]);
+            
+            while (stmt.step()) {
+                results.push(stmt.getAsObject());
+            }
+            
+            stmt.free();
+            return results;
+        } else {
+            const stmt = this.db.prepare(`
+                SELECT title, content, category 
+                FROM documents 
+                WHERE title LIKE ? OR content LIKE ?
+                LIMIT ?
+            `);
+            
+            const likeQuery = `%${query}%`;
+            const results = [];
+            stmt.bind([likeQuery, likeQuery, limit]);
+            
+            while (stmt.step()) {
+                results.push(stmt.getAsObject());
+            }
+            
+            stmt.free();
+            return results;
+        }
+    }
+    
+    exportDatabase() {
+        const data = this.db.export();
+        return new Blob([data], { type: 'application/octet-stream' });
+    }
+    
+    async loadDatabase(file) {
+        const arrayBuffer = await file.arrayBuffer();
+        const data = new Uint8Array(arrayBuffer);
+        this.db = new SQL.Database(data);
+    }
+}
+
+// Usage in browser
+const browserSearch = new BrowserSQLiteService();
+
+// Search function for browser
+async function performBrowserSearch(query) {
+    try {
+        const results = await browserSearch.search(query, { usesFTS: true });
+        console.log('Search results:', results);
+        return results;
+    } catch (error) {
+        console.error('Search error:', error);
+        return [];
+    }
+}
+                    </div>
+                </div>
+
+                <div id="python" class="tab-content">
+                    <p>SQLite integration in Python applications:</p>
+                    <div class="code-block">
+# Python with sqlite3 (built-in) or sqlite-utils
+import sqlite3
+import json
+from typing import List, Dict, Optional
+
+class PythonSQLiteSearch:
+    def __init__(self, db_path: str):
+        self.db_path = db_path
+        self.conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.conn.row_factory = sqlite3.Row  # Access columns by name
+        self.setup_database()
+    
+    def setup_database(self):
+        # Create tables and enable extensions
+        cursor = self.conn.cursor()
+        
+        # Main table
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                content TEXT,
+                category TEXT,
+                tags TEXT,
+                metadata TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # FTS5 virtual table
+        cursor.execute('''
+            CREATE VIRTUAL TABLE IF NOT EXISTS documents_fts 
+            USING fts5(title, content, category, content_row=documents, content_rowid=id)
+        ''')
+        
+        self.conn.commit()
+    
+    def search(self, query: str, 
+               category: Optional[str] = None,
+               limit: int = 20,
+               use_fts: bool = True) -> List[Dict]:
+        
+        cursor = self.conn.cursor()
+        
+        if use_fts:
+            sql = '''
+                SELECT d.id, d.title, d.content, d.category, d.tags,
+                       bm25(documents_fts) as rank
+                FROM documents_fts 
+                JOIN documents d ON documents_fts.rowid = d.id
+                WHERE documents_fts MATCH ?
+            '''
+            params = [query]
+            
+            if category:
+                sql += ' AND d.category = ?'
+                params.append(category)
+            
+            sql += ' ORDER BY rank LIMIT ?'
+            params.append(limit)
+            
+        else:
+            sql = '''
+                SELECT id, title, content, category, tags
+                FROM documents 
+                WHERE (title LIKE ? OR content LIKE ?)
+            '''
+            like_query = f'%{query}%'
+            params = [like_query, like_query]
+            
+            if category:
+                sql += ' AND category = ?'
+                params.append(category)
+            
+            sql += ' ORDER BY created_at DESC LIMIT ?'
+            params.append(limit)
+        
+        cursor.execute(sql, params)
+        results = [dict(row) for row in cursor.fetchall()]
+        
+        # Parse JSON fields
+        for result in results:
+            if result.get('tags'):
+                try:
+                    result['tags'] = json.loads(result['tags'])
+                except json.JSONDecodeError:
+                    result['tags'] = []
+        
+        return results
+    
+    def insert_document(self, title: str, content: str, 
+                       category: str, tags: List[str]) -> int:
+        cursor = self.conn.cursor()
+        
+        cursor.execute('''
+            INSERT INTO documents (title, content, category, tags)
+            VALUES (?, ?, ?, ?)
+        ''', (title, content, category, json.dumps(tags)))
+        
+        doc_id = cursor.lastrowid
+        
+        # Insert into FTS table
+        cursor.execute('''
+            INSERT INTO documents_fts (title, content, category)
+            VALUES (?, ?, ?)
+        ''', (title, content, category))
+        
+        self.conn.commit()
+        return doc_id
+    
+    def close(self):
+        self.conn.close()
+
+# Usage example
+search_service = PythonSQLiteSearch('./search.db')
+results = search_service.search('python programming', category='Technology')
+                    </div>
+                </div>
+
+                <div id="config" class="tab-content">
+                    <p>SQLite configuration options and optimization:</p>
+                    <div class="code-block">
+// Universal Search Component SQLite configuration
+const sqliteConfig = {
+    dataSource: {
+        type: 'sql',
+        sql: {
+            // File path (Node.js) or ':memory:' for in-memory database
+            connectionString: './data/search.db',
+            
+            // Table configuration
+            tableName: 'documents',
+            searchFields: ['title', 'content', 'category', 'tags'],
+            
+            // FTS5 configuration
+            ftsTable: 'documents_fts',
+            ftsColumns: ['title', 'content', 'category'],
+            
+            // Query configuration
+            whereClause: "status = 'active' AND category IS NOT NULL",
+            orderBy: 'bm25(documents_fts), created_at DESC',
+            limit: 25,
+            
+            // Performance settings
+            pragmas: {
+                journal_mode: 'WAL',      // Write-Ahead Logging
+                synchronous: 'NORMAL',    // Balance safety/performance
+                cache_size: 1000,         // Page cache size
+                temp_store: 'memory',     // Temporary storage in memory
+                mmap_size: 268435456      // Memory-mapped I/O (256MB)
+            }
+        }
+    },
+    
+    // Advanced search options
+    searchOptions: {
+        enableFTS: true,
+        enableSnippets: true,
+        snippetLength: 32,
+        highlightTags: ['<mark>', '</mark>'],
+        rankingWeights: {
+            title: 3.0,
+            content: 1.0,
+            category: 2.0
+        }
+    }
+};
+
+// Connection optimization function
+function optimizeSQLiteConnection(db) {
+    // Apply performance PRAGMA statements
+    db.pragma('journal_mode = WAL');
+    db.pragma('synchronous = NORMAL');
+    db.pragma('cache_size = 1000');
+    db.pragma('temp_store = memory');
+    db.pragma('mmap_size = 268435456');
+    
+    // Analyze for query optimization
+    db.pragma('optimize');
+    
+    return db;
+}
+
+// Environment-specific configuration
+const getConfig = (environment) => {
+    const baseConfig = { ...sqliteConfig };
+    
+    switch (environment) {
+        case 'development':
+            baseConfig.dataSource.sql.connectionString = './dev.db';
+            baseConfig.dataSource.sql.pragmas.synchronous = 'OFF';  // Faster writes
+            break;
+            
+        case 'production':
+            baseConfig.dataSource.sql.connectionString = process.env.SQLITE_DB_PATH;
+            baseConfig.dataSource.sql.pragmas.synchronous = 'FULL';  // Maximum safety
+            break;
+            
+        case 'testing':
+            baseConfig.dataSource.sql.connectionString = ':memory:';  // In-memory
+            break;
+    }
+    
+    return baseConfig;
+};
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Browser Demo -->
+        <div class="section">
+            <div class="section-header">In-Browser SQLite Demo</div>
+            <div class="section-content">
+                <div class="browser-demo">
+                    <div class="info">
+                        <strong>Live Browser Demo:</strong> This demonstrates SQLite FTS5 search running entirely in your browser using WebAssembly.
+                    </div>
+                    
+                    <div class="interactive-demo">
+                        <div class="demo-controls">
+                            <div class="form-group">
+                                <label for="sqlite-query">Search Query:</label>
+                                <input type="text" id="sqlite-query" placeholder="javascript react" value="javascript">
+                            </div>
+                            <div class="form-group">
+                                <label for="search-type">Search Type:</label>
+                                <select id="search-type">
+                                    <option value="fts">FTS5 Search</option>
+                                    <option value="like">LIKE Search</option>
+                                    <option value="json">JSON Tags Search</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="category-sqlite">Category:</label>
+                                <select id="category-sqlite">
+                                    <option value="">All Categories</option>
+                                    <option value="Programming">Programming</option>
+                                    <option value="Database">Database</option>
+                                    <option value="Web Development">Web Development</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="result-limit">Results Limit:</label>
+                                <input type="number" id="result-limit" min="1" max="50" value="10">
+                            </div>
+                        </div>
+                        
+                        <button onclick="performSQLiteSearch()">Execute SQLite Search</button>
+                        
+                        <div id="sqlite-query-display" class="query-display" style="display: none;"></div>
+                        <div id="sqlite-results" class="results" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Tips -->
+        <div class="section">
+            <div class="section-header">SQLite Performance Optimization</div>
+            <div class="section-content">
+                <div class="performance-tip">
+                    <h4>SQLite-specific optimization strategies:</h4>
+                    <ul>
+                        <li><strong>FTS5 vs FTS4:</strong> Always use FTS5 for new projects (better performance and features)</li>
+                        <li><strong>WAL Mode:</strong> Enable Write-Ahead Logging for better concurrency</li>
+                        <li><strong>PRAGMA optimize:</strong> Run periodically to update query planner statistics</li>
+                        <li><strong>Prepared Statements:</strong> Reuse prepared statements for better performance</li>
+                        <li><strong>Batch Operations:</strong> Use transactions for bulk operations</li>
+                        <li><strong>Memory-Mapped I/O:</strong> Use mmap_size for large databases</li>
+                    </ul>
+                </div>
+                
+                <div class="code-block">
+-- Performance analysis queries for SQLite
+.timer ON
+.headers ON
+
+-- Query plan analysis
+EXPLAIN QUERY PLAN 
+SELECT * FROM documents_fts 
+WHERE documents_fts MATCH 'python programming';
+
+-- Index usage statistics
+SELECT name, sql FROM sqlite_master WHERE type = 'index';
+
+-- Database size and page information
+PRAGMA page_size;
+PRAGMA page_count;
+PRAGMA freelist_count;
+PRAGMA cache_size;
+
+-- FTS5 statistics
+SELECT * FROM documents_fts('vocab');
+
+-- Analyze database for query optimization
+ANALYZE;
+PRAGMA optimize;
+
+-- Check integrity
+PRAGMA integrity_check;
+PRAGMA foreign_key_check;
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock SQLite data for browser demo
+        const mockSQLiteData = [
+            {
+                id: 1,
+                title: 'JavaScript Fundamentals',
+                content: 'Complete guide to JavaScript programming including ES6+ features, async/await, and modern development patterns',
+                category: 'Programming',
+                tags: '["javascript", "web", "frontend", "programming"]',
+                author: 'John Doe',
+                created_at: '2024-01-15'
+            },
+            {
+                id: 2,
+                title: 'React Component Patterns',
+                content: 'Advanced React patterns including hooks, context, and performance optimization techniques',
+                category: 'Programming',
+                tags: '["react", "javascript", "components", "hooks"]',
+                author: 'Jane Smith',
+                created_at: '2024-02-20'
+            },
+            {
+                id: 3,
+                title: 'SQLite Database Guide',
+                content: 'Comprehensive SQLite tutorial covering FTS5, JSON1, and performance optimization',
+                category: 'Database',
+                tags: '["sqlite", "database", "sql", "fts"]',
+                author: 'Bob Johnson',
+                created_at: '2024-03-10'
+            },
+            {
+                id: 4,
+                title: 'Web Development Best Practices',
+                content: 'Modern web development practices including accessibility, performance, and security',
+                category: 'Web Development',
+                tags: '["web", "html", "css", "best-practices"]',
+                author: 'Alice Wilson',
+                created_at: '2024-01-25'
+            },
+            {
+                id: 5,
+                title: 'Node.js Backend Development',
+                content: 'Building scalable backend applications with Node.js, Express, and database integration',
+                category: 'Programming',
+                tags: '["nodejs", "backend", "express", "api"]',
+                author: 'Charlie Brown',
+                created_at: '2024-02-05'
+            }
+        ];
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.section:nth-child(3) .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.section:nth-child(3) .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showConnectionTab(tabName) {
+            // Hide all connection tab contents
+            document.querySelectorAll('.section:nth-child(4) .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all connection tabs
+            document.querySelectorAll('.section:nth-child(4) .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function performSQLiteSearch() {
+            const query = document.getElementById('sqlite-query').value.trim();
+            const searchType = document.getElementById('search-type').value;
+            const category = document.getElementById('category-sqlite').value;
+            const limit = parseInt(document.getElementById('result-limit').value) || 10;
+            
+            if (!query) {
+                alert('Please enter a search query');
+                return;
+            }
+            
+            // Generate SQLite query based on search type
+            let sqlQuery = '';
+            
+            switch (searchType) {
+                case 'fts':
+                    sqlQuery = `SELECT d.id, d.title, d.content, d.category, d.tags,
+       bm25(documents_fts) as rank
+FROM documents_fts 
+JOIN documents d ON documents_fts.rowid = d.id
+WHERE documents_fts MATCH '${query}'`;
+                    break;
+                    
+                case 'like':
+                    sqlQuery = `SELECT id, title, content, category, tags
+FROM documents 
+WHERE title LIKE '%${query}%' OR content LIKE '%${query}%'`;
+                    break;
+                    
+                case 'json':
+                    sqlQuery = `SELECT id, title, content, category, tags
+FROM documents 
+WHERE json_extract(tags, '$') LIKE '%${query}%'`;
+                    break;
+            }
+            
+            // Add category filter if specified
+            if (category) {
+                sqlQuery += `\n  AND ${searchType === 'fts' ? 'd.' : ''}category = '${category}'`;
+            }
+            
+            // Add ordering and limit
+            if (searchType === 'fts') {
+                sqlQuery += `\nORDER BY rank ASC, created_at DESC`;
+            } else {
+                sqlQuery += `\nORDER BY created_at DESC`;
+            }
+            
+            sqlQuery += `\nLIMIT ${limit};`;
+            
+            // Display generated query
+            document.getElementById('sqlite-query-display').innerHTML = sqlQuery;
+            document.getElementById('sqlite-query-display').style.display = 'block';
+            
+            // Simulate search results
+            const results = simulateSQLiteSearch(query, searchType, category, limit);
+            displaySQLiteResults(results);
+        }
+        
+        function simulateSQLiteSearch(query, searchType, category, limit) {
+            let results = [...mockSQLiteData];
+            
+            // Filter by category
+            if (category) {
+                results = results.filter(item => item.category === category);
+            }
+            
+            // Apply search logic based on type
+            const queryLower = query.toLowerCase();
+            const queryTerms = queryLower.split(' ');
+            
+            results = results.map(item => {
+                let score = 0;
+                const searchableText = `${item.title} ${item.content}`.toLowerCase();
+                const tags = JSON.parse(item.tags);
+                
+                switch (searchType) {
+                    case 'fts':
+                        // Simulate FTS5 BM25 scoring
+                        queryTerms.forEach(term => {
+                            const titleMatches = (item.title.toLowerCase().match(new RegExp(term, 'g')) || []).length;
+                            const contentMatches = (item.content.toLowerCase().match(new RegExp(term, 'g')) || []).length;
+                            score += (titleMatches * 3.0) + (contentMatches * 1.0);
+                        });
+                        break;
+                        
+                    case 'like':
+                        // Simple LIKE simulation
+                        if (searchableText.includes(queryLower)) {
+                            score = item.title.toLowerCase().includes(queryLower) ? 3 : 1;
+                        }
+                        break;
+                        
+                    case 'json':
+                        // JSON tags search
+                        tags.forEach(tag => {
+                            if (tag.toLowerCase().includes(queryLower)) {
+                                score += 2;
+                            }
+                        });
+                        break;
+                }
+                
+                return { ...item, rank: score };
+            }).filter(item => item.rank > 0);
+            
+            // Sort by rank (lower is better for FTS5 BM25)
+            if (searchType === 'fts') {
+                results.sort((a, b) => a.rank - b.rank);
+            } else {
+                results.sort((a, b) => b.rank - a.rank);
+            }
+            
+            return results.slice(0, limit);
+        }
+        
+        function displaySQLiteResults(results) {
+            const resultsDiv = document.getElementById('sqlite-results');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="result-item">No results found. Try a different search term or category.</div>';
+            } else {
+                resultsDiv.innerHTML = results.map(item => {
+                    const tags = JSON.parse(item.tags);
+                    return `
+                        <div class="result-item">
+                            <h4>${item.title}</h4>
+                            <p><strong>Content:</strong> ${item.content.substring(0, 200)}...</p>
+                            <p><strong>Category:</strong> ${item.category} | <strong>Author:</strong> ${item.author}</p>
+                            <p><strong>Tags:</strong> ${tags.join(', ')}</p>
+                            <p><strong>Score:</strong> ${item.rank.toFixed(3)} | <strong>Created:</strong> ${item.created_at}</p>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            resultsDiv.style.display = 'block';
+        }
+        
+        // Initialize demo on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-run a sample search after 2 seconds
+            setTimeout(() => {
+                performSQLiteSearch();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

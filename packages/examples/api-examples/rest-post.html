@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST POST API Example - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .search-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            z-index: 1000;
+            display: none;
+        }
+        .search-result {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .search-result:hover {
+            background: #f0f0f0;
+        }
+        .search-result:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .result-meta {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .loading {
+            padding: 12px;
+            text-align: center;
+            color: #666;
+        }
+        .error {
+            padding: 12px;
+            color: #d32f2f;
+            background: #ffebee;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .config-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .demo-controls {
+            margin: 20px 0;
+        }
+        .demo-controls label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+        }
+        .demo-controls input, .demo-controls select, .demo-controls textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .request-body-editor {
+            height: 120px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>REST POST API Integration Example</h1>
+    <p>This example demonstrates how to configure the Universal Search Component to work with REST POST endpoints using request body parameters.</p>
+
+    <div class="warning">
+        <strong>Note:</strong> This example uses a mock POST endpoint for demonstration. In production, ensure your API supports CORS and proper authentication.
+    </div>
+
+    <div class="example-section">
+        <h2>Live Demo - Mock Search API</h2>
+        <div class="search-container">
+            <div style="position: relative;">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search products... (try 'phone' or 'laptop')"
+                    aria-label="Search products"
+                    autocomplete="off"
+                >
+                <div id="search-dropdown" class="search-dropdown" role="listbox" aria-label="Search results"></div>
+            </div>
+        </div>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Configuration</h2>
+        <div class="config-display" id="config-display"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Custom POST Configuration</h2>
+        <div class="demo-controls">
+            <label for="endpoint-url">API Endpoint URL:</label>
+            <input type="url" id="endpoint-url" value="https://httpbin.org/post" placeholder="https://api.example.com/search">
+            
+            <label for="request-body-template">Request Body Template (JSON):</label>
+            <textarea id="request-body-template" class="request-body-editor" placeholder='{"query": "{{QUERY}}", "filters": {}}'>{
+  "query": "{{QUERY}}",
+  "limit": 10,
+  "type": "product",
+  "filters": {
+    "category": "electronics",
+    "inStock": true
+  }
+}</textarea>
+            
+            <label for="response-path">Response Data Path:</label>
+            <input type="text" id="response-path" value="json.results" placeholder="data.results">
+            
+            <label for="auth-header">Authorization Header (optional):</label>
+            <input type="text" id="auth-header" value="" placeholder="Bearer your-token-here">
+            
+            <button onclick="updateConfiguration()">Update Configuration</button>
+            <button onclick="testPostEndpoint()">Test POST Endpoint</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>POST Request Body Strategies</h2>
+        <p>Different APIs expect request bodies in different formats:</p>
+        <div class="config-display">
+// Strategy 1: Simple query object
+{
+  "query": "search term",
+  "limit": 10
+}
+
+// Strategy 2: Structured search object
+{
+  "search": {
+    "query": "search term",
+    "fields": ["name", "description"],
+    "fuzzy": true
+  },
+  "pagination": {
+    "limit": 10,
+    "offset": 0
+  }
+}
+
+// Strategy 3: Filter-based search
+{
+  "filters": [
+    {"field": "name", "operator": "contains", "value": "search term"},
+    {"field": "status", "operator": "equals", "value": "active"}
+  ],
+  "sort": [{"field": "name", "direction": "asc"}]
+}
+
+// Strategy 4: GraphQL-style
+{
+  "query": "query Search($term: String!) { search(term: $term) { id name description } }",
+  "variables": {"term": "search term"}
+}</div>
+    </div>
+
+    <div class="example-section">
+        <h2>Request/Response Flow</h2>
+        <div id="request-response-log" class="config-display">No requests made yet...</div>
+    </div>
+
+    <script>
+        // Mock data generator for demonstration
+        function generateMockResults(query) {
+            const mockProducts = [
+                { id: 1, name: 'iPhone 15 Pro', category: 'Electronics', price: 999, description: 'Latest Apple smartphone' },
+                { id: 2, name: 'Samsung Galaxy S24', category: 'Electronics', price: 899, description: 'Premium Android phone' },
+                { id: 3, name: 'MacBook Pro 16"', category: 'Computers', price: 2399, description: 'Professional laptop' },
+                { id: 4, name: 'Dell XPS 13', category: 'Computers', price: 1299, description: 'Ultrabook laptop' },
+                { id: 5, name: 'Sony WH-1000XM5', category: 'Audio', price: 399, description: 'Noise-canceling headphones' },
+                { id: 6, name: 'AirPods Pro', category: 'Audio', price: 249, description: 'Wireless earbuds' }
+            ];
+
+            return mockProducts.filter(product => 
+                product.name.toLowerCase().includes(query.toLowerCase()) ||
+                product.description.toLowerCase().includes(query.toLowerCase()) ||
+                product.category.toLowerCase().includes(query.toLowerCase())
+            );
+        }
+
+        // Universal Search Component Configuration
+        let currentConfig = {
+            dataSource: {
+                type: 'api',
+                api: {
+                    endpoint: 'https://httpbin.org/post',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': '*/*'
+                    },
+                    requestTransform: (query) => {
+                        const bodyTemplate = document.getElementById('request-body-template').value;
+                        const requestBody = bodyTemplate.replace('{{QUERY}}', query);
+                        
+                        logRequest('POST', currentConfig.dataSource.api.endpoint, requestBody);
+                        
+                        return {
+                            url: currentConfig.dataSource.api.endpoint,
+                            method: 'POST',
+                            headers: currentConfig.dataSource.api.headers,
+                            body: requestBody
+                        };
+                    },
+                    responseTransform: (data) => {
+                        logResponse(data);
+                        
+                        // For demonstration with httpbin.org, use mock data
+                        if (data.url && data.url.includes('httpbin.org')) {
+                            const queryFromBody = JSON.parse(data.json || '{}').query || '';
+                            const mockResults = generateMockResults(queryFromBody);
+                            
+                            return mockResults.map(product => ({
+                                label: product.name,
+                                value: product.id,
+                                metadata: {
+                                    subtitle: `$${product.price} - ${product.category}`,
+                                    category: product.category,
+                                    details: product.description
+                                }
+                            }));
+                        }
+                        
+                        // For real APIs, parse according to response path
+                        const responsePath = document.getElementById('response-path').value;
+                        let results = data;
+                        
+                        if (responsePath) {
+                            const pathParts = responsePath.split('.');
+                            for (const part of pathParts) {
+                                results = results?.[part];
+                            }
+                        }
+                        
+                        if (!Array.isArray(results)) return [];
+                        
+                        return results.map(item => ({
+                            label: item.name || item.title || item.label || 'No label',
+                            value: item.id || item.value || Math.random(),
+                            metadata: {
+                                subtitle: item.description || item.subtitle || '',
+                                category: item.category || 'Item',
+                                details: JSON.stringify(item).substring(0, 100) + '...'
+                            }
+                        }));
+                    }
+                }
+            },
+            queryHandling: {
+                minLength: 2,
+                debounceMs: 300,
+                triggerOn: 'change',
+                caseSensitive: false
+            },
+            ui: {
+                maxResults: 10,
+                placeholder: 'Search products...',
+                loadingText: 'Searching...',
+                noResultsText: 'No products found',
+                theme: 'light'
+            },
+            actionHandling: {
+                onSelect: (result) => {
+                    showStatus(`Selected: ${result.label} (ID: ${result.value})`, 'success');
+                    document.getElementById('search-input').value = result.label;
+                    hideDropdown();
+                },
+                onError: (error) => {
+                    showStatus(`Error: ${error.message}`, 'error');
+                },
+                onLoading: (isLoading) => {
+                    if (isLoading) {
+                        showDropdown([{ type: 'loading', content: 'Searching...' }]);
+                    }
+                }
+            }
+        };
+
+        // Search functionality
+        let debounceTimer;
+        let currentResults = [];
+
+        function displayConfig() {
+            const configElement = document.getElementById('config-display');
+            configElement.textContent = JSON.stringify(currentConfig, null, 2);
+        }
+
+        function logRequest(method, url, body) {
+            const log = document.getElementById('request-response-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            log.textContent = `[${timestamp}] REQUEST:\n${method} ${url}\n\nBody:\n${body}\n\n` + log.textContent;
+        }
+
+        function logResponse(data) {
+            const log = document.getElementById('request-response-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const responseText = `[${timestamp}] RESPONSE:\n${JSON.stringify(data, null, 2)}\n\n`;
+            log.textContent = log.textContent.replace(/(\[.*?\] REQUEST:[\s\S]*?)\n\n/, `$1\n\n${responseText}`);
+        }
+
+        async function performSearch(query) {
+            if (query.length < currentConfig.queryHandling.minLength) {
+                hideDropdown();
+                return;
+            }
+
+            try {
+                currentConfig.actionHandling.onLoading(true);
+                
+                const requestConfig = currentConfig.dataSource.api.requestTransform(query);
+                
+                const response = await fetch(requestConfig.url, {
+                    method: requestConfig.method,
+                    headers: requestConfig.headers,
+                    body: requestConfig.body
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const transformedResults = currentConfig.dataSource.api.responseTransform(data);
+                
+                currentResults = transformedResults.slice(0, currentConfig.ui.maxResults);
+                
+                if (currentResults.length === 0) {
+                    showDropdown([{ type: 'message', content: currentConfig.ui.noResultsText }]);
+                } else {
+                    showDropdown(currentResults);
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                currentConfig.actionHandling.onError(error);
+                hideDropdown();
+            }
+        }
+
+        function showDropdown(results) {
+            const dropdown = document.getElementById('search-dropdown');
+            dropdown.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultElement = document.createElement('div');
+                
+                if (result.type === 'loading') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                } else if (result.type === 'message') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                } else {
+                    resultElement.className = 'search-result';
+                    resultElement.role = 'option';
+                    resultElement.tabIndex = 0;
+                    resultElement.dataset.index = index;
+                    
+                    resultElement.innerHTML = `
+                        <div class="result-label">${escapeHtml(result.label)}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.subtitle || '')}</div>
+                        ${result.metadata?.details ? `<div class="result-meta">${escapeHtml(result.metadata.details)}</div>` : ''}
+                    `;
+                    
+                    resultElement.addEventListener('click', () => {
+                        currentConfig.actionHandling.onSelect(result);
+                    });
+                }
+                
+                dropdown.appendChild(resultElement);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateConfiguration() {
+            const endpoint = document.getElementById('endpoint-url').value;
+            const responsePath = document.getElementById('response-path').value;
+            const authHeader = document.getElementById('auth-header').value;
+
+            currentConfig.dataSource.api.endpoint = endpoint;
+            
+            // Update headers with auth if provided
+            if (authHeader.trim()) {
+                currentConfig.dataSource.api.headers['Authorization'] = authHeader.trim();
+            } else {
+                delete currentConfig.dataSource.api.headers['Authorization'];
+            }
+
+            // Update request transform
+            currentConfig.dataSource.api.requestTransform = (query) => {
+                const bodyTemplate = document.getElementById('request-body-template').value;
+                const requestBody = bodyTemplate.replace('{{QUERY}}', query);
+                
+                logRequest('POST', endpoint, requestBody);
+                
+                return {
+                    url: endpoint,
+                    method: 'POST',
+                    headers: currentConfig.dataSource.api.headers,
+                    body: requestBody
+                };
+            };
+
+            displayConfig();
+            showStatus('Configuration updated successfully', 'success');
+        }
+
+        async function testPostEndpoint() {
+            const endpoint = document.getElementById('endpoint-url').value;
+            const bodyTemplate = document.getElementById('request-body-template').value;
+            
+            try {
+                showStatus('Testing POST endpoint...', 'success');
+                const testBody = bodyTemplate.replace('{{QUERY}}', 'test');
+                
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...currentConfig.dataSource.api.headers
+                    },
+                    body: testBody
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    logResponse(data);
+                    showStatus(`POST endpoint accessible (${response.status})`, 'success');
+                } else {
+                    showStatus(`POST endpoint returned ${response.status}: ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`POST endpoint test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, currentConfig.queryHandling.debounceMs);
+        });
+
+        // Keyboard navigation
+        document.getElementById('search-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                hideDropdown();
+            }
+        });
+
+        // Initialize
+        displayConfig();
+    </script>
+</body>
+</html>

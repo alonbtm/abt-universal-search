@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parameterized Queries - Universal Search Component</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            background: #27ae60;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        .section-content {
+            padding: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .tab.active {
+            color: #27ae60;
+            border-bottom-color: #27ae60;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .query-demo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .demo-panel {
+            border: 2px solid #27ae60;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .demo-controls {
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: block;
+            color: #495057;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #219a52;
+        }
+        .query-output {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .attack-demo {
+            background: #ffe6e6;
+            border: 2px solid #dc3545;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .safe-demo {
+            background: #e6ffe6;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .vulnerable {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 15px;
+        }
+        .secure {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 15px;
+        }
+        .parameter-highlight {
+            background: #ffd700;
+            color: #333;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Parameterized Queries</h1>
+            <div class="subtitle">Safe query building with WHERE clause parameterization and SQL injection prevention</div>
+        </div>
+
+        <!-- Why Parameterized Queries -->
+        <div class="section">
+            <div class="section-header">Why Parameterized Queries?</div>
+            <div class="section-content">
+                <div class="danger">
+                    <h4>🚨 The Problem: SQL Injection Attacks</h4>
+                    <p>SQL injection is one of the most common and dangerous web application vulnerabilities. It occurs when user input is directly concatenated into SQL queries without proper sanitization.</p>
+                </div>
+
+                <div class="comparison-grid">
+                    <div class="vulnerable">
+                        <h4>❌ Vulnerable Code</h4>
+                        <div class="code-block">
+// NEVER DO THIS - String concatenation
+const query = `SELECT * FROM users WHERE name = '${userName}'`;
+
+// Attacker input: "'; DROP TABLE users; --"
+// Results in: SELECT * FROM users WHERE name = ''; DROP TABLE users; --'
+
+// NEVER DO THIS - Template literals with user input
+const sql = `SELECT id, title FROM posts WHERE category = '${category}' AND status = 'published'`;
+                        </div>
+                    </div>
+                    
+                    <div class="secure">
+                        <h4>✅ Secure Code</h4>
+                        <div class="code-block">
+// DO THIS - Parameterized queries
+const query = 'SELECT * FROM users WHERE name = ?';
+const values = [userName];
+
+// Or named parameters
+const sql = 'SELECT id, title FROM posts WHERE category = :category AND status = :status';
+const params = { category: category, status: 'published' };
+
+// Parameters are escaped and treated as data, not code
+                        </div>
+                    </div>
+                </div>
+
+                <div class="success">
+                    <h4>✅ Benefits of Parameterized Queries:</h4>
+                    <ul>
+                        <li><strong>Security:</strong> Complete protection against SQL injection attacks</li>
+                        <li><strong>Performance:</strong> Query plan reuse and better database optimization</li>
+                        <li><strong>Data Type Safety:</strong> Automatic type conversion and validation</li>
+                        <li><strong>Code Clarity:</strong> Clear separation between query structure and data</li>
+                        <li><strong>Maintenance:</strong> Easier to debug and modify queries</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database-Specific Parameter Syntax -->
+        <div class="section">
+            <div class="section-header">Parameter Syntax by Database</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('postgresql-params')">PostgreSQL</div>
+                    <div class="tab" onclick="showTab('mysql-params')">MySQL</div>
+                    <div class="tab" onclick="showTab('sqlite-params')">SQLite</div>
+                    <div class="tab" onclick="showTab('universal-params')">Universal Patterns</div>
+                </div>
+
+                <div id="postgresql-params" class="tab-content active">
+                    <h3>PostgreSQL Parameter Syntax</h3>
+                    <div class="code-block">
+-- Positional parameters ($1, $2, $3, ...)
+SELECT id, title, content, created_at 
+FROM articles 
+WHERE category = $1 
+  AND status = $2 
+  AND created_at >= $3
+ORDER BY created_at DESC 
+LIMIT $4;
+
+-- Named parameters (with pg-promise library)
+SELECT id, title, content, author_id,
+       ts_rank(search_vector, plainto_tsquery('english', $(searchTerm))) as rank
+FROM articles 
+WHERE search_vector @@ plainto_tsquery('english', $(searchTerm))
+  AND category = $(category)
+  AND status = $(status)
+  AND author_id = $(authorId)
+ORDER BY rank DESC, created_at DESC
+LIMIT $(limit);
+
+-- Array parameters for IN clauses
+SELECT * FROM articles 
+WHERE category = ANY($1::text[])  -- $1 = ['tech', 'science', 'news']
+  AND status = $2;
+
+-- JSON parameter handling
+SELECT id, title, metadata->>$(jsonKey) as extracted_value
+FROM articles 
+WHERE metadata @> $(jsonFilter)::jsonb;  -- $jsonFilter = '{"published": true}'
+
+-- Full-text search with parameterized queries
+SELECT *, 
+       ts_rank(search_vector, plainto_tsquery('english', $1)) as relevance_score,
+       ts_headline('english', content, plainto_tsquery('english', $1)) as snippet
+FROM documents 
+WHERE search_vector @@ plainto_tsquery('english', $1)
+  AND category = ANY($2::text[])
+ORDER BY relevance_score DESC
+LIMIT $3 OFFSET $4;
+                    </div>
+
+                    <div class="info">
+                        <strong>PostgreSQL Pro Tips:</strong>
+                        <ul>
+                            <li>Use <code>$1::type</code> for explicit type casting</li>
+                            <li>Use <code>ANY($1::text[])</code> for IN clause with arrays</li>
+                            <li>Use <code>$(name)</code> syntax with pg-promise for named parameters</li>
+                            <li>Always parameterize full-text search terms</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="mysql-params" class="tab-content">
+                    <h3>MySQL Parameter Syntax</h3>
+                    <div class="code-block">
+-- Question mark placeholders (?)
+SELECT id, title, content, created_at 
+FROM articles 
+WHERE category = ? 
+  AND status = ? 
+  AND created_at >= ?
+ORDER BY created_at DESC 
+LIMIT ?;
+
+-- FULLTEXT search with parameters
+SELECT id, title, content,
+       MATCH(title, content) AGAINST(? IN BOOLEAN MODE) as relevance_score
+FROM articles 
+WHERE MATCH(title, content) AGAINST(? IN BOOLEAN MODE)
+  AND category = ?
+  AND status = ?
+ORDER BY relevance_score DESC
+LIMIT ?;
+
+-- Multiple parameter usage (same parameter used multiple times)
+SELECT id, title, content, price,
+       CASE WHEN price BETWEEN ? AND ? THEN 'target_range' ELSE 'other' END as price_category
+FROM products 
+WHERE (title LIKE ? OR description LIKE ?)
+  AND price BETWEEN ? AND ?
+  AND category = ?;
+
+-- JSON parameter handling (MySQL 5.7+)
+SELECT id, title, 
+       JSON_EXTRACT(metadata, ?) as extracted_value
+FROM articles 
+WHERE JSON_CONTAINS(tags, ?)
+  AND JSON_EXTRACT(metadata, ?) = ?;
+
+-- Spatial queries with parameters
+SELECT id, name, location,
+       ST_Distance_Sphere(location, ST_GeomFromText(?, 4326)) as distance_meters
+FROM locations 
+WHERE ST_Distance_Sphere(location, ST_GeomFromText(?, 4326)) <= ?
+ORDER BY distance_meters ASC
+LIMIT ?;
+
+-- Prepared statement reuse pattern
+PREPARE search_stmt FROM '
+  SELECT id, title, content,
+         MATCH(search_text) AGAINST(? IN BOOLEAN MODE) as score
+  FROM articles 
+  WHERE MATCH(search_text) AGAINST(? IN BOOLEAN MODE)
+    AND category = ?
+  ORDER BY score DESC
+  LIMIT ?
+';
+
+-- Execute with different parameters
+SET @search_term = 'machine learning';
+SET @category = 'technology';
+SET @limit = 20;
+EXECUTE search_stmt USING @search_term, @search_term, @category, @limit;
+                    </div>
+
+                    <div class="warning">
+                        <strong>MySQL Parameter Notes:</strong>
+                        <ul>
+                            <li>Only question mark (?) placeholders are supported</li>
+                            <li>Parameters must be provided in exact order</li>
+                            <li>Same parameter value must be repeated if used multiple times</li>
+                            <li>Use PREPARE statements for frequently executed queries</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="sqlite-params" class="tab-content">
+                    <h3>SQLite Parameter Syntax</h3>
+                    <div class="code-block">
+-- Question mark placeholders (positional)
+SELECT id, title, content, created_at 
+FROM articles 
+WHERE category = ? 
+  AND status = ? 
+  AND created_at >= date(?)
+ORDER BY created_at DESC 
+LIMIT ?;
+
+-- Named parameters (:name, @name, $name)
+SELECT id, title, content, author,
+       snippet(articles_fts, 1, '<mark>', '</mark>', '...', 32) as snippet
+FROM articles_fts 
+JOIN articles ON articles_fts.rowid = articles.id
+WHERE articles_fts MATCH :searchTerm
+  AND articles.category = :category
+  AND articles.status = :status
+  AND articles.created_at >= date(:dateFrom)
+ORDER BY bm25(articles_fts)
+LIMIT :limit OFFSET :offset;
+
+-- Mixed parameter styles (not recommended but supported)
+SELECT * FROM articles 
+WHERE title LIKE :searchPattern 
+  AND category = ?
+  AND priority >= $minPriority;
+
+-- FTS5 search with parameters
+SELECT id, title, content,
+       bm25(articles_fts) as rank,
+       highlight(articles_fts, 1, '<mark>', '</mark>') as highlighted_title
+FROM articles_fts 
+WHERE articles_fts MATCH ?
+  AND category = ?
+ORDER BY rank
+LIMIT ?;
+
+-- JSON parameter handling (JSON1 extension)
+SELECT id, title, 
+       json_extract(metadata, ?) as extracted_value
+FROM articles 
+WHERE json_extract(tags, '$[*]') LIKE ?
+  AND json_extract(metadata, ?) = ?;
+
+-- Virtual table queries with parameters
+SELECT * FROM articles_fts 
+WHERE articles_fts MATCH 'title:' || ? || ' OR content:' || ?
+  AND category = ?;
+
+-- Common Table Expression (CTE) with parameters
+WITH ranked_articles AS (
+  SELECT *, bm25(articles_fts) as rank
+  FROM articles_fts 
+  WHERE articles_fts MATCH ?
+)
+SELECT a.id, a.title, a.category, r.rank
+FROM ranked_articles r
+JOIN articles a ON r.rowid = a.id
+WHERE a.category = ? AND r.rank < ?
+ORDER BY r.rank
+LIMIT ?;
+                    </div>
+
+                    <div class="success">
+                        <strong>SQLite Parameter Benefits:</strong>
+                        <ul>
+                            <li>Supports multiple parameter styles: <code>?</code>, <code>:name</code>, <code>@name</code>, <code>$name</code></li>
+                            <li>Named parameters improve code readability</li>
+                            <li>Excellent performance with prepared statements</li>
+                            <li>Built-in parameter validation and type conversion</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="universal-params" class="tab-content">
+                    <h3>Universal Parameterization Patterns</h3>
+                    <div class="code-block">
+// Universal Search Component - Database-agnostic parameterization
+class UniversalQueryBuilder {
+    constructor(dbType) {
+        this.dbType = dbType;
+        this.parameterStyles = {
+            'postgresql': (index) => `$${index}`,
+            'mysql': () => '?',
+            'sqlite': () => '?'
+        };
+    }
+    
+    buildSearchQuery(config) {
+        const { tableName, searchFields, whereClause, orderBy, limit } = config;
+        const params = [];
+        
+        // Build base query structure
+        let query = `SELECT id, ${searchFields.join(', ')}`;
+        
+        // Add ranking/scoring based on database type
+        if (this.dbType === 'postgresql') {
+            query += `, ts_rank(search_vector, plainto_tsquery('english', ${this.param(1)})) as rank`;
+            params.push(config.searchTerm);
+        } else if (this.dbType === 'mysql') {
+            query += `, MATCH(${searchFields.join(', ')}) AGAINST(${this.param(params.length + 1)} IN BOOLEAN MODE) as rank`;
+            params.push(config.searchTerm);
+        } else if (this.dbType === 'sqlite') {
+            query += `, bm25(${tableName}_fts) as rank`;
+        }
+        
+        query += ` FROM ${tableName}`;
+        
+        // Add FTS join for SQLite
+        if (this.dbType === 'sqlite') {
+            query += `_fts JOIN ${tableName} ON ${tableName}_fts.rowid = ${tableName}.id`;
+        }
+        
+        // Add WHERE clause with parameters
+        query += ` WHERE `;
+        
+        // Add search condition based on database type
+        if (this.dbType === 'postgresql') {
+            query += `search_vector @@ plainto_tsquery('english', ${this.param(1)})`;
+        } else if (this.dbType === 'mysql') {
+            query += `MATCH(${searchFields.join(', ')}) AGAINST(${this.param(1)} IN BOOLEAN MODE)`;
+        } else if (this.dbType === 'sqlite') {
+            query += `${tableName}_fts MATCH ${this.param(params.length + 1)}`;
+            params.push(config.searchTerm);
+        }
+        
+        // Add additional WHERE conditions
+        if (whereClause) {
+            const parameterizedWhere = this.parameterizeWhereClause(whereClause, params);
+            query += ` AND ${parameterizedWhere.clause}`;
+            params.push(...parameterizedWhere.params);
+        }
+        
+        // Add ORDER BY
+        query += ` ORDER BY ${orderBy || 'rank DESC'}`;
+        
+        // Add LIMIT
+        if (limit) {
+            query += ` LIMIT ${this.param(params.length + 1)}`;
+            params.push(limit);
+        }
+        
+        return { query, params };
+    }
+    
+    param(index) {
+        return this.parameterStyles[this.dbType](index);
+    }
+    
+    parameterizeWhereClause(whereClause, existingParams) {
+        // Example: "category = 'Technology' AND status = 'published'"
+        // Becomes: "category = ? AND status = ?" with params ['Technology', 'published']
+        
+        const conditions = [];
+        const params = [];
+        
+        // Simple parser for demonstration - in production, use proper SQL parsing
+        const parts = whereClause.split(' AND ');
+        
+        parts.forEach(part => {
+            const match = part.match(/(\w+)\s*=\s*'([^']+)'/);
+            if (match) {
+                const [, column, value] = match;
+                conditions.push(`${column} = ${this.param(existingParams.length + params.length + 1)}`);
+                params.push(value);
+            } else {
+                // Handle other operators, complex conditions, etc.
+                conditions.push(part);
+            }
+        });
+        
+        return {
+            clause: conditions.join(' AND '),
+            params
+        };
+    }
+}
+
+// Usage example
+const queryBuilder = new UniversalQueryBuilder('postgresql');
+const config = {
+    tableName: 'articles',
+    searchFields: ['title', 'content', 'category'],
+    searchTerm: 'machine learning',
+    whereClause: "category = 'Technology' AND status = 'published'",
+    orderBy: 'rank DESC, created_at DESC',
+    limit: 20
+};
+
+const { query, params } = queryBuilder.buildSearchQuery(config);
+console.log('Query:', query);
+console.log('Parameters:', params);
+
+// Database-specific execution
+async function executeQuery(dbType, query, params) {
+    switch (dbType) {
+        case 'postgresql':
+            return await pgClient.query(query, params);
+        case 'mysql':
+            return await mysqlConnection.execute(query, params);
+        case 'sqlite':
+            return sqliteDb.prepare(query).all(...params);
+    }
+}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Parameterization Demo -->
+        <div class="section">
+            <div class="section-header">Interactive Parameterization Demo</div>
+            <div class="section-content">
+                <div class="query-demo">
+                    <div class="demo-panel">
+                        <h4>Query Builder</h4>
+                        <div class="demo-controls">
+                            <div class="form-group">
+                                <label for="demo-database">Database Type:</label>
+                                <select id="demo-database" onchange="updateQueryDemo()">
+                                    <option value="postgresql">PostgreSQL</option>
+                                    <option value="mysql">MySQL</option>
+                                    <option value="sqlite">SQLite</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="demo-table">Table Name:</label>
+                                <input type="text" id="demo-table" value="articles" onchange="updateQueryDemo()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="demo-search">Search Term:</label>
+                                <input type="text" id="demo-search" value="machine learning" onchange="updateQueryDemo()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="demo-category">Category Filter:</label>
+                                <input type="text" id="demo-category" value="Technology" onchange="updateQueryDemo()">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="demo-status">Status Filter:</label>
+                                <select id="demo-status" onchange="updateQueryDemo()">
+                                    <option value="published">Published</option>
+                                    <option value="draft">Draft</option>
+                                    <option value="archived">Archived</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="demo-limit">Result Limit:</label>
+                                <input type="number" id="demo-limit" value="20" min="1" max="100" onchange="updateQueryDemo()">
+                            </div>
+                        </div>
+                        
+                        <button onclick="updateQueryDemo()">Generate Query</button>
+                    </div>
+                    
+                    <div class="demo-panel">
+                        <h4>Generated SQL & Parameters</h4>
+                        <div id="generated-query" class="query-output"></div>
+                    </div>
+                </div>
+                
+                <div class="info">
+                    <strong>Try These Inputs to See Parameterization in Action:</strong>
+                    <ul>
+                        <li><strong>Search Term:</strong> Try "'; DROP TABLE users; --" to see how it's safely parameterized</li>
+                        <li><strong>Category:</strong> Try "Tech' OR '1'='1" to see injection prevention</li>
+                        <li><strong>Different Databases:</strong> Switch database types to see syntax differences</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQL Injection Attack Demo -->
+        <div class="section">
+            <div class="section-header">SQL Injection Prevention Demo</div>
+            <div class="section-content">
+                <div class="attack-demo">
+                    <h4>🚨 Attack Simulation (Educational Purpose)</h4>
+                    <p>See how malicious inputs are safely handled by parameterized queries:</p>
+                    
+                    <div class="form-group">
+                        <label for="attack-input">Malicious Input (try these):</label>
+                        <select id="attack-input" onchange="simulateAttack()">
+                            <option value="'; DROP TABLE users; --">'; DROP TABLE users; --</option>
+                            <option value="' OR '1'='1">' OR '1'='1</option>
+                            <option value="' UNION SELECT * FROM passwords --">' UNION SELECT * FROM passwords --</option>
+                            <option value="'; UPDATE users SET admin=1 WHERE id=1; --">'; UPDATE users SET admin=1 WHERE id=1; --</option>
+                            <option value="' OR 1=1 /*">' OR 1=1 /*</option>
+                        </select>
+                    </div>
+                    
+                    <button onclick="simulateAttack()">Simulate Attack</button>
+                    
+                    <div id="attack-results" class="query-output"></div>
+                </div>
+                
+                <div class="safe-demo">
+                    <h4>✅ Safe Implementation Result</h4>
+                    <p>The same inputs processed through parameterized queries:</p>
+                    <div id="safe-results" class="query-output"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Parameterization Patterns -->
+        <div class="section">
+            <div class="section-header">Advanced Parameterization Patterns</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showAdvancedTab('dynamic-where')">Dynamic WHERE Clauses</div>
+                    <div class="tab" onclick="showAdvancedTab('array-params')">Array Parameters</div>
+                    <div class="tab" onclick="showAdvancedTab('json-params')">JSON Parameters</div>
+                    <div class="tab" onclick="showAdvancedTab('complex-search')">Complex Search</div>
+                </div>
+
+                <div id="dynamic-where" class="tab-content active">
+                    <h3>Dynamic WHERE Clause Building</h3>
+                    <div class="code-block">
+// Dynamic WHERE clause with parameterization
+function buildDynamicWhere(filters, dbType) {
+    const conditions = [];
+    const params = [];
+    let paramIndex = 1;
+    
+    // Helper function for parameter placeholder
+    const param = () => {
+        switch (dbType) {
+            case 'postgresql': return `$${paramIndex++}`;
+            case 'mysql': 
+            case 'sqlite': return '?';
+        }
+    };
+    
+    // Category filter
+    if (filters.category) {
+        conditions.push(`category = ${param()}`);
+        params.push(filters.category);
+    }
+    
+    // Status filter (can be array)
+    if (filters.status) {
+        if (Array.isArray(filters.status)) {
+            if (dbType === 'postgresql') {
+                conditions.push(`status = ANY(${param()})`);
+                params.push(filters.status);
+            } else {
+                const placeholders = filters.status.map(() => param()).join(', ');
+                conditions.push(`status IN (${placeholders})`);
+                params.push(...filters.status);
+            }
+        } else {
+            conditions.push(`status = ${param()}`);
+            params.push(filters.status);
+        }
+    }
+    
+    // Date range filters
+    if (filters.dateFrom) {
+        conditions.push(`created_at >= ${param()}`);
+        params.push(filters.dateFrom);
+    }
+    
+    if (filters.dateTo) {
+        conditions.push(`created_at <= ${param()}`);
+        params.push(filters.dateTo);
+    }
+    
+    // Numeric range filters
+    if (filters.minPrice !== undefined) {
+        conditions.push(`price >= ${param()}`);
+        params.push(filters.minPrice);
+    }
+    
+    if (filters.maxPrice !== undefined) {
+        conditions.push(`price <= ${param()}`);
+        params.push(filters.maxPrice);
+    }
+    
+    // Text search in multiple fields
+    if (filters.searchText) {
+        if (dbType === 'postgresql') {
+            conditions.push(`(title ILIKE ${param()} OR content ILIKE ${param()})`);
+            const searchPattern = `%${filters.searchText}%`;
+            params.push(searchPattern, searchPattern);
+        } else {
+            conditions.push(`(title LIKE ${param()} OR content LIKE ${param()})`);
+            const searchPattern = `%${filters.searchText}%`;
+            params.push(searchPattern, searchPattern);
+        }
+    }
+    
+    // Tags filter (JSON array)
+    if (filters.tags && filters.tags.length > 0) {
+        if (dbType === 'postgresql') {
+            conditions.push(`tags ?| ${param()}`);  // JSON overlap operator
+            params.push(filters.tags);
+        } else if (dbType === 'mysql') {
+            const tagConditions = filters.tags.map(() => `JSON_CONTAINS(tags, JSON_QUOTE(${param()}))`).join(' OR ');
+            conditions.push(`(${tagConditions})`);
+            params.push(...filters.tags);
+        } else { // SQLite
+            const tagConditions = filters.tags.map(() => `json_extract(tags, '$') LIKE ${param()}`).join(' OR ');
+            conditions.push(`(${tagConditions})`);
+            params.push(...filters.tags.map(tag => `%"${tag}"%`));
+        }
+    }
+    
+    return {
+        whereClause: conditions.length > 0 ? conditions.join(' AND ') : '1=1',
+        params
+    };
+}
+
+// Usage example
+const filters = {
+    category: 'Technology',
+    status: ['published', 'featured'],
+    dateFrom: '2024-01-01',
+    searchText: 'machine learning',
+    tags: ['AI', 'programming'],
+    minPrice: 10,
+    maxPrice: 100
+};
+
+const { whereClause, params } = buildDynamicWhere(filters, 'postgresql');
+const query = `SELECT * FROM articles WHERE ${whereClause} ORDER BY created_at DESC LIMIT $${params.length + 1}`;
+params.push(20); // limit
+
+console.log('Query:', query);
+console.log('Parameters:', params);
+// Output: 
+// Query: SELECT * FROM articles WHERE category = $1 AND status = ANY($2) AND created_at >= $3 AND (title ILIKE $4 OR content ILIKE $5) AND tags ?| $6 AND price >= $7 AND price <= $8 ORDER BY created_at DESC LIMIT $9
+// Parameters: ['Technology', ['published', 'featured'], '2024-01-01', '%machine learning%', '%machine learning%', ['AI', 'programming'], 10, 100, 20]
+                    </div>
+                </div>
+
+                <div id="array-params" class="tab-content">
+                    <h3>Array Parameter Handling</h3>
+                    <div class="code-block">
+// Array parameter patterns for different databases
+
+// PostgreSQL - Native array support
+function buildPostgreSQLArrayQuery(categories, statuses) {
+    const query = `
+        SELECT id, title, category, status 
+        FROM articles 
+        WHERE category = ANY($1::text[]) 
+          AND status = ANY($2::text[])
+        ORDER BY created_at DESC
+    `;
+    return { query, params: [categories, statuses] };
+}
+
+// MySQL/SQLite - IN clause with dynamic placeholders
+function buildINClauseQuery(categories, statuses, dbType) {
+    const params = [];
+    let paramIndex = 1;
+    
+    const param = () => dbType === 'postgresql' ? `$${paramIndex++}` : '?';
+    
+    // Build category IN clause
+    const categoryPlaceholders = categories.map(() => param()).join(', ');
+    params.push(...categories);
+    
+    // Build status IN clause
+    const statusPlaceholders = statuses.map(() => param()).join(', ');
+    params.push(...statuses);
+    
+    const query = `
+        SELECT id, title, category, status 
+        FROM articles 
+        WHERE category IN (${categoryPlaceholders}) 
+          AND status IN (${statusPlaceholders})
+        ORDER BY created_at DESC
+    `;
+    
+    return { query, params };
+}
+
+// Universal array handler
+class ArrayParameterHandler {
+    constructor(dbType) {
+        this.dbType = dbType;
+        this.paramIndex = 1;
+    }
+    
+    param() {
+        return this.dbType === 'postgresql' ? `$${this.paramIndex++}` : '?';
+    }
+    
+    handleArrayParameter(fieldName, values, params) {
+        if (!values || values.length === 0) {
+            return { condition: '1=1', params: [] };
+        }
+        
+        if (this.dbType === 'postgresql') {
+            // Use PostgreSQL array operators
+            const condition = `${fieldName} = ANY(${this.param()}::text[])`;
+            params.push(values);
+            return { condition, params: [values] };
+        } else {
+            // Use IN clause for MySQL/SQLite
+            const placeholders = values.map(() => this.param()).join(', ');
+            const condition = `${fieldName} IN (${placeholders})`;
+            return { condition, params: values };
+        }
+    }
+    
+    buildQuery(tableName, arrayFilters) {
+        const conditions = [];
+        const allParams = [];
+        
+        Object.entries(arrayFilters).forEach(([field, values]) => {
+            const { condition, params } = this.handleArrayParameter(field, values, allParams);
+            if (condition !== '1=1') {
+                conditions.push(condition);
+                allParams.push(...params);
+            }
+        });
+        
+        const whereClause = conditions.length > 0 ? conditions.join(' AND ') : '1=1';
+        const query = `SELECT * FROM ${tableName} WHERE ${whereClause}`;
+        
+        return { query, params: allParams };
+    }
+}
+
+// Usage examples
+const arrayHandler = new ArrayParameterHandler('postgresql');
+const arrayFilters = {
+    category: ['Technology', 'Science', 'Programming'],
+    status: ['published', 'featured'],
+    priority: [1, 2, 3]
+};
+
+const { query: pgQuery, params: pgParams } = arrayHandler.buildQuery('articles', arrayFilters);
+
+// MySQL/SQLite version
+const mysqlHandler = new ArrayParameterHandler('mysql');
+const { query: mysqlQuery, params: mysqlParams } = mysqlHandler.buildQuery('articles', arrayFilters);
+
+console.log('PostgreSQL:', pgQuery, pgParams);
+console.log('MySQL:', mysqlQuery, mysqlParams);
+                    </div>
+                </div>
+
+                <div id="json-params" class="tab-content">
+                    <h3>JSON Parameter Handling</h3>
+                    <div class="code-block">
+// JSON parameter patterns for different databases
+
+// PostgreSQL - JSONB operators
+function buildPostgreSQLJSONQuery(jsonFilters) {
+    const params = [];
+    const conditions = [];
+    let paramIndex = 1;
+    
+    // Exact match
+    if (jsonFilters.exactMatch) {
+        conditions.push(`metadata = $${paramIndex++}::jsonb`);
+        params.push(JSON.stringify(jsonFilters.exactMatch));
+    }
+    
+    // Contains (subset match)
+    if (jsonFilters.contains) {
+        conditions.push(`metadata @> $${paramIndex++}::jsonb`);
+        params.push(JSON.stringify(jsonFilters.contains));
+    }
+    
+    // Key exists
+    if (jsonFilters.hasKey) {
+        conditions.push(`metadata ? $${paramIndex++}`);
+        params.push(jsonFilters.hasKey);
+    }
+    
+    // Path value match
+    if (jsonFilters.pathValue) {
+        conditions.push(`metadata #>> $${paramIndex++} = $${paramIndex++}`);
+        params.push(jsonFilters.pathValue.path, jsonFilters.pathValue.value);
+    }
+    
+    // Array contains element
+    if (jsonFilters.arrayContains) {
+        conditions.push(`tags @> $${paramIndex++}::jsonb`);
+        params.push(JSON.stringify([jsonFilters.arrayContains]));
+    }
+    
+    const query = `
+        SELECT id, title, metadata, tags 
+        FROM articles 
+        WHERE ${conditions.join(' AND ')}
+    `;
+    
+    return { query, params };
+}
+
+// MySQL - JSON functions
+function buildMySQLJSONQuery(jsonFilters) {
+    const params = [];
+    const conditions = [];
+    
+    // Path value match
+    if (jsonFilters.pathValue) {
+        conditions.push(`JSON_EXTRACT(metadata, ?) = ?`);
+        params.push(jsonFilters.pathValue.path, jsonFilters.pathValue.value);
+    }
+    
+    // Contains value in array
+    if (jsonFilters.arrayContains) {
+        conditions.push(`JSON_CONTAINS(tags, JSON_QUOTE(?))`);
+        params.push(jsonFilters.arrayContains);
+    }
+    
+    // Key exists
+    if (jsonFilters.hasKey) {
+        conditions.push(`JSON_CONTAINS_PATH(metadata, 'one', ?)`);
+        params.push(`$.${jsonFilters.hasKey}`);
+    }
+    
+    // Multiple values in array
+    if (jsonFilters.arrayContainsAny) {
+        const arrayConditions = jsonFilters.arrayContainsAny.map(() => 'JSON_CONTAINS(tags, JSON_QUOTE(?))').join(' OR ');
+        conditions.push(`(${arrayConditions})`);
+        params.push(...jsonFilters.arrayContainsAny);
+    }
+    
+    const query = `
+        SELECT id, title, metadata, tags 
+        FROM articles 
+        WHERE ${conditions.join(' AND ')}
+    `;
+    
+    return { query, params };
+}
+
+// SQLite - JSON1 extension
+function buildSQLiteJSONQuery(jsonFilters) {
+    const params = [];
+    const conditions = [];
+    
+    // Path value match
+    if (jsonFilters.pathValue) {
+        conditions.push(`json_extract(metadata, ?) = ?`);
+        params.push(jsonFilters.pathValue.path, jsonFilters.pathValue.value);
+    }
+    
+    // Array contains (using LIKE)
+    if (jsonFilters.arrayContains) {
+        conditions.push(`json_extract(tags, '$') LIKE ?`);
+        params.push(`%"${jsonFilters.arrayContains}"%`);
+    }
+    
+    // Key exists
+    if (jsonFilters.hasKey) {
+        conditions.push(`json_extract(metadata, ?) IS NOT NULL`);
+        params.push(`$.${jsonFilters.hasKey}`);
+    }
+    
+    // Multiple array values
+    if (jsonFilters.arrayContainsAny) {
+        const arrayConditions = jsonFilters.arrayContainsAny.map(() => 'json_extract(tags, \'$\') LIKE ?').join(' OR ');
+        conditions.push(`(${arrayConditions})`);
+        params.push(...jsonFilters.arrayContainsAny.map(value => `%"${value}"%`));
+    }
+    
+    const query = `
+        SELECT id, title, metadata, tags 
+        FROM articles 
+        WHERE ${conditions.join(' AND ')}
+    `;
+    
+    return { query, params };
+}
+
+// Universal JSON query builder
+class JSONQueryBuilder {
+    constructor(dbType) {
+        this.dbType = dbType;
+        this.paramIndex = 1;
+    }
+    
+    param() {
+        return this.dbType === 'postgresql' ? `$${this.paramIndex++}` : '?';
+    }
+    
+    buildJSONQuery(tableName, jsonFilters) {
+        switch (this.dbType) {
+            case 'postgresql':
+                return buildPostgreSQLJSONQuery(jsonFilters);
+            case 'mysql':
+                return buildMySQLJSONQuery(jsonFilters);
+            case 'sqlite':
+                return buildSQLiteJSONQuery(jsonFilters);
+        }
+    }
+}
+
+// Usage example
+const jsonFilters = {
+    pathValue: { path: '$.category', value: 'technology' },
+    arrayContains: 'javascript',
+    hasKey: 'author',
+    arrayContainsAny: ['react', 'vue', 'angular']
+};
+
+const pgBuilder = new JSONQueryBuilder('postgresql');
+const { query: pgQuery, params: pgParams } = pgBuilder.buildJSONQuery('articles', jsonFilters);
+
+console.log('PostgreSQL JSON Query:', pgQuery);
+console.log('Parameters:', pgParams);
+                    </div>
+                </div>
+
+                <div id="complex-search" class="tab-content">
+                    <h3>Complex Multi-Field Search</h3>
+                    <div class="code-block">
+// Complex search with multiple field types and conditions
+class ComplexSearchBuilder {
+    constructor(dbType) {
+        this.dbType = dbType;
+        this.paramIndex = 1;
+        this.params = [];
+    }
+    
+    param(value) {
+        this.params.push(value);
+        return this.dbType === 'postgresql' ? `$${this.paramIndex++}` : '?';
+    }
+    
+    buildComplexSearch(searchConfig) {
+        const {
+            tableName,
+            textSearch,
+            filters,
+            dateRange,
+            numericRange,
+            arrayFields,
+            jsonFields,
+            spatialSearch,
+            sorting,
+            pagination
+        } = searchConfig;
+        
+        const conditions = [];
+        
+        // 1. Full-text search
+        if (textSearch && textSearch.term) {
+            conditions.push(this.buildTextSearch(textSearch));
+        }
+        
+        // 2. Exact match filters
+        if (filters) {
+            Object.entries(filters).forEach(([field, value]) => {
+                if (value !== null && value !== undefined) {
+                    conditions.push(`${field} = ${this.param(value)}`);
+                }
+            });
+        }
+        
+        // 3. Date range filters
+        if (dateRange) {
+            if (dateRange.from) {
+                conditions.push(`created_at >= ${this.param(dateRange.from)}`);
+            }
+            if (dateRange.to) {
+                conditions.push(`created_at <= ${this.param(dateRange.to)}`);
+            }
+        }
+        
+        // 4. Numeric range filters
+        if (numericRange) {
+            Object.entries(numericRange).forEach(([field, range]) => {
+                if (range.min !== undefined) {
+                    conditions.push(`${field} >= ${this.param(range.min)}`);
+                }
+                if (range.max !== undefined) {
+                    conditions.push(`${field} <= ${this.param(range.max)}`);
+                }
+            });
+        }
+        
+        // 5. Array field filters
+        if (arrayFields) {
+            Object.entries(arrayFields).forEach(([field, values]) => {
+                if (values && values.length > 0) {
+                    conditions.push(this.buildArrayCondition(field, values));
+                }
+            });
+        }
+        
+        // 6. JSON field filters
+        if (jsonFields) {
+            Object.entries(jsonFields).forEach(([field, jsonQuery]) => {
+                conditions.push(this.buildJSONCondition(field, jsonQuery));
+            });
+        }
+        
+        // 7. Spatial search
+        if (spatialSearch && this.dbType !== 'sqlite') {
+            conditions.push(this.buildSpatialCondition(spatialSearch));
+        }
+        
+        // Build final query
+        let query = `SELECT * FROM ${tableName}`;
+        
+        if (conditions.length > 0) {
+            query += ` WHERE ${conditions.join(' AND ')}`;
+        }
+        
+        // Add sorting
+        if (sorting) {
+            query += ` ORDER BY ${sorting}`;
+        }
+        
+        // Add pagination
+        if (pagination) {
+            if (this.dbType === 'postgresql') {
+                query += ` LIMIT ${this.param(pagination.limit)} OFFSET ${this.param(pagination.offset)}`;
+            } else {
+                query += ` LIMIT ${this.param(pagination.limit)}`;
+                if (pagination.offset) {
+                    query += ` OFFSET ${this.param(pagination.offset)}`;
+                }
+            }
+        }
+        
+        return { query, params: this.params };
+    }
+    
+    buildTextSearch(textSearch) {
+        const { term, fields, operator = 'AND' } = textSearch;
+        
+        switch (this.dbType) {
+            case 'postgresql':
+                return `search_vector @@ plainto_tsquery('english', ${this.param(term)})`;
+            case 'mysql':
+                const mysqlFields = fields.join(', ');
+                return `MATCH(${mysqlFields}) AGAINST(${this.param(term)} IN BOOLEAN MODE)`;
+            case 'sqlite':
+                return `${textSearch.ftsTable || 'documents_fts'} MATCH ${this.param(term)}`;
+        }
+    }
+    
+    buildArrayCondition(field, values) {
+        if (this.dbType === 'postgresql') {
+            return `${field} = ANY(${this.param(values)})`;
+        } else {
+            const placeholders = values.map(value => this.param(value)).join(', ');
+            return `${field} IN (${placeholders})`;
+        }
+    }
+    
+    buildJSONCondition(field, jsonQuery) {
+        switch (this.dbType) {
+            case 'postgresql':
+                if (jsonQuery.path && jsonQuery.value) {
+                    return `${field} #>> ${this.param(jsonQuery.path)} = ${this.param(jsonQuery.value)}`;
+                }
+                if (jsonQuery.contains) {
+                    return `${field} @> ${this.param(JSON.stringify(jsonQuery.contains))}`;
+                }
+                break;
+            case 'mysql':
+                if (jsonQuery.path && jsonQuery.value) {
+                    return `JSON_EXTRACT(${field}, ${this.param(jsonQuery.path)}) = ${this.param(jsonQuery.value)}`;
+                }
+                break;
+            case 'sqlite':
+                if (jsonQuery.path && jsonQuery.value) {
+                    return `json_extract(${field}, ${this.param(jsonQuery.path)}) = ${this.param(jsonQuery.value)}`;
+                }
+                break;
+        }
+        return '1=1';
+    }
+    
+    buildSpatialCondition(spatialSearch) {
+        const { point, radius, radiusUnit = 'meters' } = spatialSearch;
+        
+        if (this.dbType === 'postgresql') {
+            return `ST_DWithin(location, ST_MakePoint(${this.param(point.lng)}, ${this.param(point.lat)})::geography, ${this.param(radius)})`;
+        } else if (this.dbType === 'mysql') {
+            const pointWKT = `POINT(${this.param(point.lng)} ${this.param(point.lat)})`;
+            return `ST_Distance_Sphere(location, ST_GeomFromText(${pointWKT}, 4326)) <= ${this.param(radius)}`;
+        }
+        
+        return '1=1';
+    }
+}
+
+// Usage example
+const searchBuilder = new ComplexSearchBuilder('postgresql');
+const complexSearchConfig = {
+    tableName: 'articles',
+    textSearch: {
+        term: 'machine learning artificial intelligence',
+        fields: ['title', 'content'],
+        ftsTable: 'articles_fts'
+    },
+    filters: {
+        category: 'Technology',
+        status: 'published'
+    },
+    dateRange: {
+        from: '2024-01-01',
+        to: '2024-12-31'
+    },
+    numericRange: {
+        price: { min: 10, max: 100 },
+        rating: { min: 4.0 }
+    },
+    arrayFields: {
+        tags: ['AI', 'programming', 'tutorial']
+    },
+    jsonFields: {
+        metadata: {
+            path: '$.difficulty',
+            value: 'intermediate'
+        }
+    },
+    spatialSearch: {
+        point: { lat: 37.7749, lng: -122.4194 },
+        radius: 50000, // 50km
+        radiusUnit: 'meters'
+    },
+    sorting: 'ts_rank(search_vector, plainto_tsquery(\'english\', $1)) DESC, created_at DESC',
+    pagination: {
+        limit: 20,
+        offset: 0
+    }
+};
+
+const { query, params } = searchBuilder.buildComplexSearch(complexSearchConfig);
+console.log('Complex Query:', query);
+console.log('Parameters:', params);
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all main tab contents
+            document.querySelectorAll('.section:nth-child(3) .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from main tabs
+            document.querySelectorAll('.section:nth-child(3) .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showAdvancedTab(tabName) {
+            // Hide all advanced tab contents
+            document.querySelectorAll('.section:nth-child(6) .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from advanced tabs
+            document.querySelectorAll('.section:nth-child(6) .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function updateQueryDemo() {
+            const dbType = document.getElementById('demo-database').value;
+            const tableName = document.getElementById('demo-table').value;
+            const searchTerm = document.getElementById('demo-search').value;
+            const category = document.getElementById('demo-category').value;
+            const status = document.getElementById('demo-status').value;
+            const limit = parseInt(document.getElementById('demo-limit').value);
+            
+            const { query, params } = buildDemoQuery(dbType, tableName, searchTerm, category, status, limit);
+            
+            const output = `SQL Query:\n${query}\n\nParameters:\n${JSON.stringify(params, null, 2)}`;
+            document.getElementById('generated-query').textContent = output;
+        }
+
+        function buildDemoQuery(dbType, tableName, searchTerm, category, status, limit) {
+            const params = [searchTerm];
+            let query = '';
+            
+            switch (dbType) {
+                case 'postgresql':
+                    query = `SELECT id, title, content, category, status,
+       ts_rank(search_vector, plainto_tsquery('english', $1)) as rank
+FROM ${tableName} 
+WHERE search_vector @@ plainto_tsquery('english', $1)
+  AND category = $2
+  AND status = $3
+ORDER BY rank DESC
+LIMIT $4;`;
+                    params.push(category, status, limit);
+                    break;
+                    
+                case 'mysql':
+                    query = `SELECT id, title, content, category, status,
+       MATCH(title, content) AGAINST(? IN BOOLEAN MODE) as relevance_score
+FROM ${tableName} 
+WHERE MATCH(title, content) AGAINST(? IN BOOLEAN MODE)
+  AND category = ?
+  AND status = ?
+ORDER BY relevance_score DESC
+LIMIT ?;`;
+                    params.push(searchTerm, category, status, limit);
+                    break;
+                    
+                case 'sqlite':
+                    query = `SELECT a.id, a.title, a.content, a.category, a.status,
+       bm25(${tableName}_fts) as rank
+FROM ${tableName}_fts fts
+JOIN ${tableName} a ON fts.rowid = a.id
+WHERE ${tableName}_fts MATCH ?
+  AND a.category = ?
+  AND a.status = ?
+ORDER BY rank
+LIMIT ?;`;
+                    params.push(category, status, limit);
+                    break;
+            }
+            
+            return { query, params };
+        }
+
+        function simulateAttack() {
+            const maliciousInput = document.getElementById('attack-input').value;
+            
+            // Show what would happen with string concatenation (vulnerable)
+            const vulnerableQuery = `SELECT * FROM users WHERE name = '${maliciousInput}'`;
+            
+            // Show safe parameterized version
+            const safeQuery = `SELECT * FROM users WHERE name = ?`;
+            const safeParams = [maliciousInput];
+            
+            document.getElementById('attack-results').textContent = 
+                `❌ VULNERABLE (String Concatenation):\n${vulnerableQuery}\n\n` +
+                `⚠️ This would execute: ${maliciousInput}\n` +
+                `Result: SQL injection attack successful!`;
+            
+            document.getElementById('safe-results').textContent = 
+                `✅ SAFE (Parameterized Query):\n${safeQuery}\n\n` +
+                `Parameters: ${JSON.stringify(safeParams)}\n\n` +
+                `Result: Malicious input treated as literal string data.\n` +
+                `No SQL injection possible - the input is safely escaped!`;
+        }
+
+        // Initialize demo on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateQueryDemo();
+            simulateAttack();
+        });
+    </script>
+</body>
+</html>

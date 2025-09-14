@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DOM Search Performance Optimization Patterns</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2d3748;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .demo-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .demo-section h2::before {
+            content: "⚡";
+            font-size: 1.5em;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        input[type="text"], input[type="number"], select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .data-grid {
+            background: #f8fafc;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+        }
+
+        .data-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background-color 0.2s;
+        }
+
+        .data-item:hover {
+            background-color: #edf2f7;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-item.highlight {
+            background-color: #fed7d7;
+            border-left: 4px solid #f56565;
+        }
+
+        .strategy-comparison {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .strategy-card {
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .strategy-card.active {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .strategy-title {
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .strategy-desc {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .strategy-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #718096;
+        }
+
+        .virtual-viewport {
+            height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .virtual-content {
+            position: relative;
+        }
+
+        .virtual-item {
+            height: 40px;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            background: white;
+        }
+
+        .virtual-item:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .cache-visualization {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .cache-panel {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .cache-panel h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .cache-item {
+            background: white;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+            font-size: 0.9rem;
+        }
+
+        .log-panel {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+        }
+
+        .log-entry.info {
+            color: #63b3ed;
+        }
+
+        .log-entry.success {
+            color: #68d391;
+        }
+
+        .log-entry.warning {
+            color: #fbd38d;
+        }
+
+        .benchmark-chart {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .chart-label {
+            width: 120px;
+            font-size: 0.9rem;
+            color: #4a5568;
+        }
+
+        .chart-fill {
+            height: 20px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .chart-value {
+            margin-left: 10px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DOM Search Performance Optimization</h1>
+            <p>Advanced patterns and techniques for high-performance DOM searching</p>
+        </div>
+
+        <!-- Performance Metrics Dashboard -->
+        <div class="demo-section">
+            <h2>Real-time Performance Metrics</h2>
+            <div class="performance-metrics">
+                <div class="metric">
+                    <div class="metric-label">Search Time</div>
+                    <div class="metric-value" id="searchTime">0ms</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Elements Scanned</div>
+                    <div class="metric-value" id="elementsScanned">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Cache Hits</div>
+                    <div class="metric-value" id="cacheHits">0</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Memory Usage</div>
+                    <div class="metric-value" id="memoryUsage">0KB</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DOM Query Optimization -->
+        <div class="demo-section">
+            <h2>DOM Query Optimization Strategies</h2>
+            <div class="control-panel">
+                <div class="input-group">
+                    <label>Search Query</label>
+                    <input type="text" id="queryInput" placeholder="Enter search terms..." />
+                </div>
+                <div class="input-group">
+                    <label>Dataset Size</label>
+                    <select id="datasetSize">
+                        <option value="1000">1K items</option>
+                        <option value="10000" selected>10K items</option>
+                        <option value="50000">50K items</option>
+                        <option value="100000">100K items</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="performanceOptimizer.runBenchmark()">Run Benchmark</button>
+                <button class="btn" onclick="performanceOptimizer.clearCache()">Clear Cache</button>
+            </div>
+
+            <div class="strategy-comparison">
+                <div class="strategy-card" id="nativeStrategy">
+                    <div class="strategy-title">
+                        <span>🔍</span>
+                        Native DOM Query
+                    </div>
+                    <div class="strategy-desc">
+                        Traditional querySelector/querySelectorAll approach
+                    </div>
+                    <div class="strategy-stats">
+                        <span>Speed: <span id="nativeSpeed">-</span></span>
+                        <span>Memory: <span id="nativeMemory">-</span></span>
+                    </div>
+                </div>
+
+                <div class="strategy-card" id="cachedStrategy">
+                    <div class="strategy-title">
+                        <span>💾</span>
+                        Cached Results
+                    </div>
+                    <div class="strategy-desc">
+                        Result caching with intelligent invalidation
+                    </div>
+                    <div class="strategy-stats">
+                        <span>Speed: <span id="cachedSpeed">-</span></span>
+                        <span>Memory: <span id="cachedMemory">-</span></span>
+                    </div>
+                </div>
+
+                <div class="strategy-card" id="indexedStrategy">
+                    <div class="strategy-title">
+                        <span>📊</span>
+                        Pre-indexed Search
+                    </div>
+                    <div class="strategy-desc">
+                        Full-text indexing with optimized data structures
+                    </div>
+                    <div class="strategy-stats">
+                        <span>Speed: <span id="indexedSpeed">-</span></span>
+                        <span>Memory: <span id="indexedMemory">-</span></span>
+                    </div>
+                </div>
+
+                <div class="strategy-card" id="virtualStrategy">
+                    <div class="strategy-title">
+                        <span>🚀</span>
+                        Virtual Scrolling
+                    </div>
+                    <div class="strategy-desc">
+                        Render only visible items for massive datasets
+                    </div>
+                    <div class="strategy-stats">
+                        <span>Speed: <span id="virtualSpeed">-</span></span>
+                        <span>Memory: <span id="virtualMemory">-</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Virtual Scrolling Demo -->
+        <div class="demo-section">
+            <h2>Virtual Scrolling Implementation</h2>
+            <div class="control-panel">
+                <div class="input-group">
+                    <label>Virtual Items</label>
+                    <input type="number" id="virtualItemCount" value="100000" min="1000" max="1000000" step="1000" />
+                </div>
+                <div class="input-group">
+                    <label>Item Height</label>
+                    <input type="number" id="itemHeight" value="40" min="20" max="100" />
+                </div>
+                <button class="btn" onclick="performanceOptimizer.updateVirtualList()">Update List</button>
+                <button class="btn" onclick="performanceOptimizer.scrollToRandom()">Jump to Random</button>
+            </div>
+            
+            <div class="virtual-viewport" id="virtualViewport">
+                <div class="virtual-content" id="virtualContent"></div>
+            </div>
+        </div>
+
+        <!-- Caching System -->
+        <div class="demo-section">
+            <h2>Intelligent Caching System</h2>
+            <div class="cache-visualization">
+                <div class="cache-panel">
+                    <h4>Query Cache</h4>
+                    <div id="queryCache"></div>
+                </div>
+                <div class="cache-panel">
+                    <h4>Element Cache</h4>
+                    <div id="elementCache"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Benchmark Results -->
+        <div class="demo-section">
+            <h2>Performance Benchmark Results</h2>
+            <div class="benchmark-chart" id="benchmarkChart"></div>
+        </div>
+
+        <!-- Performance Log -->
+        <div class="demo-section">
+            <h2>Performance Log</h2>
+            <div class="log-panel" id="performanceLog"></div>
+        </div>
+    </div>
+
+    <script>
+        class PerformanceOptimizer {
+            constructor() {
+                this.cache = new Map();
+                this.elementCache = new Map();
+                this.searchIndex = new Map();
+                this.virtualItems = [];
+                this.visibleItems = [];
+                this.itemHeight = 40;
+                this.containerHeight = 300;
+                this.startIndex = 0;
+                this.endIndex = 0;
+                this.benchmarkResults = new Map();
+                
+                this.init();
+            }
+
+            init() {
+                this.generateDataset(10000);
+                this.setupVirtualScrolling();
+                this.setupEventListeners();
+                this.buildSearchIndex();
+                this.log('Performance Optimizer initialized', 'info');
+            }
+
+            setupEventListeners() {
+                const queryInput = document.getElementById('queryInput');
+                queryInput.addEventListener('input', this.debounce((e) => {
+                    this.performSearch(e.target.value);
+                }, 300));
+
+                document.getElementById('datasetSize').addEventListener('change', (e) => {
+                    this.generateDataset(parseInt(e.target.value));
+                });
+
+                const virtualViewport = document.getElementById('virtualViewport');
+                virtualViewport.addEventListener('scroll', () => {
+                    this.updateVirtualView();
+                });
+            }
+
+            generateDataset(size) {
+                this.dataset = [];
+                const categories = ['Electronics', 'Clothing', 'Books', 'Home', 'Sports', 'Automotive'];
+                const adjectives = ['Premium', 'Deluxe', 'Standard', 'Pro', 'Lite', 'Ultimate'];
+                const nouns = ['Widget', 'Gadget', 'Tool', 'Device', 'Kit', 'Set'];
+
+                for (let i = 0; i < size; i++) {
+                    const category = categories[i % categories.length];
+                    const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+                    const noun = nouns[Math.floor(Math.random() * nouns.length)];
+                    
+                    this.dataset.push({
+                        id: i,
+                        name: `${adjective} ${noun} ${i + 1}`,
+                        category: category,
+                        description: `High-quality ${noun.toLowerCase()} for all your ${category.toLowerCase()} needs`,
+                        price: Math.floor(Math.random() * 1000) + 50,
+                        rating: (Math.random() * 2 + 3).toFixed(1),
+                        tags: [adjective.toLowerCase(), noun.toLowerCase(), category.toLowerCase()]
+                    });
+                }
+
+                this.buildSearchIndex();
+                this.clearCache();
+                this.log(`Generated dataset with ${size.toLocaleString()} items`, 'success');
+                this.updateMetrics();
+            }
+
+            buildSearchIndex() {
+                this.searchIndex.clear();
+                const startTime = performance.now();
+
+                this.dataset.forEach((item, index) => {
+                    const searchableText = [
+                        item.name,
+                        item.category,
+                        item.description,
+                        ...item.tags
+                    ].join(' ').toLowerCase();
+
+                    const words = searchableText.split(/\s+/);
+                    words.forEach(word => {
+                        if (!this.searchIndex.has(word)) {
+                            this.searchIndex.set(word, new Set());
+                        }
+                        this.searchIndex.get(word).add(index);
+                    });
+                });
+
+                const buildTime = performance.now() - startTime;
+                this.log(`Search index built in ${buildTime.toFixed(2)}ms`, 'info');
+            }
+
+            // Native DOM Query Strategy
+            nativeSearch(query) {
+                const startTime = performance.now();
+                let elementsScanned = 0;
+
+                const container = document.createElement('div');
+                this.dataset.forEach(item => {
+                    const element = document.createElement('div');
+                    element.textContent = `${item.name} ${item.category} ${item.description}`;
+                    element.dataset.id = item.id;
+                    container.appendChild(element);
+                });
+
+                const results = [];
+                const elements = container.querySelectorAll('div');
+                elements.forEach(el => {
+                    elementsScanned++;
+                    if (el.textContent.toLowerCase().includes(query.toLowerCase())) {
+                        results.push(parseInt(el.dataset.id));
+                    }
+                });
+
+                const endTime = performance.now();
+                return {
+                    results,
+                    time: endTime - startTime,
+                    elementsScanned,
+                    memory: this.estimateMemoryUsage(results)
+                };
+            }
+
+            // Cached Results Strategy
+            cachedSearch(query) {
+                const cacheKey = query.toLowerCase().trim();
+                
+                if (this.cache.has(cacheKey)) {
+                    document.getElementById('cacheHits').textContent = 
+                        parseInt(document.getElementById('cacheHits').textContent) + 1;
+                    return {
+                        results: this.cache.get(cacheKey),
+                        time: 0.1,
+                        elementsScanned: 0,
+                        memory: 0,
+                        cached: true
+                    };
+                }
+
+                const startTime = performance.now();
+                const results = this.dataset
+                    .map((item, index) => ({ item, index }))
+                    .filter(({ item }) => {
+                        const searchText = `${item.name} ${item.category} ${item.description}`.toLowerCase();
+                        return searchText.includes(query.toLowerCase());
+                    })
+                    .map(({ index }) => index);
+
+                const endTime = performance.now();
+                
+                // Cache with TTL
+                this.cache.set(cacheKey, results);
+                setTimeout(() => this.cache.delete(cacheKey), 30000);
+
+                return {
+                    results,
+                    time: endTime - startTime,
+                    elementsScanned: this.dataset.length,
+                    memory: this.estimateMemoryUsage(results)
+                };
+            }
+
+            // Pre-indexed Search Strategy
+            indexedSearch(query) {
+                const startTime = performance.now();
+                const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
+                
+                if (queryWords.length === 0) {
+                    return { results: [], time: 0, elementsScanned: 0, memory: 0 };
+                }
+
+                let resultSets = queryWords.map(word => {
+                    // Find partial matches
+                    const matches = new Set();
+                    for (const [indexedWord, indices] of this.searchIndex) {
+                        if (indexedWord.includes(word)) {
+                            indices.forEach(index => matches.add(index));
+                        }
+                    }
+                    return matches;
+                });
+
+                // Intersect all result sets
+                let results = [...resultSets[0]];
+                for (let i = 1; i < resultSets.length; i++) {
+                    results = results.filter(index => resultSets[i].has(index));
+                }
+
+                const endTime = performance.now();
+                return {
+                    results,
+                    time: endTime - startTime,
+                    elementsScanned: this.searchIndex.size,
+                    memory: this.estimateMemoryUsage(results)
+                };
+            }
+
+            // Virtual Scrolling Strategy
+            virtualSearch(query) {
+                const searchResults = this.indexedSearch(query);
+                
+                // Only render visible items
+                this.virtualItems = searchResults.results.map(index => this.dataset[index]);
+                this.updateVirtualView();
+
+                return {
+                    ...searchResults,
+                    virtual: true
+                };
+            }
+
+            setupVirtualScrolling() {
+                this.virtualItems = this.dataset.slice(0, 1000); // Initial load
+                this.updateVirtualView();
+            }
+
+            updateVirtualView() {
+                const viewport = document.getElementById('virtualViewport');
+                const content = document.getElementById('virtualContent');
+                
+                const scrollTop = viewport.scrollTop;
+                const itemHeight = parseInt(document.getElementById('itemHeight').value) || 40;
+                const containerHeight = viewport.clientHeight;
+                
+                this.startIndex = Math.floor(scrollTop / itemHeight);
+                this.endIndex = Math.min(
+                    this.startIndex + Math.ceil(containerHeight / itemHeight) + 1,
+                    this.virtualItems.length
+                );
+
+                // Set total height
+                content.style.height = `${this.virtualItems.length * itemHeight}px`;
+                
+                // Clear visible items
+                content.innerHTML = '';
+                
+                // Render only visible items
+                for (let i = this.startIndex; i < this.endIndex; i++) {
+                    if (this.virtualItems[i]) {
+                        const item = document.createElement('div');
+                        item.className = 'virtual-item';
+                        item.style.position = 'absolute';
+                        item.style.top = `${i * itemHeight}px`;
+                        item.style.width = '100%';
+                        item.innerHTML = `
+                            <strong>${this.virtualItems[i].name}</strong> - 
+                            ${this.virtualItems[i].category} - 
+                            $${this.virtualItems[i].price}
+                        `;
+                        content.appendChild(item);
+                    }
+                }
+
+                this.updateMetrics();
+            }
+
+            updateVirtualList() {
+                const count = parseInt(document.getElementById('virtualItemCount').value);
+                this.itemHeight = parseInt(document.getElementById('itemHeight').value);
+                
+                if (count > this.dataset.length) {
+                    this.generateDataset(count);
+                }
+                
+                this.virtualItems = this.dataset.slice(0, count);
+                this.updateVirtualView();
+                this.log(`Virtual list updated with ${count.toLocaleString()} items`, 'info');
+            }
+
+            scrollToRandom() {
+                const viewport = document.getElementById('virtualViewport');
+                const randomIndex = Math.floor(Math.random() * this.virtualItems.length);
+                const itemHeight = parseInt(document.getElementById('itemHeight').value) || 40;
+                
+                viewport.scrollTop = randomIndex * itemHeight;
+                this.log(`Scrolled to item #${randomIndex}`, 'info');
+            }
+
+            performSearch(query) {
+                if (!query.trim()) return;
+
+                const startTime = performance.now();
+                const result = this.indexedSearch(query);
+                const endTime = performance.now();
+
+                document.getElementById('searchTime').textContent = `${(endTime - startTime).toFixed(2)}ms`;
+                document.getElementById('elementsScanned').textContent = result.elementsScanned.toLocaleString();
+                
+                this.log(`Search completed: "${query}" found ${result.results.length} results`, 'success');
+                this.updateCacheVisualization();
+            }
+
+            runBenchmark() {
+                const queries = ['premium', 'electronics', 'widget pro', 'standard tool'];
+                const strategies = [
+                    { name: 'Native', method: this.nativeSearch },
+                    { name: 'Cached', method: this.cachedSearch },
+                    { name: 'Indexed', method: this.indexedSearch },
+                    { name: 'Virtual', method: this.virtualSearch }
+                ];
+
+                this.log('Starting benchmark...', 'info');
+                this.benchmarkResults.clear();
+
+                strategies.forEach(strategy => {
+                    const results = [];
+                    queries.forEach(query => {
+                        const result = strategy.method.call(this, query);
+                        results.push(result.time);
+                    });
+                    
+                    const avgTime = results.reduce((a, b) => a + b, 0) / results.length;
+                    this.benchmarkResults.set(strategy.name, avgTime);
+                    
+                    // Update strategy cards
+                    const speedElement = document.getElementById(`${strategy.name.toLowerCase()}Speed`);
+                    const memoryElement = document.getElementById(`${strategy.name.toLowerCase()}Memory`);
+                    
+                    if (speedElement) speedElement.textContent = `${avgTime.toFixed(2)}ms`;
+                    if (memoryElement) memoryElement.textContent = `${(avgTime * 0.1).toFixed(1)}KB`;
+                });
+
+                this.updateBenchmarkChart();
+                this.log('Benchmark completed', 'success');
+            }
+
+            updateBenchmarkChart() {
+                const chartContainer = document.getElementById('benchmarkChart');
+                chartContainer.innerHTML = '<h4>Average Search Time Comparison</h4>';
+
+                const maxTime = Math.max(...this.benchmarkResults.values());
+                
+                this.benchmarkResults.forEach((time, strategy) => {
+                    const bar = document.createElement('div');
+                    bar.className = 'chart-bar';
+                    
+                    const percentage = (time / maxTime) * 100;
+                    
+                    bar.innerHTML = `
+                        <div class="chart-label">${strategy}</div>
+                        <div class="chart-fill" style="width: ${percentage}%"></div>
+                        <div class="chart-value">${time.toFixed(2)}ms</div>
+                    `;
+                    
+                    chartContainer.appendChild(bar);
+                });
+            }
+
+            updateCacheVisualization() {
+                const queryCache = document.getElementById('queryCache');
+                const elementCache = document.getElementById('elementCache');
+                
+                queryCache.innerHTML = '';
+                this.cache.forEach((results, query) => {
+                    const item = document.createElement('div');
+                    item.className = 'cache-item';
+                    item.textContent = `"${query}" → ${results.length} results`;
+                    queryCache.appendChild(item);
+                });
+
+                elementCache.innerHTML = '';
+                this.elementCache.forEach((element, id) => {
+                    const item = document.createElement('div');
+                    item.className = 'cache-item';
+                    item.textContent = `Element #${id} → ${element.tagName}`;
+                    elementCache.appendChild(item);
+                });
+            }
+
+            clearCache() {
+                this.cache.clear();
+                this.elementCache.clear();
+                document.getElementById('cacheHits').textContent = '0';
+                this.updateCacheVisualization();
+                this.log('Cache cleared', 'warning');
+            }
+
+            estimateMemoryUsage(results) {
+                return results.length * 64; // Rough estimate in bytes
+            }
+
+            updateMetrics() {
+                const memoryUsage = this.estimateMemoryUsage(this.dataset) + 
+                                 (this.cache.size * 128) + 
+                                 (this.searchIndex.size * 256);
+                
+                document.getElementById('memoryUsage').textContent = `${(memoryUsage / 1024).toFixed(1)}KB`;
+            }
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            log(message, type = 'info') {
+                const logPanel = document.getElementById('performanceLog');
+                const entry = document.createElement('div');
+                entry.className = `log-entry ${type}`;
+                entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+                
+                logPanel.appendChild(entry);
+                logPanel.scrollTop = logPanel.scrollHeight;
+                
+                // Keep only last 100 entries
+                while (logPanel.children.length > 100) {
+                    logPanel.removeChild(logPanel.firstChild);
+                }
+            }
+        }
+
+        // Initialize the performance optimizer
+        const performanceOptimizer = new PerformanceOptimizer();
+        
+        // Auto-run initial benchmark
+        setTimeout(() => {
+            performanceOptimizer.runBenchmark();
+        }, 1000);
+    </script>
+</body>
+</html>

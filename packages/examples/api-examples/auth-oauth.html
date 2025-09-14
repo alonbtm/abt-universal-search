@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth 2.0 Authentication Example - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .security-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .config-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .oauth-flow {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .flow-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .demo-controls {
+            margin: 20px 0;
+        }
+        .demo-controls label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+        }
+        .demo-controls input, .demo-controls select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        .oauth-status {
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        .oauth-status.connected {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .oauth-status.disconnected {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .search-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            z-index: 1000;
+            display: none;
+        }
+        .search-result {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .search-result:hover {
+            background: #f0f0f0;
+        }
+        .result-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .result-meta {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .token-display {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 10px 0;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .step {
+            padding: 8px 16px;
+            border-radius: 20px;
+            margin: 0 10px 0 0;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .step.active {
+            background: #1976d2;
+            color: white;
+        }
+        .step.inactive {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .step.completed {
+            background: #2e7d32;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>OAuth 2.0 Authentication Examples</h1>
+    <p>Learn how to implement OAuth 2.0 authentication flows with the Universal Search Component for secure third-party API access.</p>
+
+    <div class="security-warning">
+        <strong>⚠️ Security Notice:</strong> This example demonstrates OAuth flows for educational purposes. In production, implement OAuth flows server-side and use PKCE for public clients.
+    </div>
+
+    <div class="example-section">
+        <h2>OAuth 2.0 Flow Status</h2>
+        <div class="step-indicator">
+            <div class="step" id="step-config">1. Configure</div>
+            <div class="step" id="step-authorize">2. Authorize</div>
+            <div class="step" id="step-token">3. Get Token</div>
+            <div class="step" id="step-search">4. Search</div>
+        </div>
+        
+        <div id="oauth-status" class="oauth-status disconnected">
+            Status: Not authenticated
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>OAuth 2.0 Configuration</h2>
+        <div class="demo-controls">
+            <label for="oauth-provider">OAuth Provider:</label>
+            <select id="oauth-provider" onchange="updateOAuthConfig()">
+                <option value="github">GitHub</option>
+                <option value="google">Google</option>
+                <option value="custom">Custom Provider</option>
+            </select>
+            
+            <label for="client-id">Client ID:</label>
+            <input type="text" id="client-id" placeholder="your-client-id">
+            
+            <label for="client-secret">Client Secret (for demo only):</label>
+            <input type="password" id="client-secret" placeholder="your-client-secret">
+            
+            <label for="auth-url">Authorization URL:</label>
+            <input type="url" id="auth-url" placeholder="https://github.com/login/oauth/authorize">
+            
+            <label for="token-url">Token URL:</label>
+            <input type="url" id="token-url" placeholder="https://github.com/login/oauth/access_token">
+            
+            <label for="api-url">API URL:</label>
+            <input type="url" id="api-url" placeholder="https://api.github.com/search/repositories">
+            
+            <label for="scopes">Scopes:</label>
+            <input type="text" id="scopes" placeholder="repo user">
+            
+            <button onclick="startOAuthFlow()">Start OAuth Flow</button>
+            <button onclick="simulateOAuth()" class="secondary">Simulate OAuth (Demo)</button>
+            <button onclick="clearOAuth()" class="secondary">Clear Authentication</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>OAuth Token Information</h2>
+        <div id="token-display" class="token-display">No token available</div>
+        <button onclick="refreshToken()" style="display: none;" id="refresh-btn">Refresh Token</button>
+    </div>
+
+    <div class="example-section">
+        <h2>Authenticated Search</h2>
+        <div class="search-container">
+            <div style="position: relative;">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search with OAuth authentication... (authenticate first)"
+                    aria-label="Search with OAuth"
+                    autocomplete="off"
+                    disabled
+                >
+                <div id="search-dropdown" class="search-dropdown" role="listbox" aria-label="Search results"></div>
+            </div>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>OAuth Flow Implementation</h2>
+        
+        <div class="oauth-flow">
+            <div class="flow-title">1. Authorization Code Flow (Most Secure)</div>
+            <div class="config-display">// Step 1: Redirect to authorization server
+const authUrl = new URL('https://github.com/login/oauth/authorize');
+authUrl.searchParams.set('client_id', 'your-client-id');
+authUrl.searchParams.set('redirect_uri', 'https://yourapp.com/callback');
+authUrl.searchParams.set('scope', 'repo user');
+authUrl.searchParams.set('state', generateRandomState());
+authUrl.searchParams.set('response_type', 'code');
+
+window.location.href = authUrl.toString();
+
+// Step 2: Handle callback and exchange code for token
+async function handleOAuthCallback(code, state) {
+  const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+    method: 'POST',
+    headers: { 'Accept': 'application/json' },
+    body: new URLSearchParams({
+      client_id: 'your-client-id',
+      client_secret: 'your-client-secret',
+      code: code,
+      redirect_uri: 'https://yourapp.com/callback'
+    })
+  });
+  
+  const tokenData = await tokenResponse.json();
+  return tokenData.access_token;
+}</div>
+        </div>
+
+        <div class="oauth-flow">
+            <div class="flow-title">2. PKCE Flow (Public Clients)</div>
+            <div class="config-display">// Step 1: Generate PKCE challenge
+function generateCodeChallenge() {
+  const codeVerifier = generateRandomString(128);
+  const challenge = btoa(sha256(codeVerifier))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+  
+  return { codeVerifier, challenge };
+}
+
+// Step 2: Authorization with PKCE
+const { codeVerifier, challenge } = generateCodeChallenge();
+const authUrl = new URL('https://provider.com/oauth/authorize');
+authUrl.searchParams.set('code_challenge', challenge);
+authUrl.searchParams.set('code_challenge_method', 'S256');
+
+// Step 3: Token exchange with code verifier
+const tokenResponse = await fetch('/oauth/token', {
+  method: 'POST',
+  body: new URLSearchParams({
+    grant_type: 'authorization_code',
+    code: authCode,
+    code_verifier: codeVerifier
+  })
+});</div>
+        </div>
+
+        <div class="oauth-flow">
+            <div class="flow-title">3. Universal Search Integration</div>
+            <div class="config-display">// OAuth-enabled search configuration
+class OAuthSearchManager {
+  constructor(oauthConfig) {
+    this.oauthConfig = oauthConfig;
+    this.accessToken = null;
+    this.refreshToken = null;
+    this.expiresAt = null;
+  }
+
+  async getValidToken() {
+    if (this.isTokenExpired()) {
+      await this.refreshAccessToken();
+    }
+    return this.accessToken;
+  }
+
+  async initializeSearch() {
+    const searchConfig = {
+      dataSource: {
+        type: 'api',
+        api: {
+          endpoint: this.oauthConfig.apiUrl,
+          method: 'GET',
+          authentication: {
+            type: 'oauth',
+            credentials: {
+              tokenProvider: () => this.getValidToken()
+            }
+          },
+          requestTransform: async (query) => {
+            const token = await this.getValidToken();
+            return {
+              url: `${this.oauthConfig.apiUrl}?q=${query}`,
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+              }
+            };
+          }
+        }
+      }
+    };
+
+    return new UniversalSearch(searchConfig);
+  }
+}</div>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Configuration</h2>
+        <div class="config-display" id="config-display"></div>
+    </div>
+
+    <script>
+        let oauthState = {
+            isAuthenticated: false,
+            accessToken: null,
+            refreshToken: null,
+            expiresAt: null,
+            provider: 'github'
+        };
+
+        let currentConfig = {
+            dataSource: {
+                type: 'api',
+                api: {
+                    endpoint: 'https://api.github.com/search/repositories',
+                    method: 'GET',
+                    authentication: {
+                        type: 'oauth',
+                        credentials: {
+                            tokenProvider: () => oauthState.accessToken
+                        }
+                    },
+                    requestTransform: async (query) => {
+                        if (!oauthState.isAuthenticated) {
+                            throw new Error('OAuth authentication required');
+                        }
+
+                        const token = oauthState.accessToken;
+                        const apiUrl = document.getElementById('api-url').value;
+                        
+                        return {
+                            url: `${apiUrl}?q=${encodeURIComponent(query)}`,
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Accept': 'application/json',
+                                'User-Agent': 'Universal-Search-Component'
+                            }
+                        };
+                    },
+                    responseTransform: (data) => {
+                        const items = data.items || data.results || [];
+                        if (!Array.isArray(items)) return [];
+                        
+                        return items.slice(0, 10).map(item => ({
+                            label: item.name || item.title || 'No name',
+                            value: item.id || Math.random(),
+                            metadata: {
+                                subtitle: item.description || 'No description',
+                                category: item.language || 'Unknown',
+                                details: `⭐ ${item.stargazers_count || 0} stars`
+                            }
+                        }));
+                    }
+                }
+            },
+            queryHandling: {
+                minLength: 2,
+                debounceMs: 500,
+                triggerOn: 'change'
+            },
+            actionHandling: {
+                onSelect: (result) => {
+                    showStatus(`Selected: ${result.label}`, 'success');
+                    hideDropdown();
+                },
+                onError: (error) => {
+                    showStatus(`Error: ${error.message}`, 'error');
+                },
+                onLoading: (isLoading) => {
+                    if (isLoading) {
+                        showDropdown([{ type: 'loading', content: 'Searching with OAuth...' }]);
+                    }
+                }
+            }
+        };
+
+        const oauthConfigs = {
+            github: {
+                authUrl: 'https://github.com/login/oauth/authorize',
+                tokenUrl: 'https://github.com/login/oauth/access_token',
+                apiUrl: 'https://api.github.com/search/repositories',
+                scopes: 'repo user'
+            },
+            google: {
+                authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+                tokenUrl: 'https://oauth2.googleapis.com/token',
+                apiUrl: 'https://www.googleapis.com/customsearch/v1',
+                scopes: 'https://www.googleapis.com/auth/userinfo.profile'
+            },
+            custom: {
+                authUrl: '',
+                tokenUrl: '',
+                apiUrl: '',
+                scopes: ''
+            }
+        };
+
+        function updateOAuthConfig() {
+            const provider = document.getElementById('oauth-provider').value;
+            const config = oauthConfigs[provider];
+            
+            document.getElementById('auth-url').value = config.authUrl;
+            document.getElementById('token-url').value = config.tokenUrl;
+            document.getElementById('api-url').value = config.apiUrl;
+            document.getElementById('scopes').value = config.scopes;
+            
+            oauthState.provider = provider;
+            updateSteps();
+        }
+
+        function updateSteps() {
+            const steps = ['config', 'authorize', 'token', 'search'];
+            steps.forEach((step, index) => {
+                const element = document.getElementById(`step-${step}`);
+                element.className = 'step inactive';
+            });
+            
+            // Mark config as completed if we have basic config
+            if (document.getElementById('client-id').value) {
+                document.getElementById('step-config').className = 'step completed';
+            } else {
+                document.getElementById('step-config').className = 'step active';
+            }
+            
+            if (oauthState.isAuthenticated) {
+                document.getElementById('step-authorize').className = 'step completed';
+                document.getElementById('step-token').className = 'step completed';
+                document.getElementById('step-search').className = 'step active';
+            }
+        }
+
+        function updateOAuthStatus() {
+            const statusElement = document.getElementById('oauth-status');
+            const searchInput = document.getElementById('search-input');
+            const tokenDisplay = document.getElementById('token-display');
+            const refreshBtn = document.getElementById('refresh-btn');
+            
+            if (oauthState.isAuthenticated) {
+                statusElement.textContent = `Status: Authenticated with ${oauthState.provider}`;
+                statusElement.className = 'oauth-status connected';
+                searchInput.disabled = false;
+                searchInput.placeholder = 'Search with OAuth authentication...';
+                
+                const tokenInfo = `Access Token: ${oauthState.accessToken?.substring(0, 20)}...
+Expires: ${oauthState.expiresAt ? new Date(oauthState.expiresAt).toLocaleString() : 'Unknown'}
+Provider: ${oauthState.provider}`;
+                tokenDisplay.textContent = tokenInfo;
+                refreshBtn.style.display = 'inline-block';
+            } else {
+                statusElement.textContent = 'Status: Not authenticated';
+                statusElement.className = 'oauth-status disconnected';
+                searchInput.disabled = true;
+                searchInput.placeholder = 'Search with OAuth authentication... (authenticate first)';
+                tokenDisplay.textContent = 'No token available';
+                refreshBtn.style.display = 'none';
+            }
+            
+            updateSteps();
+        }
+
+        function startOAuthFlow() {
+            const clientId = document.getElementById('client-id').value;
+            const authUrl = document.getElementById('auth-url').value;
+            const scopes = document.getElementById('scopes').value;
+            
+            if (!clientId || !authUrl) {
+                showStatus('Please configure Client ID and Authorization URL first', 'error');
+                return;
+            }
+
+            // Generate state for CSRF protection
+            const state = generateRandomString(32);
+            sessionStorage.setItem('oauth_state', state);
+            
+            // Build authorization URL
+            const authorizationUrl = new URL(authUrl);
+            authorizationUrl.searchParams.set('client_id', clientId);
+            authorizationUrl.searchParams.set('redirect_uri', window.location.origin + window.location.pathname);
+            authorizationUrl.searchParams.set('scope', scopes);
+            authorizationUrl.searchParams.set('state', state);
+            authorizationUrl.searchParams.set('response_type', 'code');
+            
+            showStatus('Redirecting to OAuth provider...', 'success');
+            
+            // In a real app, you would redirect here
+            // window.location.href = authorizationUrl.toString();
+            
+            // For demo purposes, we'll simulate the flow
+            setTimeout(() => {
+                showStatus('OAuth flow would redirect to provider. Using simulation instead.', 'success');
+                simulateOAuth();
+            }, 2000);
+        }
+
+        function simulateOAuth() {
+            // Simulate OAuth flow completion
+            oauthState.isAuthenticated = true;
+            oauthState.accessToken = 'demo_' + generateRandomString(40);
+            oauthState.refreshToken = 'refresh_' + generateRandomString(40);
+            oauthState.expiresAt = Date.now() + (3600 * 1000); // 1 hour
+            
+            updateOAuthStatus();
+            displayConfig();
+            showStatus('OAuth authentication simulated successfully', 'success');
+        }
+
+        function clearOAuth() {
+            oauthState.isAuthenticated = false;
+            oauthState.accessToken = null;
+            oauthState.refreshToken = null;
+            oauthState.expiresAt = null;
+            
+            updateOAuthStatus();
+            displayConfig();
+            showStatus('OAuth authentication cleared', 'success');
+        }
+
+        async function refreshToken() {
+            if (!oauthState.refreshToken) {
+                showStatus('No refresh token available', 'error');
+                return;
+            }
+
+            try {
+                showStatus('Refreshing access token...', 'success');
+                
+                // Simulate token refresh
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                oauthState.accessToken = 'refreshed_' + generateRandomString(40);
+                oauthState.expiresAt = Date.now() + (3600 * 1000);
+                
+                updateOAuthStatus();
+                showStatus('Token refreshed successfully', 'success');
+                
+            } catch (error) {
+                showStatus(`Token refresh failed: ${error.message}`, 'error');
+            }
+        }
+
+        function generateRandomString(length) {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        async function performSearch(query) {
+            if (!oauthState.isAuthenticated) {
+                showStatus('OAuth authentication required', 'error');
+                return;
+            }
+
+            if (query.length < currentConfig.queryHandling.minLength) {
+                hideDropdown();
+                return;
+            }
+
+            try {
+                currentConfig.actionHandling.onLoading(true);
+                
+                const requestConfig = await currentConfig.dataSource.api.requestTransform(query);
+                
+                // Simulate API call for demo
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const mockData = {
+                    items: [
+                        {
+                            name: `${query}-repo-1`,
+                            description: `A repository matching "${query}"`,
+                            language: 'JavaScript',
+                            stargazers_count: 42,
+                            id: 1
+                        },
+                        {
+                            name: `${query}-repo-2`,
+                            description: `Another repository matching "${query}"`,
+                            language: 'TypeScript',
+                            stargazers_count: 15,
+                            id: 2
+                        }
+                    ]
+                };
+                
+                const transformedResults = currentConfig.dataSource.api.responseTransform(mockData);
+                
+                if (transformedResults.length === 0) {
+                    showDropdown([{ type: 'message', content: 'No results found' }]);
+                } else {
+                    showDropdown(transformedResults);
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                currentConfig.actionHandling.onError(error);
+                hideDropdown();
+            }
+        }
+
+        function showDropdown(results) {
+            const dropdown = document.getElementById('search-dropdown');
+            dropdown.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultElement = document.createElement('div');
+                
+                if (result.type === 'loading') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                    resultElement.style.padding = '12px';
+                    resultElement.style.textAlign = 'center';
+                    resultElement.style.color = '#666';
+                } else if (result.type === 'message') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                    resultElement.style.padding = '12px';
+                    resultElement.style.textAlign = 'center';
+                    resultElement.style.color = '#666';
+                } else {
+                    resultElement.className = 'search-result';
+                    resultElement.innerHTML = `
+                        <div class="result-label">${escapeHtml(result.label)}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.subtitle || '')}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.details || '')}</div>
+                    `;
+                    
+                    resultElement.addEventListener('click', () => {
+                        currentConfig.actionHandling.onSelect(result);
+                    });
+                }
+                
+                dropdown.appendChild(resultElement);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function displayConfig() {
+            const configElement = document.getElementById('config-display');
+            configElement.textContent = JSON.stringify(currentConfig, null, 2);
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, currentConfig.queryHandling.debounceMs);
+        });
+
+        document.getElementById('search-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                hideDropdown();
+            }
+        });
+
+        // Check for OAuth callback on page load
+        function handleOAuthCallback() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
+            const error = urlParams.get('error');
+            
+            if (error) {
+                showStatus(`OAuth error: ${error}`, 'error');
+                return;
+            }
+            
+            if (code && state) {
+                const savedState = sessionStorage.getItem('oauth_state');
+                if (state !== savedState) {
+                    showStatus('OAuth state mismatch - possible CSRF attack', 'error');
+                    return;
+                }
+                
+                // In a real app, you would exchange the code for a token
+                simulateOAuth();
+                
+                // Clean up URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // Initialize
+        updateOAuthConfig();
+        updateOAuthStatus();
+        displayConfig();
+        handleOAuthCallback();
+    </script>
+</body>
+</html>

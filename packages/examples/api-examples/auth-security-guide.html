@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Security Best Practices - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .guide-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .security-level {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .level-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .level-low { border-left: 4px solid #ff9800; }
+        .level-medium { border-left: 4px solid #2196f3; }
+        .level-high { border-left: 4px solid #4caf50; }
+        .level-enterprise { border-left: 4px solid #9c27b0; }
+        
+        .code-block {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .code-good {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+        }
+        .code-bad {
+            background: #ffebee;
+            border-left: 4px solid #f44336;
+        }
+        .warning-box {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .info-box {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+        .checklist {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 8px 0;
+        }
+        .checklist-item input[type="checkbox"] {
+            margin-right: 10px;
+            margin-top: 3px;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .comparison-table th,
+        .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .comparison-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .comparison-table .good {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .comparison-table .bad {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .comparison-table .neutral {
+            background: #f5f5f5;
+            color: #666;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .nav-menu {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .nav-menu a {
+            color: #1976d2;
+            text-decoration: none;
+            margin: 0 15px 0 0;
+            font-weight: 500;
+        }
+        .nav-menu a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <h1>Authentication Security Best Practices Guide</h1>
+    <p>Comprehensive security guidelines for implementing authentication with the Universal Search Component.</p>
+
+    <div class="nav-menu">
+        <strong>Quick Navigation:</strong>
+        <a href="#security-levels">Security Levels</a>
+        <a href="#authentication-methods">Auth Methods</a>
+        <a href="#best-practices">Best Practices</a>
+        <a href="#implementation">Implementation</a>
+        <a href="#checklist">Security Checklist</a>
+    </div>
+
+    <div class="guide-section" id="security-levels">
+        <h2>Authentication Security Levels</h2>
+        
+        <div class="security-level level-low">
+            <div class="level-title">🔴 Level 1: Basic (Development Only)</div>
+            <p><strong>Use Case:</strong> Local development, prototyping, public APIs</p>
+            <div class="code-block">// Basic API key in headers - DEVELOPMENT ONLY
+{
+  dataSource: {
+    api: {
+      headers: {
+        'X-API-Key': 'dev-key-12345'
+      }
+    }
+  }
+}</div>
+            <p><strong>Security Risks:</strong> API keys exposed in client code, no rotation, vulnerable to XSS</p>
+        </div>
+
+        <div class="security-level level-medium">
+            <div class="level-title">🟡 Level 2: Client-Side with Environment Variables</div>
+            <p><strong>Use Case:</strong> Static sites, build-time configuration, rate-limited APIs</p>
+            <div class="code-block">// Environment variable - BUILD TIME ONLY
+{
+  dataSource: {
+    api: {
+      headers: {
+        'X-API-Key': process.env.REACT_APP_API_KEY
+      }
+    }
+  }
+}</div>
+            <p><strong>Security Risks:</strong> Keys still visible in bundle, no runtime rotation</p>
+        </div>
+
+        <div class="security-level level-high">
+            <div class="level-title">🟢 Level 3: Proxy Service Pattern</div>
+            <p><strong>Use Case:</strong> Production applications, sensitive APIs, enterprise environments</p>
+            <div class="code-block">// Secure proxy service
+{
+  dataSource: {
+    api: {
+      endpoint: '/api/search-proxy',
+      headers: {
+        'Authorization': `Bearer ${userJWT}`
+      },
+      requestTransform: (query) => ({
+        url: '/api/search-proxy',
+        method: 'POST',
+        body: JSON.stringify({ query, service: 'external-api' })
+      })
+    }
+  }
+}</div>
+            <p><strong>Benefits:</strong> API keys server-side only, authentication required, audit trails</p>
+        </div>
+
+        <div class="security-level level-enterprise">
+            <div class="level-title">🟣 Level 4: Enterprise OAuth + Proxy</div>
+            <p><strong>Use Case:</strong> Enterprise SaaS, multi-tenant, compliance requirements</p>
+            <div class="code-block">// Enterprise OAuth with token refresh
+{
+  dataSource: {
+    api: {
+      authentication: {
+        type: 'oauth',
+        credentials: {
+          tokenProvider: async () => {
+            return await oauthManager.getValidToken();
+          },
+          refreshEndpoint: '/auth/refresh',
+          clientId: 'enterprise-client-id'
+        }
+      }
+    }
+  }
+}</div>
+            <p><strong>Benefits:</strong> Token rotation, granular permissions, compliance audit trails</p>
+        </div>
+    </div>
+
+    <div class="guide-section" id="authentication-methods">
+        <h2>Authentication Method Comparison</h2>
+        
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Security Level</th>
+                    <th>Implementation Complexity</th>
+                    <th>Token Rotation</th>
+                    <th>Client-Side Exposure</th>
+                    <th>Best For</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>No Auth</td>
+                    <td class="neutral">None</td>
+                    <td class="good">Very Low</td>
+                    <td class="bad">N/A</td>
+                    <td class="good">None</td>
+                    <td>Public APIs, development</td>
+                </tr>
+                <tr>
+                    <td>API Key (Header)</td>
+                    <td class="bad">Low</td>
+                    <td class="good">Low</td>
+                    <td class="bad">Manual</td>
+                    <td class="bad">High</td>
+                    <td>Development, rate-limited public APIs</td>
+                </tr>
+                <tr>
+                    <td>API Key (Proxy)</td>
+                    <td class="good">High</td>
+                    <td class="neutral">Medium</td>
+                    <td class="good">Automatic</td>
+                    <td class="good">None</td>
+                    <td>Production applications</td>
+                </tr>
+                <tr>
+                    <td>Bearer Token (JWT)</td>
+                    <td class="good">High</td>
+                    <td class="neutral">Medium</td>
+                    <td class="good">Automatic</td>
+                    <td class="neutral">Medium</td>
+                    <td>Authenticated APIs, short sessions</td>
+                </tr>
+                <tr>
+                    <td>OAuth 2.0</td>
+                    <td class="good">Very High</td>
+                    <td class="bad">High</td>
+                    <td class="good">Automatic</td>
+                    <td class="neutral">Medium</td>
+                    <td>Third-party APIs, enterprise</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="guide-section" id="best-practices">
+        <h2>Security Best Practices</h2>
+
+        <h3>✅ DO: Secure Implementation Patterns</h3>
+        
+        <div class="code-block code-good">// ✅ Secure token management
+class SecureTokenManager {
+  constructor() {
+    this.tokenCache = new Map();
+    this.refreshPromises = new Map();
+  }
+
+  async getValidToken(service) {
+    const cached = this.tokenCache.get(service);
+    
+    if (cached && !this.isExpiringSoon(cached.expiresAt)) {
+      return cached.token;
+    }
+
+    // Prevent multiple simultaneous refresh attempts
+    if (this.refreshPromises.has(service)) {
+      return this.refreshPromises.get(service);
+    }
+
+    const refreshPromise = this.refreshToken(service);
+    this.refreshPromises.set(service, refreshPromise);
+    
+    try {
+      const newToken = await refreshPromise;
+      this.refreshPromises.delete(service);
+      return newToken;
+    } catch (error) {
+      this.refreshPromises.delete(service);
+      throw error;
+    }
+  }
+
+  async refreshToken(service) {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // Include HTTP-only cookies
+      body: JSON.stringify({ service })
+    });
+
+    if (!response.ok) {
+      throw new Error('Token refresh failed');
+    }
+
+    const data = await response.json();
+    
+    this.tokenCache.set(service, {
+      token: data.accessToken,
+      expiresAt: Date.now() + (data.expiresIn * 1000)
+    });
+
+    return data.accessToken;
+  }
+
+  isExpiringSoon(expiresAt) {
+    return Date.now() >= (expiresAt - 60000); // Refresh 1 minute early
+  }
+}</div>
+
+        <div class="code-block code-good">// ✅ Secure search configuration
+const secureSearchConfig = {
+  dataSource: {
+    api: {
+      endpoint: '/api/search-proxy',
+      authentication: {
+        type: 'bearer',
+        credentials: {
+          tokenProvider: () => tokenManager.getValidToken('search-api')
+        }
+      },
+      requestTransform: async (query) => {
+        // Validate and sanitize query
+        const sanitizedQuery = DOMPurify.sanitize(query.trim());
+        
+        if (sanitizedQuery.length < 2 || sanitizedQuery.length > 100) {
+          throw new Error('Invalid query length');
+        }
+
+        const token = await tokenManager.getValidToken('search-api');
+        
+        return {
+          url: '/api/search-proxy',
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'X-Request-ID': generateRequestId(),
+            'X-Client-Version': CLIENT_VERSION
+          },
+          body: JSON.stringify({
+            query: sanitizedQuery,
+            timestamp: Date.now(),
+            checksum: generateChecksum(sanitizedQuery)
+          })
+        };
+      }
+    }
+  }
+};</div>
+
+        <h3>❌ DON'T: Insecure Patterns</h3>
+
+        <div class="code-block code-bad">// ❌ Never store secrets in client code
+const badConfig = {
+  dataSource: {
+    api: {
+      headers: {
+        'X-API-Key': 'sk-live-1234567890abcdef', // Exposed to all users!
+        'Authorization': 'Bearer eyJhbGc...'      // Visible in network tab!
+      }
+    }
+  }
+};
+
+// ❌ Never store tokens in localStorage
+localStorage.setItem('api_token', token); // Vulnerable to XSS attacks!
+
+// ❌ Never hardcode credentials
+const API_SECRET = 'super-secret-key'; // Visible in source code!
+
+// ❌ Never trust client-side validation only
+if (userInput.length > 0) {
+  // No server-side validation - vulnerable to manipulation
+}</div>
+
+        <div class="warning-box">
+            <strong>⚠️ Critical Security Warning:</strong> Never include API keys, secrets, or sensitive tokens in client-side code. They will be visible to all users and can be extracted from your JavaScript bundle.
+        </div>
+    </div>
+
+    <div class="guide-section" id="implementation">
+        <h2>Secure Implementation Examples</h2>
+
+        <h3>Proxy Service Implementation (Backend)</h3>
+        <div class="code-block">// Node.js/Express proxy service example
+const express = require('express');
+const rateLimit = require('express-rate-limit');
+const { authenticateJWT } = require('./middleware/auth');
+
+const app = express();
+
+// Rate limiting
+const searchLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many search requests, please try again later'
+});
+
+// Authentication middleware
+app.use('/api/search-proxy', authenticateJWT);
+app.use('/api/search-proxy', searchLimiter);
+
+app.post('/api/search-proxy', async (req, res) => {
+  try {
+    const { query, service } = req.body;
+    const userId = req.user.id;
+
+    // Validate input
+    if (!query || query.length < 2 || query.length > 100) {
+      return res.status(400).json({ error: 'Invalid query' });
+    }
+
+    // Check user permissions for the service
+    if (!await hasServiceAccess(userId, service)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Get service-specific API key (stored securely on server)
+    const apiKey = await getServiceApiKey(service);
+    
+    // Make external API call
+    const searchResults = await callExternalAPI(query, apiKey);
+    
+    // Log the request for auditing
+    await logSearchRequest(userId, service, query, searchResults.length);
+    
+    res.json(searchResults);
+  } catch (error) {
+    console.error('Search proxy error:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});</div>
+
+        <h3>Client-Side Token Refresh</h3>
+        <div class="code-block">// Automatic token refresh implementation
+class AuthenticatedSearchClient {
+  constructor(config) {
+    this.config = config;
+    this.refreshInProgress = false;
+  }
+
+  async search(query) {
+    try {
+      return await this.makeSearchRequest(query);
+    } catch (error) {
+      if (error.status === 401 && !this.refreshInProgress) {
+        // Token expired, try to refresh
+        await this.refreshTokens();
+        return await this.makeSearchRequest(query);
+      }
+      throw error;
+    }
+  }
+
+  async makeSearchRequest(query) {
+    const token = await this.getAccessToken();
+    
+    const response = await fetch('/api/search-proxy', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ query })
+    });
+
+    if (!response.ok) {
+      throw { status: response.status, message: response.statusText };
+    }
+
+    return response.json();
+  }
+
+  async refreshTokens() {
+    if (this.refreshInProgress) {
+      return; // Already refreshing
+    }
+
+    this.refreshInProgress = true;
+    
+    try {
+      const response = await fetch('/auth/refresh', {
+        method: 'POST',
+        credentials: 'include' // Send HTTP-only refresh cookie
+      });
+
+      if (!response.ok) {
+        // Refresh failed, redirect to login
+        window.location.href = '/login';
+        return;
+      }
+
+      const data = await response.json();
+      this.updateTokens(data);
+    } finally {
+      this.refreshInProgress = false;
+    }
+  }
+}</div>
+
+        <h3>CORS Security Configuration</h3>
+        <div class="code-block">// Secure CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests from your domain(s) only
+    const allowedOrigins = [
+      'https://yourapp.com',
+      'https://app.yourcompany.com'
+    ];
+    
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Allow cookies for authentication
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Request-ID',
+    'X-Client-Version'
+  ]
+};
+
+app.use(cors(corsOptions));</div>
+    </div>
+
+    <div class="guide-section" id="checklist">
+        <h2>Security Implementation Checklist</h2>
+
+        <div class="checklist">
+            <h3>🔒 Authentication Security</h3>
+            <div class="checklist-item">
+                <input type="checkbox" id="no-client-secrets">
+                <label for="no-client-secrets">No API keys or secrets in client-side code</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="proxy-service">
+                <label for="proxy-service">Proxy service implemented for sensitive APIs</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="token-refresh">
+                <label for="token-refresh">Automatic token refresh mechanism</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="https-only">
+                <label for="https-only">HTTPS enforced for all API communications</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="secure-storage">
+                <label for="secure-storage">Tokens stored securely (HTTP-only cookies or secure memory)</label>
+            </div>
+        </div>
+
+        <div class="checklist">
+            <h3>🛡️ Input Validation & Security</h3>
+            <div class="checklist-item">
+                <input type="checkbox" id="input-validation">
+                <label for="input-validation">Server-side input validation implemented</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="query-sanitization">
+                <label for="query-sanitization">Search queries sanitized to prevent injection</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="rate-limiting">
+                <label for="rate-limiting">Rate limiting configured</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="cors-configured">
+                <label for="cors-configured">CORS properly configured with allowed origins</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="csrf-protection">
+                <label for="csrf-protection">CSRF protection implemented</label>
+            </div>
+        </div>
+
+        <div class="checklist">
+            <h3>📊 Monitoring & Compliance</h3>
+            <div class="checklist-item">
+                <input type="checkbox" id="audit-logging">
+                <label for="audit-logging">Search requests logged for audit purposes</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="error-handling">
+                <label for="error-handling">Error handling doesn't expose sensitive information</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="permission-checks">
+                <label for="permission-checks">User permissions verified for each service</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="token-rotation">
+                <label for="token-rotation">Regular token rotation schedule established</label>
+            </div>
+            <div class="checklist-item">
+                <input type="checkbox" id="security-headers">
+                <label for="security-headers">Security headers configured (CSP, HSTS, etc.)</label>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <strong>💡 Security Review:</strong> Have your authentication implementation reviewed by a security expert before deploying to production. Consider using automated security scanning tools to identify potential vulnerabilities.
+        </div>
+    </div>
+
+    <div class="guide-section">
+        <h2>Common Security Pitfalls</h2>
+        
+        <h3>1. Client-Side Secret Exposure</h3>
+        <p><strong>Problem:</strong> API keys visible in JavaScript bundle or network requests</p>
+        <p><strong>Solution:</strong> Use proxy services to keep secrets server-side</p>
+
+        <h3>2. Token Storage in localStorage</h3>
+        <p><strong>Problem:</strong> Tokens accessible to XSS attacks</p>
+        <p><strong>Solution:</strong> Use HTTP-only cookies or secure in-memory storage</p>
+
+        <h3>3. Missing Token Refresh</h3>
+        <p><strong>Problem:</strong> Users frequently logged out due to expired tokens</p>
+        <p><strong>Solution:</strong> Implement automatic token refresh with proper error handling</p>
+
+        <h3>4. Insufficient Input Validation</h3>
+        <p><strong>Problem:</strong> Injection attacks through search queries</p>
+        <p><strong>Solution:</strong> Validate and sanitize all inputs on both client and server</p>
+
+        <h3>5. Overprivileged API Access</h3>
+        <p><strong>Problem:</strong> API keys with more permissions than needed</p>
+        <p><strong>Solution:</strong> Use principle of least privilege and scope-limited tokens</p>
+    </div>
+
+    <script>
+        // Save checklist state
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                const checkedItems = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).length;
+                const totalItems = document.querySelectorAll('input[type="checkbox"]').length;
+                
+                if (checkedItems === totalItems) {
+                    console.log('🎉 All security checks completed!');
+                }
+            });
+        });
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('.nav-menu a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

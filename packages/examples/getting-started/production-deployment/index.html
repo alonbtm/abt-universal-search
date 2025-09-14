@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Search - Production Deployment</title>
+    
+    <!-- Security Headers (implement in server) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains">
+    
+    <!-- Performance optimizations -->
+    <link rel="preconnect" href="https://api.internal.com">
+    <link rel="dns-prefetch" href="https://analytics.internal.com">
+    
+    <style>
+        /* Production-grade CSS with optimizations */
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #64748b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background-color: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
+            color: white;
+            border-radius: 0.75rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .production-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px var(--shadow);
+        }
+
+        .feature-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feature-icon {
+            font-size: 1.25rem;
+        }
+
+        .search-container {
+            background: var(--surface);
+            padding: 2rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .search-wrapper {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background: var(--surface);
+            color: var(--text-primary);
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 20px;
+            background: var(--border);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .toggle-switch.active {
+            background: var(--primary-color);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(20px);
+        }
+
+        .results-container {
+            min-height: 200px;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            background: var(--background);
+            padding: 1rem;
+        }
+
+        .result-item {
+            padding: 0.875rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .result-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 4px var(--shadow);
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .result-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+
+        .result-metadata {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .metadata-badge {
+            background: var(--background);
+            padding: 0.125rem 0.375rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--border);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .loading::before {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 0.5rem;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: var(--error-color);
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .success {
+            color: var(--success-color);
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .monitoring-panel {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            border: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-card {
+            text-align: center;
+            padding: 1rem;
+            background: var(--background);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border);
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .production-features {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-controls {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Production Deployment</h1>
+            <p>Enterprise-grade Universal Search implementation with security, monitoring, and performance optimization</p>
+        </div>
+
+        <div class="production-features">
+            <div class="feature-card">
+                <h3><span class="feature-icon">🔒</span> Security</h3>
+                <p>Input validation, output sanitization, rate limiting, CSP headers, and authentication integration</p>
+            </div>
+            <div class="feature-card">
+                <h3><span class="feature-icon">📊</span> Monitoring</h3>
+                <p>Performance metrics, error tracking, analytics integration, and health checks</p>
+            </div>
+            <div class="feature-card">
+                <h3><span class="feature-icon">⚡</span> Performance</h3>
+                <p>Advanced caching, CDN integration, lazy loading, and optimized bundle size</p>
+            </div>
+            <div class="feature-card">
+                <h3><span class="feature-icon">🔧</span> DevOps</h3>
+                <p>CI/CD pipeline, Docker containers, Kubernetes deployment, and automated testing</p>
+            </div>
+        </div>
+
+        <div class="search-container">
+            <h2>Enterprise Search Interface</h2>
+            
+            <div class="search-wrapper">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="search-input" 
+                    placeholder="Search with enterprise security and monitoring..."
+                    autocomplete="off"
+                    data-testid="search-input"
+                >
+            </div>
+
+            <div class="search-controls">
+                <div class="control-group">
+                    <span class="control-label">Security Mode</span>
+                    <div class="toggle-switch active" id="securityToggle" data-testid="security-toggle"></div>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Monitoring</span>
+                    <div class="toggle-switch active" id="monitoringToggle" data-testid="monitoring-toggle"></div>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Cache</span>
+                    <div class="toggle-switch active" id="cacheToggle" data-testid="cache-toggle"></div>
+                </div>
+                <div class="control-group">
+                    <span class="control-label">Analytics</span>
+                    <div class="toggle-switch active" id="analyticsToggle" data-testid="analytics-toggle"></div>
+                </div>
+            </div>
+
+            <div id="resultsContainer" class="results-container">
+                <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                    Start typing to see enterprise search results with full monitoring and security
+                </p>
+            </div>
+        </div>
+
+        <div class="monitoring-panel">
+            <h3>📊 Real-time Monitoring</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value" id="responseTime">0ms</div>
+                    <div class="metric-label">Response Time</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="cacheHitRate">0%</div>
+                    <div class="metric-label">Cache Hit Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="totalQueries">0</div>
+                    <div class="metric-label">Total Queries</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="errorRate">0%</div>
+                    <div class="metric-label">Error Rate</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="activeUsers">1</div>
+                    <div class="metric-label">Active Users</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="uptime">100%</div>
+                    <div class="metric-label">Uptime</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Production-grade Universal Search implementation
+        class ProductionSearchService {
+            constructor() {
+                this.cache = new Map();
+                this.metrics = {
+                    queries: 0,
+                    cacheHits: 0,
+                    errors: 0,
+                    totalResponseTime: 0
+                };
+                this.config = {
+                    security: true,
+                    monitoring: true,
+                    caching: true,
+                    analytics: true,
+                    maxResults: 50,
+                    debounceMs: 300,
+                    cacheExpiry: 300000, // 5 minutes
+                    rateLimitRpm: 100
+                };
+                this.initializeMonitoring();
+                this.setupEventListeners();
+                this.startMetricsUpdater();
+            }
+
+            // Security layer
+            sanitizeInput(input) {
+                if (!this.config.security) return input;
+                
+                // Input validation and sanitization
+                const sanitized = input
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/[<>\"']/g, '')
+                    .trim();
+                
+                if (sanitized.length > 100) {
+                    throw new Error('Query too long');
+                }
+                
+                return sanitized;
+            }
+
+            // Rate limiting
+            checkRateLimit(identifier = 'default') {
+                const now = Date.now();
+                const windowStart = now - 60000; // 1 minute window
+                
+                if (!this.rateLimitStore) this.rateLimitStore = new Map();
+                if (!this.rateLimitStore.has(identifier)) {
+                    this.rateLimitStore.set(identifier, []);
+                }
+                
+                const requests = this.rateLimitStore.get(identifier);
+                const recentRequests = requests.filter(time => time > windowStart);
+                
+                if (recentRequests.length >= this.config.rateLimitRpm) {
+                    throw new Error('Rate limit exceeded');
+                }
+                
+                recentRequests.push(now);
+                this.rateLimitStore.set(identifier, recentRequests);
+                return true;
+            }
+
+            // Caching layer
+            getCached(key) {
+                if (!this.config.caching) return null;
+                
+                const cached = this.cache.get(key);
+                if (!cached) return null;
+                
+                if (Date.now() - cached.timestamp > this.config.cacheExpiry) {
+                    this.cache.delete(key);
+                    return null;
+                }
+                
+                this.metrics.cacheHits++;
+                return cached.data;
+            }
+
+            setCached(key, data) {
+                if (!this.config.caching) return;
+                
+                this.cache.set(key, {
+                    data,
+                    timestamp: Date.now()
+                });
+            }
+
+            // Analytics and monitoring
+            trackEvent(event, data = {}) {
+                if (!this.config.analytics) return;
+                
+                const eventData = {
+                    event,
+                    timestamp: Date.now(),
+                    sessionId: this.getSessionId(),
+                    ...data
+                };
+                
+                // Send to analytics service (mock)
+                console.log('Analytics Event:', eventData);
+                
+                // Update metrics
+                if (event === 'search_query') {
+                    this.metrics.queries++;
+                }
+            }
+
+            getSessionId() {
+                if (!this.sessionId) {
+                    this.sessionId = 'session_' + Math.random().toString(36).substr(2, 9);
+                }
+                return this.sessionId;
+            }
+
+            // Main search functionality
+            async search(query) {
+                const startTime = performance.now();
+                
+                try {
+                    // Security validation
+                    this.checkRateLimit();
+                    const sanitizedQuery = this.sanitizeInput(query);
+                    
+                    if (!sanitizedQuery.trim()) {
+                        return [];
+                    }
+                    
+                    // Check cache
+                    const cacheKey = `search_${sanitizedQuery}`;
+                    const cached = this.getCached(cacheKey);
+                    if (cached) {
+                        this.trackEvent('search_cache_hit', { query: sanitizedQuery });
+                        return cached;
+                    }
+                    
+                    // Simulate enterprise data source
+                    const results = await this.performEnterpriseSearch(sanitizedQuery);
+                    
+                    // Cache results
+                    this.setCached(cacheKey, results);
+                    
+                    // Track analytics
+                    this.trackEvent('search_query', { 
+                        query: sanitizedQuery,
+                        resultCount: results.length 
+                    });
+                    
+                    return results;
+                    
+                } catch (error) {
+                    this.metrics.errors++;
+                    this.trackEvent('search_error', { 
+                        query,
+                        error: error.message 
+                    });
+                    throw error;
+                } finally {
+                    const responseTime = performance.now() - startTime;
+                    this.metrics.totalResponseTime += responseTime;
+                    this.updateMetricsDisplay();
+                }
+            }
+
+            async performEnterpriseSearch(query) {
+                // Simulate API delay and enterprise search logic
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 200 + 100));
+                
+                const enterpriseData = [
+                    { id: 1, title: 'Customer Analytics Dashboard', description: 'Real-time customer behavior analytics and insights', source: 'analytics', security: 'high', category: 'dashboard' },
+                    { id: 2, title: 'Financial Reporting System', description: 'Comprehensive financial reporting and compliance tools', source: 'finance', security: 'critical', category: 'reporting' },
+                    { id: 3, title: 'HR Management Portal', description: 'Employee management and human resources platform', source: 'hr', security: 'medium', category: 'portal' },
+                    { id: 4, title: 'Inventory Management', description: 'Supply chain and inventory optimization system', source: 'operations', security: 'high', category: 'management' },
+                    { id: 5, title: 'Security Audit Logs', description: 'Security event monitoring and audit trail system', source: 'security', security: 'critical', category: 'audit' },
+                    { id: 6, title: 'Customer Support Tickets', description: 'Customer service and support ticket management', source: 'support', security: 'medium', category: 'tickets' },
+                    { id: 7, title: 'Product Catalog API', description: 'Enterprise product information and catalog management', source: 'products', security: 'low', category: 'api' },
+                    { id: 8, title: 'Marketing Campaign Analytics', description: 'Marketing performance and campaign effectiveness metrics', source: 'marketing', security: 'medium', category: 'analytics' },
+                    { id: 9, title: 'Compliance Documentation', description: 'Regulatory compliance and documentation management', source: 'legal', security: 'critical', category: 'documentation' },
+                    { id: 10, title: 'Performance Monitoring', description: 'System performance and infrastructure monitoring', source: 'infrastructure', security: 'high', category: 'monitoring' }
+                ];
+                
+                const filtered = enterpriseData.filter(item => 
+                    item.title.toLowerCase().includes(query.toLowerCase()) ||
+                    item.description.toLowerCase().includes(query.toLowerCase()) ||
+                    item.category.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                return filtered.slice(0, this.config.maxResults);
+            }
+
+            // UI Management
+            setupEventListeners() {
+                const searchInput = document.getElementById('searchInput');
+                const resultsContainer = document.getElementById('resultsContainer');
+                
+                let debounceTimer;
+                
+                searchInput.addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(async () => {
+                        const query = e.target.value;
+                        
+                        if (!query.trim()) {
+                            resultsContainer.innerHTML = `
+                                <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                                    Start typing to see enterprise search results with full monitoring and security
+                                </p>
+                            `;
+                            return;
+                        }
+                        
+                        try {
+                            resultsContainer.innerHTML = `
+                                <div class="loading">Searching enterprise data sources...</div>
+                            `;
+                            
+                            const results = await this.search(query);
+                            this.displayResults(results);
+                            
+                        } catch (error) {
+                            resultsContainer.innerHTML = `
+                                <div class="error">
+                                    <strong>Search Error:</strong> ${error.message}
+                                </div>
+                            `;
+                        }
+                    }, this.config.debounceMs);
+                });
+                
+                // Setup toggle controls
+                this.setupToggleControls();
+            }
+
+            setupToggleControls() {
+                const toggles = [
+                    { id: 'securityToggle', config: 'security' },
+                    { id: 'monitoringToggle', config: 'monitoring' },
+                    { id: 'cacheToggle', config: 'caching' },
+                    { id: 'analyticsToggle', config: 'analytics' }
+                ];
+                
+                toggles.forEach(({ id, config }) => {
+                    const toggle = document.getElementById(id);
+                    toggle.addEventListener('click', () => {
+                        this.config[config] = !this.config[config];
+                        toggle.classList.toggle('active', this.config[config]);
+                        
+                        this.trackEvent('config_change', { 
+                            setting: config,
+                            enabled: this.config[config]
+                        });
+                    });
+                });
+            }
+
+            displayResults(results) {
+                const resultsContainer = document.getElementById('resultsContainer');
+                
+                if (results.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <p style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                            No results found. Try a different search term.
+                        </p>
+                    `;
+                    return;
+                }
+                
+                const resultsHTML = results.map(result => `
+                    <div class="result-item" data-result-id="${result.id}">
+                        <div class="result-title">${result.title}</div>
+                        <div class="result-description">${result.description}</div>
+                        <div class="result-metadata">
+                            <span class="metadata-badge">Source: ${result.source}</span>
+                            <span class="metadata-badge">Security: ${result.security}</span>
+                            <span class="metadata-badge">Category: ${result.category}</span>
+                        </div>
+                    </div>
+                `).join('');
+                
+                resultsContainer.innerHTML = resultsHTML;
+                
+                // Add click handlers
+                resultsContainer.querySelectorAll('.result-item').forEach(item => {
+                    item.addEventListener('click', () => {
+                        const resultId = item.dataset.resultId;
+                        this.trackEvent('result_click', { resultId });
+                        
+                        // Show success message
+                        const successDiv = document.createElement('div');
+                        successDiv.className = 'success';
+                        successDiv.innerHTML = `<strong>Result Selected:</strong> ${item.querySelector('.result-title').textContent}`;
+                        item.appendChild(successDiv);
+                        
+                        setTimeout(() => successDiv.remove(), 3000);
+                    });
+                });
+            }
+
+            // Monitoring and metrics
+            initializeMonitoring() {
+                this.startTime = Date.now();
+                
+                // Set up error handling
+                window.addEventListener('error', (event) => {
+                    this.metrics.errors++;
+                    this.trackEvent('javascript_error', {
+                        message: event.message,
+                        filename: event.filename,
+                        line: event.lineno
+                    });
+                });
+                
+                // Set up performance monitoring
+                if ('PerformanceObserver' in window) {
+                    const observer = new PerformanceObserver((list) => {
+                        for (const entry of list.getEntries()) {
+                            if (entry.entryType === 'navigation') {
+                                this.trackEvent('page_load', {
+                                    loadTime: entry.loadEventEnd - entry.loadEventStart
+                                });
+                            }
+                        }
+                    });
+                    observer.observe({ entryTypes: ['navigation'] });
+                }
+            }
+
+            updateMetricsDisplay() {
+                const avgResponseTime = this.metrics.queries > 0 ? 
+                    Math.round(this.metrics.totalResponseTime / this.metrics.queries) : 0;
+                
+                const cacheHitRate = this.metrics.queries > 0 ? 
+                    Math.round((this.metrics.cacheHits / this.metrics.queries) * 100) : 0;
+                
+                const errorRate = this.metrics.queries > 0 ? 
+                    Math.round((this.metrics.errors / this.metrics.queries) * 100) : 0;
+                
+                const uptime = Math.round(((Date.now() - this.startTime) / 1000 / 60 / 60) * 100) / 100;
+                
+                document.getElementById('responseTime').textContent = `${avgResponseTime}ms`;
+                document.getElementById('cacheHitRate').textContent = `${cacheHitRate}%`;
+                document.getElementById('totalQueries').textContent = this.metrics.queries;
+                document.getElementById('errorRate').textContent = `${errorRate}%`;
+                document.getElementById('uptime').textContent = `${uptime}h`;
+            }
+
+            startMetricsUpdater() {
+                setInterval(() => {
+                    this.updateMetricsDisplay();
+                }, 1000);
+            }
+        }
+
+        // Initialize production search service
+        const productionSearch = new ProductionSearchService();
+        
+        // Expose for testing
+        window.productionSearch = productionSearch;
+        
+        console.log('🏢 Production Universal Search initialized with enterprise features');
+    </script>
+</body>
+</html>

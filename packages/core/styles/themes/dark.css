@@ -1,0 +1,307 @@
+/**
+ * Dark Theme
+ * Modern dark theme with professional color palette
+ */
+
+:root {
+  /* Theme Metadata */
+  --alon-theme-name: 'dark';
+  --alon-theme-version: '1.0.0';
+
+  /* Primary Colors */
+  --alon-color-primary-50: #0c1929;
+  --alon-color-primary-100: #0f2a44;
+  --alon-color-primary-200: #1e3b5a;
+  --alon-color-primary-300: #2d4c70;
+  --alon-color-primary-400: #3c5d86;
+  --alon-color-primary-500: #4b6e9c;
+  --alon-color-primary-600: #5a7fb2;
+  --alon-color-primary-700: #6990c8;
+  --alon-color-primary-800: #78a1de;
+  --alon-color-primary-900: #87b2f4;
+  --alon-color-primary-950: #96c3ff;
+
+  /* Secondary Colors */
+  --alon-color-secondary-50: #020617;
+  --alon-color-secondary-100: #0f172a;
+  --alon-color-secondary-200: #1e293b;
+  --alon-color-secondary-300: #334155;
+  --alon-color-secondary-400: #475569;
+  --alon-color-secondary-500: #64748b;
+  --alon-color-secondary-600: #94a3b8;
+  --alon-color-secondary-700: #cbd5e1;
+  --alon-color-secondary-800: #e2e8f0;
+  --alon-color-secondary-900: #f1f5f9;
+  --alon-color-secondary-950: #f8fafc;
+
+  /* Neutral Colors */
+  --alon-color-neutral-50: #09090b;
+  --alon-color-neutral-100: #18181b;
+  --alon-color-neutral-200: #27272a;
+  --alon-color-neutral-300: #3f3f46;
+  --alon-color-neutral-400: #52525b;
+  --alon-color-neutral-500: #71717a;
+  --alon-color-neutral-600: #a1a1aa;
+  --alon-color-neutral-700: #d4d4d8;
+  --alon-color-neutral-800: #e4e4e7;
+  --alon-color-neutral-900: #f4f4f5;
+  --alon-color-neutral-950: #fafafa;
+
+  /* Semantic Colors */
+  --alon-color-success: #10b981;
+  --alon-color-warning: #f59e0b;
+  --alon-color-error: #ef4444;
+  --alon-color-info: #3b82f6;
+
+  /* State Colors */
+  --alon-color-hover: #27272a;
+  --alon-color-active: #3f3f46;
+  --alon-color-focus: #4b6e9c;
+  --alon-color-disabled: #3f3f46;
+
+  /* Background Colors */
+  --alon-background-primary: #0f0f0f;
+  --alon-background-secondary: #18181b;
+  --alon-background-tertiary: #27272a;
+  --alon-background-overlay: rgba(0, 0, 0, 0.8);
+
+  /* Text Colors */
+  --alon-text-primary: #f1f5f9;
+  --alon-text-secondary: #cbd5e1;
+  --alon-text-tertiary: #94a3b8;
+  --alon-text-inverse: #1e293b;
+
+  /* Border Colors */
+  --alon-border-primary: #27272a;
+  --alon-border-secondary: #3f3f46;
+  --alon-border-tertiary: #52525b;
+  --alon-border-focus: #4b6e9c;
+
+  /* Spacing System - Same as light theme */
+  --alon-spacing-unit: 4;
+  --alon-spacing-xs: 0.25rem;
+  --alon-spacing-sm: 0.5rem;
+  --alon-spacing-md: 1rem;
+  --alon-spacing-lg: 1.5rem;
+  --alon-spacing-xl: 2rem;
+  --alon-spacing-2xl: 2.5rem;
+  --alon-spacing-3xl: 3rem;
+  --alon-spacing-4xl: 4rem;
+  --alon-spacing-5xl: 5rem;
+  --alon-spacing-6xl: 6rem;
+
+  /* Component Spacing */
+  --alon-spacing-padding-xs: 0.5rem;
+  --alon-spacing-padding-sm: 0.75rem;
+  --alon-spacing-padding-md: 1rem;
+  --alon-spacing-padding-lg: 1.25rem;
+  --alon-spacing-padding-xl: 1.5rem;
+
+  --alon-spacing-margin-xs: 0.25rem;
+  --alon-spacing-margin-sm: 0.5rem;
+  --alon-spacing-margin-md: 1rem;
+  --alon-spacing-margin-lg: 1.5rem;
+  --alon-spacing-margin-xl: 2rem;
+
+  --alon-spacing-gap-xs: 0.5rem;
+  --alon-spacing-gap-sm: 0.75rem;
+  --alon-spacing-gap-md: 1rem;
+  --alon-spacing-gap-lg: 1.25rem;
+  --alon-spacing-gap-xl: 1.5rem;
+
+  /* Typography System - Same as light theme */
+  --alon-font-primary: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --alon-font-secondary: Georgia, 'Times New Roman', Times, serif;
+  --alon-font-monospace: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  --alon-font-display: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Font Weights */
+  --alon-font-weight-light: 300;
+  --alon-font-weight-normal: 400;
+  --alon-font-weight-medium: 500;
+  --alon-font-weight-semibold: 600;
+  --alon-font-weight-bold: 700;
+
+  /* Font Sizes */
+  --alon-font-size-xs: 0.75rem;
+  --alon-font-size-sm: 0.875rem;
+  --alon-font-size-base: 1rem;
+  --alon-font-size-lg: 1.125rem;
+  --alon-font-size-xl: 1.25rem;
+  --alon-font-size-2xl: 1.5rem;
+  --alon-font-size-3xl: 1.875rem;
+  --alon-font-size-4xl: 2.25rem;
+  --alon-font-size-5xl: 3rem;
+  --alon-font-size-6xl: 3.75rem;
+
+  /* Line Heights */
+  --alon-line-height-tight: 1.2;
+  --alon-line-height-normal: 1.5;
+  --alon-line-height-relaxed: 1.75;
+  --alon-line-height-loose: 2;
+
+  /* Letter Spacing */
+  --alon-letter-spacing-tight: -0.025em;
+  --alon-letter-spacing-normal: 0;
+  --alon-letter-spacing-wide: 0.025em;
+
+  /* Dark Theme Shadows - Lighter and more subtle */
+  --alon-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --alon-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --alon-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --alon-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --alon-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --alon-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+
+  /* Inner Shadows */
+  --alon-shadow-inner-sm: inset 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --alon-shadow-inner-md: inset 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  --alon-shadow-inner-lg: inset 0 4px 8px 0 rgba(0, 0, 0, 0.4);
+
+  /* Focus Shadows */
+  --alon-shadow-focus-primary: 0 0 0 3px rgba(75, 110, 156, 0.6);
+  --alon-shadow-focus-secondary: 0 0 0 3px rgba(148, 163, 184, 0.6);
+  --alon-shadow-focus-error: 0 0 0 3px rgba(239, 68, 68, 0.6);
+
+  /* Borders - Same as light theme */
+  --alon-border-width-none: 0;
+  --alon-border-width-thin: 1px;
+  --alon-border-width-medium: 2px;
+  --alon-border-width-thick: 4px;
+
+  --alon-border-radius-none: 0;
+  --alon-border-radius-sm: 0.25rem;
+  --alon-border-radius-md: 0.375rem;
+  --alon-border-radius-lg: 0.5rem;
+  --alon-border-radius-xl: 0.75rem;
+  --alon-border-radius-full: 9999px;
+
+  --alon-border-style-solid: solid;
+  --alon-border-style-dashed: dashed;
+  --alon-border-style-dotted: dotted;
+
+  /* Animations - Same as light theme */
+  --alon-animation-duration-fast: 150ms;
+  --alon-animation-duration-normal: 300ms;
+  --alon-animation-duration-slow: 500ms;
+
+  --alon-animation-timing-linear: linear;
+  --alon-animation-timing-ease: ease;
+  --alon-animation-timing-ease-in: ease-in;
+  --alon-animation-timing-ease-out: ease-out;
+  --alon-animation-timing-ease-in-out: ease-in-out;
+  --alon-animation-timing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  --alon-animation-delay-none: 0ms;
+  --alon-animation-delay-short: 75ms;
+  --alon-animation-delay-medium: 150ms;
+  --alon-animation-delay-long: 300ms;
+
+  /* Transitions */
+  --alon-transition-all: all var(--alon-animation-duration-normal) var(--alon-animation-timing-ease-in-out);
+  --alon-transition-colors: color var(--alon-animation-duration-fast) var(--alon-animation-timing-ease-in-out),
+                           background-color var(--alon-animation-duration-fast) var(--alon-animation-timing-ease-in-out),
+                           border-color var(--alon-animation-duration-fast) var(--alon-animation-timing-ease-in-out);
+  --alon-transition-transform: transform var(--alon-animation-duration-normal) var(--alon-animation-timing-ease-in-out);
+  --alon-transition-opacity: opacity var(--alon-animation-duration-fast) var(--alon-animation-timing-ease-in-out);
+
+  /* Breakpoints - Same as light theme */
+  --alon-breakpoint-xs: 0px;
+  --alon-breakpoint-sm: 576px;
+  --alon-breakpoint-md: 768px;
+  --alon-breakpoint-lg: 992px;
+  --alon-breakpoint-xl: 1200px;
+  --alon-breakpoint-2xl: 1400px;
+
+  /* Container Breakpoints */
+  --alon-container-xs: 0px;
+  --alon-container-sm: 320px;
+  --alon-container-md: 480px;
+  --alon-container-lg: 640px;
+  --alon-container-xl: 800px;
+
+  /* Z-Index Scale */
+  --alon-z-index-dropdown: 1000;
+  --alon-z-index-sticky: 1020;
+  --alon-z-index-fixed: 1030;
+  --alon-z-index-modal-backdrop: 1040;
+  --alon-z-index-modal: 1050;
+  --alon-z-index-popover: 1060;
+  --alon-z-index-tooltip: 1070;
+  --alon-z-index-toast: 1080;
+}
+
+/* Component-specific dark theme styles */
+.alon-search-dropdown {
+  background-color: var(--alon-background-primary);
+  border-color: var(--alon-border-primary);
+  color: var(--alon-text-primary);
+  box-shadow: var(--alon-shadow-lg);
+}
+
+.alon-search-input {
+  background-color: var(--alon-background-secondary);
+  border-color: var(--alon-border-secondary);
+  color: var(--alon-text-primary);
+}
+
+.alon-search-input:focus {
+  border-color: var(--alon-border-focus);
+  box-shadow: var(--alon-shadow-focus-primary);
+}
+
+.alon-search-input::placeholder {
+  color: var(--alon-text-tertiary);
+}
+
+.alon-search-result {
+  color: var(--alon-text-primary);
+}
+
+.alon-search-result:hover {
+  background-color: var(--alon-color-hover);
+}
+
+.alon-search-result.selected {
+  background-color: var(--alon-color-primary-100);
+  color: var(--alon-color-primary-800);
+}
+
+.alon-loading-spinner {
+  color: var(--alon-color-primary-600);
+}
+
+.alon-error-message {
+  color: var(--alon-color-error);
+  background-color: rgba(239, 68, 68, 0.15);
+  border-color: var(--alon-color-error);
+}
+
+/* Dark theme specific accessibility improvements */
+@media (prefers-contrast: high) {
+  :root {
+    --alon-border-primary: #ffffff;
+    --alon-text-primary: #ffffff;
+    --alon-background-primary: #000000;
+    --alon-background-secondary: #1a1a1a;
+    --alon-color-primary-600: #96c3ff;
+  }
+}
+
+/* Dark theme scrollbar styling */
+.alon-search-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.alon-search-dropdown::-webkit-scrollbar-track {
+  background: var(--alon-background-tertiary);
+}
+
+.alon-search-dropdown::-webkit-scrollbar-thumb {
+  background: var(--alon-border-tertiary);
+  border-radius: var(--alon-border-radius-sm);
+}
+
+.alon-search-dropdown::-webkit-scrollbar-thumb:hover {
+  background: var(--alon-text-tertiary);
+}

@@ -1,0 +1,58 @@
+import { IPaginationManager, PaginationConfig, PaginationParams, PaginationResult, PaginationState, PaginationProvider, PaginationCache, PaginationOptimizer, PaginationEvents, PaginationPerformance } from '../types/Pagination';
+export declare class PaginationManager<T = any> implements IPaginationManager<T> {
+    private config;
+    private state;
+    private providers;
+    private cache;
+    private optimizer;
+    private events;
+    private abortController;
+    private prefetchPromises;
+    private performance;
+    constructor(config?: Partial<PaginationConfig>, events?: PaginationEvents<T>);
+    private initializeDefaultProviders;
+    private initializeOptimizer;
+    private loadOffsetPage;
+    private loadCursorPage;
+    loadPage(params: PaginationParams): Promise<PaginationResult<T>>;
+    getPage(pageNumber: number): Promise<PaginationResult<T>>;
+    getNextPage(): Promise<PaginationResult<T> | null>;
+    getPreviousPage(): Promise<PaginationResult<T> | null>;
+    jumpToPage(pageNumber: number): Promise<PaginationResult<T>>;
+    refreshCurrentPage(): Promise<PaginationResult<T>>;
+    private findProvider;
+    private updateState;
+    private updatePerformance;
+    private calculateCacheHitRate;
+    private cacheResult;
+    private prefetchPages;
+    private prefetchPage;
+    getCurrentPage(): number;
+    getTotalPages(): number | null;
+    hasNextPage(): boolean;
+    hasPreviousPage(): boolean;
+    reset(): void;
+    setPageSize(size: number): void;
+    getPageSize(): number;
+    prefetchNextPage(): Promise<void>;
+    getCachedPage(pageNumber: number): PaginationResult<T> | null;
+    invalidateCache(pageNumber?: number): void;
+    getState(): PaginationState<T>;
+    getPerformanceMetrics(): PaginationPerformance;
+    addProvider(provider: PaginationProvider<T>): void;
+    removeProvider(name: string): void;
+    setCache(cache: PaginationCache<T>): void;
+    setOptimizer(optimizer: PaginationOptimizer): void;
+    isLoading(): boolean;
+    getError(): Error | null;
+    getData(): T[];
+    getTotalCount(): number | null;
+    getCacheStats(): {
+        cachedPages: number;
+        maxCachedPages: number;
+        hitRate: number;
+        memoryUsage: number;
+    };
+    dispose(): void;
+}
+//# sourceMappingURL=PaginationManager.d.ts.map

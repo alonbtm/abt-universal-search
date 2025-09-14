@@ -1,0 +1,70 @@
+{
+  "name": "universal-search-component",
+  "version": "1.0.0",
+  "description": "Universal search component with multi-data source support",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "build:all": "npm run build --workspaces",
+    "test": "npm run test --workspaces && npm run test:distribution",
+    "test:unit": "npm run test --workspace=packages/core",
+    "test:integration": "npm run test --workspace=packages/core -- --testPathPattern=integration",
+    "test:coverage": "npm run test:coverage --workspace=packages/core",
+    "test:distribution": "jest --config jest.config.js",
+    "test:distribution:watch": "jest --config jest.config.js --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "lint": "npm run lint --workspaces",
+    "dev": "concurrently \"npm run dev --workspace=packages/core\" \"npm run serve\"",
+    "serve": "http-server . -p 8080 --cors -c-1 -o /packages/examples/simple-integration",
+    "clean": "npm run clean --workspaces",
+    "prepare": "husky",
+    "size-check": "npm run size-check --workspaces",
+    "analyze": "npm run build && npm run size-check",
+    "release": "semantic-release"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@types/jest": "^29.0.0",
+    "@types/node": "^20.0.0",
+    "jest": "^29.0.0",
+    "semantic-release": "^24.2.7",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.3.0"
+  },
+  "lint-staged": {
+    "packages/*/src/**/*.{ts,tsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "packages/*/src/**/*.{js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/universal-search-component.git"
+  },
+  "keywords": [
+    "search",
+    "component",
+    "typescript",
+    "universal",
+    "data-source"
+  ],
+  "author": "Development Team",
+  "license": "MIT",
+  "dependencies": {
+    "@universal-search/core": "^1.0.0"
+  }
+}

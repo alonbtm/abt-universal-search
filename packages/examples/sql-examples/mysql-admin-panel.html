@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MySQL Admin Panel - Connection Pool Management</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+        }
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-connected { background: #27ae60; }
+        .status-disconnected { background: #e74c3c; }
+        .status-warning { background: #f39c12; }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+        button.danger {
+            background: #e74c3c;
+        }
+        button.danger:hover {
+            background: #c0392b;
+        }
+        button.success {
+            background: #27ae60;
+        }
+        button.success:hover {
+            background: #219a52;
+        }
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            background: #f8f9fa;
+            border-right: 1px solid #e1e8ed;
+            transition: all 0.3s;
+        }
+        .tab:last-child {
+            border-right: none;
+        }
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+        .tab-content {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .metric {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        .log-container {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        .query-result {
+            background: #f8f9fa;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 500px;
+            overflow: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MySQL Admin Panel</h1>
+            <p>Connection Pool Management & Database Administration</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h3><span id="connection-status" class="status-indicator status-disconnected"></span>Connection Status</h3>
+                <p id="connection-text">Disconnected</p>
+                <p id="connection-details">No active connections</p>
+            </div>
+            <div class="card">
+                <h3>Pool Statistics</h3>
+                <p>Active: <span id="active-connections">0</span></p>
+                <p>Total: <span id="total-connections">0</span></p>
+                <p>Queue: <span id="queued-requests">0</span></p>
+            </div>
+            <div class="card">
+                <h3>Performance</h3>
+                <p>Avg Query Time: <span id="avg-query-time">0ms</span></p>
+                <p>Total Queries: <span id="total-queries">0</span></p>
+                <p>Errors: <span id="error-count">0</span></p>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('connection')">Connection Pool</div>
+            <div class="tab" onclick="showTab('query')">Query Executor</div>
+            <div class="tab" onclick="showTab('monitoring')">Monitoring</div>
+            <div class="tab" onclick="showTab('logs')">Logs</div>
+        </div>
+
+        <div id="connection" class="tab-content active">
+            <h3>MySQL Connection Pool Configuration</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <div>
+                    <div class="form-group">
+                        <label for="host">Host:</label>
+                        <input type="text" id="host" value="localhost" placeholder="localhost">
+                    </div>
+                    <div class="form-group">
+                        <label for="port">Port:</label>
+                        <input type="number" id="port" value="3306" placeholder="3306">
+                    </div>
+                    <div class="form-group">
+                        <label for="user">Username:</label>
+                        <input type="text" id="user" value="root" placeholder="root">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" placeholder="Enter password">
+                    </div>
+                    <div class="form-group">
+                        <label for="database">Database:</label>
+                        <input type="text" id="database" value="search_demo" placeholder="database_name">
+                    </div>
+                </div>
+                <div>
+                    <div class="form-group">
+                        <label for="connectionLimit">Connection Limit:</label>
+                        <input type="number" id="connectionLimit" value="10" min="1" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="acquireTimeout">Acquire Timeout (ms):</label>
+                        <input type="number" id="acquireTimeout" value="60000" min="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="timeout">Query Timeout (ms):</label>
+                        <input type="number" id="timeout" value="60000" min="1000">
+                    </div>
+                    <div class="form-group">
+                        <label for="charset">Charset:</label>
+                        <select id="charset">
+                            <option value="utf8mb4">utf8mb4</option>
+                            <option value="utf8">utf8</option>
+                            <option value="latin1">latin1</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="reconnect" checked> Auto Reconnect
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <button onclick="connectPool()" class="success">Connect Pool</button>
+                <button onclick="disconnectPool()" class="danger">Disconnect Pool</button>
+                <button onclick="testConnection()">Test Connection</button>
+                <button onclick="resetPool()">Reset Pool</button>
+            </div>
+            <div id="connection-alert"></div>
+        </div>
+
+        <div id="query" class="tab-content">
+            <h3>Query Executor</h3>
+            <div class="form-group">
+                <label for="sql-query">SQL Query:</label>
+                <textarea id="sql-query" rows="6" placeholder="SELECT * FROM products WHERE name LIKE ? LIMIT ?">SELECT id, name, description, category, price FROM products WHERE name LIKE ? ORDER BY id LIMIT ?</textarea>
+            </div>
+            <div class="form-group">
+                <label for="query-params">Parameters (JSON array):</label>
+                <input type="text" id="query-params" placeholder='["%laptop%", 10]' value='["%laptop%", 10]'>
+            </div>
+            <div>
+                <button onclick="executeQuery()" class="success">Execute Query</button>
+                <button onclick="explainQuery()">Explain Query</button>
+                <button onclick="clearResults()">Clear Results</button>
+            </div>
+            <div id="query-alert"></div>
+            <div id="query-results" class="query-result" style="display: none;"></div>
+        </div>
+
+        <div id="monitoring" class="tab-content">
+            <h3>Pool Monitoring & Statistics</h3>
+            <div class="metrics">
+                <div class="metric">
+                    <div class="metric-value" id="metric-active">0</div>
+                    <div class="metric-label">Active Connections</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="metric-idle">0</div>
+                    <div class="metric-label">Idle Connections</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="metric-total">0</div>
+                    <div class="metric-label">Total Connections</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="metric-queue">0</div>
+                    <div class="metric-label">Queued Requests</div>
+                </div>
+            </div>
+            <div>
+                <button onclick="refreshStats()" class="success">Refresh Stats</button>
+                <button onclick="startMonitoring()">Start Auto-Refresh</button>
+                <button onclick="stopMonitoring()">Stop Auto-Refresh</button>
+            </div>
+            <div id="monitoring-alert"></div>
+        </div>
+
+        <div id="logs" class="tab-content">
+            <h3>Connection & Query Logs</h3>
+            <div>
+                <button onclick="clearLogs()">Clear Logs</button>
+                <button onclick="exportLogs()">Export Logs</button>
+                <label>
+                    <input type="checkbox" id="auto-scroll" checked> Auto-scroll
+                </label>
+            </div>
+            <div id="log-container" class="log-container">
+                <div>[INFO] MySQL Admin Panel initialized</div>
+                <div>[INFO] Ready to connect to MySQL database</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let pool = null;
+        let monitoringInterval = null;
+        let queryStats = {
+            totalQueries: 0,
+            totalTime: 0,
+            errors: 0
+        };
+
+        // Mock MySQL pool implementation for demo
+        class MockMySQLPool {
+            constructor(config) {
+                this.config = config;
+                this.connected = false;
+                this.stats = {
+                    active: 0,
+                    idle: config.connectionLimit || 10,
+                    total: config.connectionLimit || 10,
+                    queue: 0
+                };
+            }
+
+            async connect() {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        this.connected = true;
+                        this.stats.idle = this.config.connectionLimit || 10;
+                        resolve();
+                    }, 1000);
+                });
+            }
+
+            async execute(sql, params = []) {
+                if (!this.connected) {
+                    throw new Error('Pool not connected');
+                }
+
+                return new Promise((resolve, reject) => {
+                    const startTime = Date.now();
+                    this.stats.active++;
+                    this.stats.idle--;
+
+                    setTimeout(() => {
+                        this.stats.active--;
+                        this.stats.idle++;
+                        
+                        const queryTime = Date.now() - startTime;
+                        queryStats.totalQueries++;
+                        queryStats.totalTime += queryTime;
+
+                        // Mock results based on query
+                        if (sql.toLowerCase().includes('select')) {
+                            const mockResults = [
+                                { id: 1, name: 'MacBook Pro M3', description: 'High-performance laptop', category: 'Electronics', price: 2999.00 },
+                                { id: 2, name: 'Dell XPS 13', description: 'Ultrabook laptop', category: 'Electronics', price: 1299.00 }
+                            ];
+                            resolve([mockResults, { affectedRows: 0, insertId: 0 }]);
+                        } else {
+                            resolve([[], { affectedRows: 1, insertId: 0 }]);
+                        }
+                    }, Math.random() * 500 + 100);
+                });
+            }
+
+            async end() {
+                this.connected = false;
+                this.stats = { active: 0, idle: 0, total: 0, queue: 0 };
+            }
+
+            getStats() {
+                return this.stats;
+            }
+        }
+
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function log(message, level = 'INFO') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logContainer = document.getElementById('log-container');
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] [${level}] ${message}`;
+            logContainer.appendChild(logEntry);
+            
+            if (document.getElementById('auto-scroll').checked) {
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+        }
+
+        function showAlert(containerId, message, type = 'success') {
+            const container = document.getElementById(containerId);
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        async function connectPool() {
+            try {
+                const config = {
+                    host: document.getElementById('host').value,
+                    port: parseInt(document.getElementById('port').value),
+                    user: document.getElementById('user').value,
+                    password: document.getElementById('password').value,
+                    database: document.getElementById('database').value,
+                    connectionLimit: parseInt(document.getElementById('connectionLimit').value),
+                    acquireTimeout: parseInt(document.getElementById('acquireTimeout').value),
+                    timeout: parseInt(document.getElementById('timeout').value),
+                    charset: document.getElementById('charset').value,
+                    reconnect: document.getElementById('reconnect').checked
+                };
+
+                log(`Connecting to MySQL: ${config.host}:${config.port}/${config.database}`);
+                
+                pool = new MockMySQLPool(config);
+                await pool.connect();
+                
+                // Update UI
+                document.getElementById('connection-status').className = 'status-indicator status-connected';
+                document.getElementById('connection-text').textContent = 'Connected';
+                document.getElementById('connection-details').textContent = `${config.host}:${config.port}/${config.database}`;
+                
+                updateStats();
+                showAlert('connection-alert', 'Successfully connected to MySQL database!', 'success');
+                log('MySQL connection pool established successfully');
+                
+            } catch (error) {
+                document.getElementById('connection-status').className = 'status-indicator status-disconnected';
+                document.getElementById('connection-text').textContent = 'Connection Failed';
+                showAlert('connection-alert', `Connection failed: ${error.message}`, 'error');
+                log(`Connection failed: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function disconnectPool() {
+            if (pool) {
+                try {
+                    await pool.end();
+                    pool = null;
+                    
+                    document.getElementById('connection-status').className = 'status-indicator status-disconnected';
+                    document.getElementById('connection-text').textContent = 'Disconnected';
+                    document.getElementById('connection-details').textContent = 'No active connections';
+                    
+                    updateStats();
+                    showAlert('connection-alert', 'Disconnected from MySQL database', 'warning');
+                    log('MySQL connection pool closed');
+                    
+                } catch (error) {
+                    showAlert('connection-alert', `Disconnect error: ${error.message}`, 'error');
+                    log(`Disconnect error: ${error.message}`, 'ERROR');
+                }
+            }
+        }
+
+        async function testConnection() {
+            if (!pool) {
+                showAlert('connection-alert', 'No active connection pool', 'error');
+                return;
+            }
+
+            try {
+                log('Testing connection...');
+                const startTime = Date.now();
+                await pool.execute('SELECT 1 as test');
+                const duration = Date.now() - startTime;
+                
+                showAlert('connection-alert', `Connection test successful (${duration}ms)`, 'success');
+                log(`Connection test passed in ${duration}ms`);
+                
+            } catch (error) {
+                showAlert('connection-alert', `Connection test failed: ${error.message}`, 'error');
+                log(`Connection test failed: ${error.message}`, 'ERROR');
+            }
+        }
+
+        async function executeQuery() {
+            if (!pool) {
+                showAlert('query-alert', 'No active connection pool', 'error');
+                return;
+            }
+
+            const sql = document.getElementById('sql-query').value.trim();
+            const paramsText = document.getElementById('query-params').value.trim();
+            
+            if (!sql) {
+                showAlert('query-alert', 'Please enter a SQL query', 'error');
+                return;
+            }
+
+            try {
+                let params = [];
+                if (paramsText) {
+                    params = JSON.parse(paramsText);
+                }
+
+                log(`Executing query: ${sql}`);
+                log(`Parameters: ${JSON.stringify(params)}`);
+                
+                const startTime = Date.now();
+                const [results, metadata] = await pool.execute(sql, params);
+                const duration = Date.now() - startTime;
+                
+                displayQueryResults(results, metadata, duration);
+                showAlert('query-alert', `Query executed successfully (${duration}ms)`, 'success');
+                log(`Query completed in ${duration}ms, ${results.length} rows returned`);
+                
+                updateStats();
+                
+            } catch (error) {
+                queryStats.errors++;
+                showAlert('query-alert', `Query failed: ${error.message}`, 'error');
+                log(`Query failed: ${error.message}`, 'ERROR');
+            }
+        }
+
+        function displayQueryResults(results, metadata, duration) {
+            const container = document.getElementById('query-results');
+            
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <h4>Query Results (${duration}ms)</h4>
+                    <p>No rows returned</p>
+                    <p>Affected rows: ${metadata.affectedRows}</p>
+                `;
+            } else {
+                const columns = Object.keys(results[0]);
+                const tableHTML = `
+                    <h4>Query Results (${duration}ms) - ${results.length} rows</h4>
+                    <table>
+                        <thead>
+                            <tr>${columns.map(col => `<th>${col}</th>`).join('')}</tr>
+                        </thead>
+                        <tbody>
+                            ${results.map(row => 
+                                `<tr>${columns.map(col => `<td>${row[col] || ''}</td>`).join('')}</tr>`
+                            ).join('')}
+                        </tbody>
+                    </table>
+                `;
+                container.innerHTML = tableHTML;
+            }
+            
+            container.style.display = 'block';
+        }
+
+        function updateStats() {
+            if (pool) {
+                const stats = pool.getStats();
+                document.getElementById('active-connections').textContent = stats.active;
+                document.getElementById('total-connections').textContent = stats.total;
+                document.getElementById('queued-requests').textContent = stats.queue;
+                
+                document.getElementById('metric-active').textContent = stats.active;
+                document.getElementById('metric-idle').textContent = stats.idle;
+                document.getElementById('metric-total').textContent = stats.total;
+                document.getElementById('metric-queue').textContent = stats.queue;
+            } else {
+                document.getElementById('active-connections').textContent = '0';
+                document.getElementById('total-connections').textContent = '0';
+                document.getElementById('queued-requests').textContent = '0';
+                
+                document.getElementById('metric-active').textContent = '0';
+                document.getElementById('metric-idle').textContent = '0';
+                document.getElementById('metric-total').textContent = '0';
+                document.getElementById('metric-queue').textContent = '0';
+            }
+            
+            document.getElementById('total-queries').textContent = queryStats.totalQueries;
+            document.getElementById('error-count').textContent = queryStats.errors;
+            
+            const avgTime = queryStats.totalQueries > 0 ? 
+                Math.round(queryStats.totalTime / queryStats.totalQueries) : 0;
+            document.getElementById('avg-query-time').textContent = `${avgTime}ms`;
+        }
+
+        function startMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+            }
+            
+            monitoringInterval = setInterval(() => {
+                updateStats();
+            }, 2000);
+            
+            showAlert('monitoring-alert', 'Auto-refresh started (2s interval)', 'success');
+            log('Monitoring started with 2-second refresh interval');
+        }
+
+        function stopMonitoring() {
+            if (monitoringInterval) {
+                clearInterval(monitoringInterval);
+                monitoringInterval = null;
+                showAlert('monitoring-alert', 'Auto-refresh stopped', 'warning');
+                log('Monitoring stopped');
+            }
+        }
+
+        function clearLogs() {
+            document.getElementById('log-container').innerHTML = '';
+            log('Logs cleared');
+        }
+
+        function clearResults() {
+            document.getElementById('query-results').style.display = 'none';
+            document.getElementById('query-results').innerHTML = '';
+        }
+
+        // Initialize
+        updateStats();
+        log('MySQL Admin Panel ready');
+    </script>
+</body>
+</html>

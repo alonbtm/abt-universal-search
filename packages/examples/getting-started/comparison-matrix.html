@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Search - Progressive Complexity Comparison</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #2d3748;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #718096;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .comparison-controls {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-options {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: #4a5568;
+        }
+
+        .filter-select {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .comparison-table {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        thead th {
+            padding: 1rem;
+            font-weight: 600;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background-color: #f7fafc;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+
+        .feature-category {
+            font-weight: 600;
+            background: #f0f4f8;
+            color: #2d3748;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .feature-name {
+            font-weight: 500;
+            color: #4a5568;
+            width: 200px;
+            min-width: 200px;
+        }
+
+        .level-cell {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .support-level {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+
+        .support-full {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .support-partial {
+            background: #fed7aa;
+            color: #c05621;
+        }
+
+        .support-basic {
+            background: #bee3f8;
+            color: #2a69ac;
+        }
+
+        .support-none {
+            background: #fed7d7;
+            color: #822727;
+        }
+
+        .support-enterprise {
+            background: #e9d8fd;
+            color: #553c9a;
+        }
+
+        .complexity-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .complexity-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e2e8f0;
+        }
+
+        .complexity-dot.active {
+            background: #667eea;
+        }
+
+        .time-estimate {
+            font-size: 0.875rem;
+            color: #718096;
+            font-style: italic;
+        }
+
+        .code-sample {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.8rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+
+        .side-by-side {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .level-showcase {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .level-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .level-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .level-description {
+            color: #718096;
+            margin-bottom: 1rem;
+        }
+
+        .level-highlights {
+            list-style: none;
+        }
+
+        .level-highlights li {
+            padding: 0.25rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .level-highlights li::before {
+            content: '✓';
+            color: #38a169;
+            font-weight: bold;
+        }
+
+        .migration-path {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .migration-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .migration-timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 1;
+        }
+
+        .migration-step {
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #667eea;
+            position: relative;
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .migration-step:hover {
+            transform: scale(1.1);
+            background: #667eea;
+            color: white;
+        }
+
+        .migration-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .migration-label {
+            text-align: center;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #4a5568;
+            max-width: 120px;
+        }
+
+        .performance-metrics {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .metric-card {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .metric-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-values {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+        }
+
+        .metric-trend {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+        }
+
+        .trend-up {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .trend-down {
+            background: #c6f6d5;
+            color: #38a169;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .comparison-table {
+                font-size: 0.8rem;
+            }
+
+            .filter-options {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .side-by-side {
+                grid-template-columns: 1fr;
+            }
+
+            .migration-timeline {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .migration-timeline::before {
+                top: 0;
+                bottom: 0;
+                left: 50%;
+                width: 2px;
+                height: auto;
+            }
+
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Progressive Complexity Comparison</h1>
+            <p>Compare Universal Search implementation levels side-by-side to choose the right approach for your project</p>
+        </div>
+
+        <div class="comparison-controls">
+            <div class="filter-options">
+                <div class="filter-group">
+                    <span class="filter-label">Category:</span>
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="setup">Setup & Installation</option>
+                        <option value="features">Features & Capabilities</option>
+                        <option value="development">Development Experience</option>
+                        <option value="performance">Performance & Optimization</option>
+                        <option value="security">Security & Compliance</option>
+                        <option value="deployment">Deployment & DevOps</option>
+                        <option value="maintenance">Maintenance & Support</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Compare:</span>
+                    <select id="compareMode" class="filter-select">
+                        <option value="all">All Levels</option>
+                        <option value="basic">Basic (1-2)</option>
+                        <option value="intermediate">Intermediate (2-3)</option>
+                        <option value="advanced">Advanced (3-4)</option>
+                        <option value="full">Full Journey (1-4)</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">View:</span>
+                    <select id="viewMode" class="filter-select">
+                        <option value="table">Comparison Table</option>
+                        <option value="cards">Side-by-Side Cards</option>
+                        <option value="migration">Migration Path</option>
+                        <option value="performance">Performance Metrics</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table View -->
+        <div id="tableView" class="comparison-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th class="level-cell">
+                            Level 1<br>
+                            <span class="time-estimate">30 seconds</span>
+                        </th>
+                        <th class="level-cell">
+                            Level 2<br>
+                            <span class="time-estimate">5 minutes</span>
+                        </th>
+                        <th class="level-cell">
+                            Level 3<br>
+                            <span class="time-estimate">30 minutes</span>
+                        </th>
+                        <th class="level-cell">
+                            Level 4<br>
+                            <span class="time-estimate">Production</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="comparisonTableBody">
+                    <!-- Table content will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Side-by-Side Cards View -->
+        <div id="cardsView" class="side-by-side hidden">
+            <div class="level-showcase">
+                <div class="level-header">
+                    <div class="level-number">1</div>
+                    <div>
+                        <div class="level-title">30-Second Start</div>
+                        <div class="complexity-indicator">
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot"></div>
+                            <div class="complexity-dot"></div>
+                            <div class="complexity-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="level-description">Get started instantly with a single HTML file and CDN link. Perfect for quick prototypes and simple implementations.</p>
+                <ul class="level-highlights">
+                    <li>Zero configuration required</li>
+                    <li>CDN-based installation</li>
+                    <li>In-memory data only</li>
+                    <li>Basic UI components</li>
+                    <li>No build process needed</li>
+                </ul>
+                <div class="code-sample">
+&lt;script src="https://cdn.jsdelivr.net/npm/universal-search@latest"&gt;&lt;/script&gt;
+&lt;script&gt;
+  new UniversalSearch({
+    containerId: 'search',
+    data: [...]
+  });
+&lt;/script&gt;
+                </div>
+            </div>
+
+            <div class="level-showcase">
+                <div class="level-header">
+                    <div class="level-number">2</div>
+                    <div>
+                        <div class="level-title">5-Minute Setup</div>
+                        <div class="complexity-indicator">
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot"></div>
+                            <div class="complexity-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="level-description">npm-based installation with TypeScript support and basic development tooling. Ideal for small to medium projects.</p>
+                <ul class="level-highlights">
+                    <li>npm package installation</li>
+                    <li>TypeScript support</li>
+                    <li>ES module imports</li>
+                    <li>Basic type safety</li>
+                    <li>Simple build process</li>
+                </ul>
+                <div class="code-sample">
+npm install @universal-search/core
+import { UniversalSearch } from '@universal-search/core';
+
+const search = new UniversalSearch({
+  dataSource: { type: 'memory', data: [...] }
+});
+                </div>
+            </div>
+
+            <div class="level-showcase">
+                <div class="level-header">
+                    <div class="level-number">3</div>
+                    <div>
+                        <div class="level-title">30-Minute Integration</div>
+                        <div class="complexity-indicator">
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="level-description">Full development environment with all data sources, testing, and advanced features. Perfect for production applications.</p>
+                <ul class="level-highlights">
+                    <li>All 4 data source types</li>
+                    <li>Comprehensive testing</li>
+                    <li>Advanced build tools</li>
+                    <li>Custom styling system</li>
+                    <li>Error handling & loading states</li>
+                </ul>
+                <div class="code-sample">
+const config = {
+  dataSources: [
+    { type: 'api', endpoint: '...' },
+    { type: 'sql', query: '...' },
+    { type: 'dom', selector: '...' },
+    { type: 'memory', data: [...] }
+  ]
+};
+                </div>
+            </div>
+
+            <div class="level-showcase">
+                <div class="level-header">
+                    <div class="level-number">4</div>
+                    <div>
+                        <div class="level-title">Production Deployment</div>
+                        <div class="complexity-indicator">
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot active"></div>
+                            <div class="complexity-dot active"></div>
+                        </div>
+                    </div>
+                </div>
+                <p class="level-description">Enterprise-grade implementation with security, monitoring, and scalability. Ready for mission-critical applications.</p>
+                <ul class="level-highlights">
+                    <li>Enterprise security measures</li>
+                    <li>Performance monitoring</li>
+                    <li>Docker & Kubernetes ready</li>
+                    <li>CI/CD pipeline integration</li>
+                    <li>24/7 support available</li>
+                </ul>
+                <div class="code-sample">
+const productionConfig = {
+  security: { rateLimit: true, sanitize: true },
+  monitoring: { metrics: true, alerts: true },
+  performance: { caching: true, optimization: true },
+  deployment: { docker: true, k8s: true }
+};
+                </div>
+            </div>
+        </div>
+
+        <!-- Migration Path View -->
+        <div id="migrationView" class="migration-path hidden">
+            <h2 style="text-align: center; margin-bottom: 2rem; color: #2d3748;">Migration Timeline</h2>
+            <div class="migration-timeline">
+                <div class="migration-step" data-level="1">1</div>
+                <div class="migration-step" data-level="2">2</div>
+                <div class="migration-step" data-level="3">3</div>
+                <div class="migration-step" data-level="4">4</div>
+            </div>
+            <div class="migration-labels">
+                <div class="migration-label">30-Second<br>CDN Start</div>
+                <div class="migration-label">5-Minute<br>npm Setup</div>
+                <div class="migration-label">30-Minute<br>Full Integration</div>
+                <div class="migration-label">Production<br>Enterprise</div>
+            </div>
+            <div id="migrationDetails" style="margin-top: 2rem; padding: 2rem; background: #f8fafc; border-radius: 12px;">
+                <p style="text-align: center; color: #718096;">Click on a step above to see migration details</p>
+            </div>
+        </div>
+
+        <!-- Performance Metrics View -->
+        <div id="performanceView" class="performance-metrics hidden">
+            <h2 style="text-align: center; margin-bottom: 1rem; color: #2d3748;">Performance Comparison Across Levels</h2>
+            <p style="text-align: center; color: #718096; margin-bottom: 2rem;">How each complexity level performs across key metrics</p>
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-title">Setup Time</div>
+                    <div class="metric-values">
+                        <div class="metric-value">30s → 6h</div>
+                        <div class="metric-trend trend-up">↑1200%</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Bundle Size</div>
+                    <div class="metric-values">
+                        <div class="metric-value">50KB → 2MB</div>
+                        <div class="metric-trend trend-up">↑4000%</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Features</div>
+                    <div class="metric-values">
+                        <div class="metric-value">5 → 50+</div>
+                        <div class="metric-trend trend-down">↑1000%</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Security Score</div>
+                    <div class="metric-values">
+                        <div class="metric-value">3/10 → 10/10</div>
+                        <div class="metric-trend trend-down">↑233%</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Maintenance</div>
+                    <div class="metric-values">
+                        <div class="metric-value">0h → 2h/week</div>
+                        <div class="metric-trend trend-up">↑∞</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-title">Scalability</div>
+                    <div class="metric-values">
+                        <div class="metric-value">100 → 1M+</div>
+                        <div class="metric-trend trend-down">↑10000%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comparison data
+        const comparisonData = [
+            // Setup & Installation
+            { category: 'setup', feature: 'Installation Method', level1: 'CDN Script Tag', level2: 'npm install', level3: 'npm + dev deps', level4: 'Enterprise setup', support: ['basic', 'full', 'full', 'enterprise'] },
+            { category: 'setup', feature: 'Setup Time', level1: '30 seconds', level2: '5 minutes', level3: '30 minutes', level4: '2-6 hours', support: ['full', 'full', 'full', 'full'] },
+            { category: 'setup', feature: 'Prerequisites', level1: 'Web browser', level2: 'Node.js 18+', level3: 'Node.js 18+', level4: 'Docker/K8s', support: ['full', 'full', 'full', 'enterprise'] },
+            { category: 'setup', feature: 'Configuration', level1: 'Inline JS object', level2: 'Config file', level3: 'Multi-file config', level4: 'Environment-based', support: ['basic', 'full', 'full', 'enterprise'] },
+
+            // Features & Capabilities  
+            { category: 'features', feature: 'Data Sources', level1: 'Memory only', level2: 'Memory only', level3: 'All 4 types', level4: 'All + custom', support: ['basic', 'basic', 'full', 'enterprise'] },
+            { category: 'features', feature: 'Search Types', level1: 'Simple text', level2: 'Text + basic', level3: 'Advanced search', level4: 'AI-powered', support: ['basic', 'partial', 'full', 'enterprise'] },
+            { category: 'features', feature: 'UI Customization', level1: 'Minimal', level2: 'Basic themes', level3: 'Full customization', level4: 'White-label', support: ['basic', 'partial', 'full', 'enterprise'] },
+            { category: 'features', feature: 'Real-time Updates', level1: 'None', level2: 'None', level3: 'DOM watching', level4: 'Full real-time', support: ['none', 'none', 'partial', 'full'] },
+
+            // Development Experience
+            { category: 'development', feature: 'TypeScript Support', level1: 'None', level2: 'Full support', level3: 'Full support', level4: 'Strict mode', support: ['none', 'full', 'full', 'enterprise'] },
+            { category: 'development', feature: 'Testing Framework', level1: 'None', level2: 'None', level3: 'Jest + Playwright', level4: 'Full test suite', support: ['none', 'none', 'full', 'enterprise'] },
+            { category: 'development', feature: 'Build Tools', level1: 'None', level2: 'Basic tsc', level3: 'Vite + advanced', level4: 'Enterprise pipeline', support: ['none', 'basic', 'full', 'enterprise'] },
+            { category: 'development', feature: 'Hot Reload', level1: 'None', level2: 'None', level3: 'Vite dev server', level4: 'Advanced HMR', support: ['none', 'none', 'full', 'enterprise'] },
+
+            // Performance & Optimization  
+            { category: 'performance', feature: 'Bundle Size', level1: '~50KB', level2: '~100KB', level3: '~500KB', level4: '~2MB', support: ['full', 'full', 'partial', 'basic'] },
+            { category: 'performance', feature: 'Caching Strategy', level1: 'Browser cache', level2: 'Basic caching', level3: 'Advanced cache', level4: 'Multi-layer', support: ['basic', 'partial', 'full', 'enterprise'] },
+            { category: 'performance', feature: 'Code Splitting', level1: 'None', level2: 'None', level3: 'Automatic', level4: 'Optimized', support: ['none', 'none', 'full', 'enterprise'] },
+            { category: 'performance', feature: 'Lazy Loading', level1: 'None', level2: 'None', level3: 'Components', level4: 'Everything', support: ['none', 'none', 'partial', 'full'] },
+
+            // Security & Compliance
+            { category: 'security', feature: 'Input Sanitization', level1: 'Basic', level2: 'Basic', level3: 'Advanced', level4: 'Enterprise', support: ['basic', 'basic', 'full', 'enterprise'] },
+            { category: 'security', feature: 'Rate Limiting', level1: 'None', level2: 'None', level3: 'None', level4: 'Advanced', support: ['none', 'none', 'none', 'full'] },
+            { category: 'security', feature: 'Authentication', level1: 'None', level2: 'None', level3: 'Basic', level4: 'Enterprise SSO', support: ['none', 'none', 'basic', 'enterprise'] },
+            { category: 'security', feature: 'Audit Logging', level1: 'None', level2: 'None', level3: 'Basic', level4: 'Full audit', support: ['none', 'none', 'basic', 'enterprise'] },
+
+            // Deployment & DevOps
+            { category: 'deployment', feature: 'Deployment Type', level1: 'Static files', level2: 'Static build', level3: 'Node.js app', level4: 'Container/K8s', support: ['full', 'full', 'full', 'enterprise'] },
+            { category: 'deployment', feature: 'CI/CD Integration', level1: 'None', level2: 'Basic', level3: 'Advanced', level4: 'Full pipeline', support: ['none', 'basic', 'full', 'enterprise'] },
+            { category: 'deployment', feature: 'Monitoring', level1: 'None', level2: 'None', level3: 'Basic', level4: 'Full monitoring', support: ['none', 'none', 'basic', 'enterprise'] },
+            { category: 'deployment', feature: 'Health Checks', level1: 'None', level2: 'None', level3: 'None', level4: 'Comprehensive', support: ['none', 'none', 'none', 'full'] },
+
+            // Maintenance & Support
+            { category: 'maintenance', feature: 'Documentation', level1: 'Basic', level2: 'Good', level3: 'Comprehensive', level4: 'Enterprise docs', support: ['basic', 'full', 'full', 'enterprise'] },
+            { category: 'maintenance', feature: 'Community Support', level1: 'GitHub Issues', level2: 'GitHub Issues', level3: 'Discord + GitHub', level4: 'Priority support', support: ['basic', 'basic', 'full', 'enterprise'] },
+            { category: 'maintenance', feature: 'Update Frequency', level1: 'Monthly', level2: 'Monthly', level3: 'Bi-weekly', level4: 'On-demand', support: ['full', 'full', 'full', 'enterprise'] },
+            { category: 'maintenance', feature: 'Breaking Changes', level1: 'Possible', level2: 'Rare', level3: 'Rare', level4: 'Never', support: ['basic', 'partial', 'partial', 'full'] }
+        ];
+
+        // Migration details
+        const migrationDetails = {
+            1: {
+                title: "Level 1: 30-Second Start",
+                description: "Perfect for quick prototypes and simple implementations",
+                features: ["Zero configuration", "CDN-based", "In-memory data", "Basic UI"],
+                nextStep: "Ready to add TypeScript and proper development tools? Migrate to Level 2"
+            },
+            2: {
+                title: "Level 2: 5-Minute Setup", 
+                description: "npm-based installation with TypeScript support",
+                features: ["npm package", "TypeScript support", "ES modules", "Type safety"],
+                nextStep: "Need multiple data sources and testing? Migrate to Level 3"
+            },
+            3: {
+                title: "Level 3: 30-Minute Integration",
+                description: "Full development environment with all features",
+                features: ["All data sources", "Testing framework", "Advanced build", "Custom styling"],
+                nextStep: "Ready for production with enterprise security? Migrate to Level 4"
+            },
+            4: {
+                title: "Level 4: Production Deployment",
+                description: "Enterprise-grade implementation for mission-critical applications",
+                features: ["Enterprise security", "Full monitoring", "Container ready", "24/7 support"],
+                nextStep: "You've reached the highest level! Consider custom enterprise features."
+            }
+        };
+
+        // DOM elements
+        const categoryFilter = document.getElementById('categoryFilter');
+        const compareMode = document.getElementById('compareMode');
+        const viewMode = document.getElementById('viewMode');
+        const tableView = document.getElementById('tableView');
+        const cardsView = document.getElementById('cardsView');
+        const migrationView = document.getElementById('migrationView');
+        const performanceView = document.getElementById('performanceView');
+        const comparisonTableBody = document.getElementById('comparisonTableBody');
+        const migrationDetails_div = document.getElementById('migrationDetails');
+
+        // Initialize comparison table
+        function renderTable() {
+            const categoryValue = categoryFilter.value;
+            const filteredData = categoryValue ? 
+                comparisonData.filter(item => item.category === categoryValue) : 
+                comparisonData;
+
+            // Group by category
+            const grouped = {};
+            filteredData.forEach(item => {
+                if (!grouped[item.category]) {
+                    grouped[item.category] = [];
+                }
+                grouped[item.category].push(item);
+            });
+
+            // Generate table HTML
+            let html = '';
+            Object.keys(grouped).forEach(category => {
+                html += `
+                    <tr class="feature-category">
+                        <td colspan="5">${category.replace(/^\w/, c => c.toUpperCase())}</td>
+                    </tr>
+                `;
+                
+                grouped[category].forEach(item => {
+                    html += `
+                        <tr>
+                            <td class="feature-name">${item.feature}</td>
+                            <td class="level-cell">
+                                <span class="support-level support-${item.support[0]}">${item.level1}</span>
+                            </td>
+                            <td class="level-cell">
+                                <span class="support-level support-${item.support[1]}">${item.level2}</span>
+                            </td>
+                            <td class="level-cell">
+                                <span class="support-level support-${item.support[2]}">${item.level3}</span>
+                            </td>
+                            <td class="level-cell">
+                                <span class="support-level support-${item.support[3]}">${item.level4}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            comparisonTableBody.innerHTML = html;
+        }
+
+        // View switching
+        function switchView(view) {
+            [tableView, cardsView, migrationView, performanceView].forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            switch(view) {
+                case 'cards':
+                    cardsView.classList.remove('hidden');
+                    break;
+                case 'migration':
+                    migrationView.classList.remove('hidden');
+                    break;
+                case 'performance':
+                    performanceView.classList.remove('hidden');
+                    break;
+                default:
+                    tableView.classList.remove('hidden');
+            }
+        }
+
+        // Migration step details
+        function showMigrationDetails(level) {
+            const details = migrationDetails[level];
+            migrationDetails_div.innerHTML = `
+                <h3 style="color: #2d3748; margin-bottom: 1rem;">${details.title}</h3>
+                <p style="color: #718096; margin-bottom: 1.5rem;">${details.description}</p>
+                <div style="margin-bottom: 1.5rem;">
+                    <h4 style="color: #4a5568; margin-bottom: 0.5rem;">Key Features:</h4>
+                    <ul style="color: #718096;">
+                        ${details.features.map(feature => `<li style="margin-bottom: 0.25rem;">✓ ${feature}</li>`).join('')}
+                    </ul>
+                </div>
+                <div style="background: #f0f4f8; padding: 1rem; border-radius: 8px; border-left: 4px solid #667eea;">
+                    <strong style="color: #2d3748;">Next Step:</strong><br>
+                    <span style="color: #4a5568;">${details.nextStep}</span>
+                </div>
+            `;
+        }
+
+        // Event listeners
+        categoryFilter.addEventListener('change', renderTable);
+        viewMode.addEventListener('change', (e) => switchView(e.target.value));
+
+        document.querySelectorAll('.migration-step').forEach(step => {
+            step.addEventListener('click', () => {
+                const level = parseInt(step.dataset.level);
+                showMigrationDetails(level);
+            });
+        });
+
+        // Initialize
+        renderTable();
+        showMigrationDetails(1);
+
+        console.log('📊 Universal Search Comparison Matrix loaded successfully');
+    </script>
+</body>
+</html>

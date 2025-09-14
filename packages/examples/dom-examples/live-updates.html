@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Content Updates - DOM Element Search</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        .content-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            min-height: 200px;
+            padding: 15px;
+            margin: 15px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .dynamic-item {
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #eee;
+            border-radius: 4px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            animation: fadeIn 0.3s ease-in;
+        }
+        .dynamic-item.highlighted {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);
+        }
+        .dynamic-item.hidden {
+            display: none;
+        }
+        .dynamic-item.removing {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+        .dynamic-item.new {
+            background-color: #e8f5e8;
+            border-color: #4caf50;
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateX(-100%); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn:hover {
+            background: #f0f0f0;
+        }
+        .btn.primary {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        .btn.primary:hover {
+            background: #1976d2;
+        }
+        .btn.danger {
+            background: #f44336;
+            color: white;
+            border-color: #f44336;
+        }
+        .btn.danger:hover {
+            background: #d32f2f;
+        }
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-controls label {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .search-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .search-stats {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+        .mutation-log {
+            background: #f0f8ff;
+            border: 1px solid #2196f3;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 15px 0;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .mutation-log .mutation-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid #e3f2fd;
+        }
+        .mutation-log .mutation-entry:last-child {
+            border-bottom: none;
+        }
+        .mutation-log .timestamp {
+            color: #666;
+            margin-right: 8px;
+        }
+        .match-highlight {
+            background-color: #ffeb3b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .performance-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .live-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            margin-right: 6px;
+            animation: pulse 2s infinite;
+        }
+        .live-indicator.paused {
+            background: #f44336;
+            animation: none;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .stream-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .auto-add-enabled {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .websocket-status {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .websocket-connected {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .websocket-disconnected {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .real-time-feed {
+            border-left: 4px solid #2196f3;
+            padding-left: 15px;
+            margin: 15px 0;
+        }
+        .feed-item {
+            padding: 8px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .feed-item.new {
+            animation: highlight 2s ease-out;
+        }
+        @keyframes highlight {
+            0% { background-color: #e3f2fd; }
+            100% { background-color: #f8f9fa; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Content Updates with MutationObserver</h1>
+    
+    <div class="example-section">
+        <h2>🔄 Real-time DOM Search with Dynamic Content</h2>
+        <p>Search functionality that automatically adapts to content changes using MutationObserver API.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="liveSearch" 
+            placeholder="Search dynamic content... (try 'item', 'task', or 'message')"
+            aria-label="Live search with dynamic content updates"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <span class="live-indicator" id="liveIndicator"></span>
+                Live Updates Active
+            </label>
+            <label>
+                <input type="checkbox" id="highlightMatches" checked />
+                Highlight Matches
+            </label>
+            <label>
+                <input type="checkbox" id="autoReindex" checked />
+                Auto Re-index
+            </label>
+            <label>
+                <input type="checkbox" id="showMutations" />
+                Show Mutation Log
+            </label>
+        </div>
+        
+        <div class="controls">
+            <button class="btn primary" onclick="liveSearchDemo.addRandomItem()">Add Item</button>
+            <button class="btn" onclick="liveSearchDemo.modifyRandomItem()">Modify Item</button>
+            <button class="btn danger" onclick="liveSearchDemo.removeRandomItem()">Remove Item</button>
+            <button class="btn" onclick="liveSearchDemo.addBulkItems(5)">Add 5 Items</button>
+            <button class="btn" onclick="liveSearchDemo.clearAll()">Clear All</button>
+        </div>
+        
+        <div id="live-stats" class="search-stats">
+            <span>Showing <strong id="live-visible">0</strong> of <strong id="live-total">0</strong> items</span>
+            <span>Mutations: <strong id="mutation-count">0</strong></span>
+        </div>
+        
+        <div id="mutationLog" class="mutation-log" style="display: none;">
+            <div><strong>Mutation Log:</strong></div>
+        </div>
+        
+        <div id="liveContent" class="content-container">
+            <!-- Dynamic content will be added here -->
+        </div>
+        
+        <div class="performance-info">
+            <span>Search Performance: <strong id="live-performance">Ready</strong></span>
+            <span>Observer Status: <strong id="observer-status">Active</strong></span>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>📡 Simulated Real-time Data Feed</h2>
+        <p>Simulates a real-time data feed (like chat messages or notifications) with automatic search indexing.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="feedSearch" 
+            placeholder="Search real-time feed... (try 'user', 'error', or 'success')"
+            aria-label="Search real-time data feed"
+        />
+        
+        <div class="stream-controls">
+            <button class="btn primary" id="startFeed" onclick="liveSearchDemo.startDataFeed()">Start Feed</button>
+            <button class="btn" id="stopFeed" onclick="liveSearchDemo.stopDataFeed()" disabled>Stop Feed</button>
+            <button class="btn" onclick="liveSearchDemo.clearFeed()">Clear Feed</button>
+            <span id="feedStatus" class="websocket-disconnected websocket-status">Feed Stopped</span>
+            <span id="autoAddStatus" class="auto-add-enabled" style="display: none;">Auto-adding items...</span>
+        </div>
+        
+        <div id="feed-stats" class="search-stats">
+            <span>Feed Items: <strong id="feed-total">0</strong> | Visible: <strong id="feed-visible">0</strong></span>
+            <span>Feed Rate: <strong id="feed-rate">0</strong> items/sec</span>
+        </div>
+        
+        <div class="real-time-feed">
+            <div id="dataFeed" class="content-container">
+                <div class="feed-item">Real-time data will appear here when feed is started...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>🎛️ Advanced Mutation Handling</h2>
+        <p>Demonstrates different types of DOM mutations and how the search adapts to each type.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="advancedSearch" 
+            placeholder="Search mutation test area... (try 'test', 'attribute', or 'content')"
+            aria-label="Advanced mutation search"
+        />
+        
+        <div class="controls">
+            <button class="btn" onclick="liveSearchDemo.testAttributeMutation()">Change Attributes</button>
+            <button class="btn" onclick="liveSearchDemo.testTextMutation()">Change Text Content</button>
+            <button class="btn" onclick="liveSearchDemo.testStructureMutation()">Change Structure</button>
+            <button class="btn" onclick="liveSearchDemo.testNestedMutation()">Nested Changes</button>
+        </div>
+        
+        <div id="advanced-stats" class="search-stats">
+            <span>Mutation Types: <strong id="mutation-types">0</strong></span>
+            <span>Deep Changes: <strong id="deep-changes">0</strong></span>
+        </div>
+        
+        <div id="mutationTestArea" class="content-container">
+            <div class="dynamic-item" data-test-id="1" data-category="test">
+                <strong>Test Item 1:</strong> This content will be modified by mutation tests
+            </div>
+            <div class="dynamic-item" data-test-id="2" data-category="example">
+                <strong>Test Item 2:</strong> Watch how attributes and content changes are detected
+            </div>
+            <div class="dynamic-item" data-test-id="3" data-category="demo">
+                <strong>Test Item 3:</strong> Structural changes will trigger re-indexing
+                <div class="nested-content">Nested content for structure tests</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LiveSearchDemo {
+            constructor() {
+                this.mutationObserver = null;
+                this.feedInterval = null;
+                this.itemCounter = 0;
+                this.mutationCounter = 0;
+                this.feedCounter = 0;
+                this.feedStartTime = null;
+                this.searchIndexes = new Map();
+                this.lastSearchQuery = '';
+                
+                this.sampleItems = [
+                    { type: 'task', content: 'Complete project documentation', priority: 'high' },
+                    { type: 'message', content: 'Meeting scheduled for tomorrow', priority: 'medium' },
+                    { type: 'notification', content: 'System backup completed successfully', priority: 'low' },
+                    { type: 'task', content: 'Review pull requests', priority: 'high' },
+                    { type: 'message', content: 'New feature request received', priority: 'medium' },
+                    { type: 'alert', content: 'Server maintenance window tonight', priority: 'critical' },
+                    { type: 'task', content: 'Update user interface components', priority: 'medium' },
+                    { type: 'message', content: 'Team standup at 10 AM', priority: 'low' }
+                ];
+                
+                this.feedItems = [
+                    { type: 'user_login', message: 'User john@example.com logged in', level: 'info' },
+                    { type: 'error', message: 'Database connection timeout', level: 'error' },
+                    { type: 'success', message: 'Payment processed successfully', level: 'success' },
+                    { type: 'warning', message: 'High memory usage detected', level: 'warning' },
+                    { type: 'user_action', message: 'File uploaded by user', level: 'info' },
+                    { type: 'system', message: 'Cache cleared automatically', level: 'info' },
+                    { type: 'error', message: 'API rate limit exceeded', level: 'error' },
+                    { type: 'success', message: 'Backup completed', level: 'success' }
+                ];
+                
+                this.initializeMutationObserver();
+                this.bindEvents();
+                this.addInitialItems();
+            }
+            
+            initializeMutationObserver() {
+                this.mutationObserver = new MutationObserver((mutations) => {
+                    this.handleMutations(mutations);
+                });
+                
+                // Observe all target containers
+                const containers = ['#liveContent', '#dataFeed', '#mutationTestArea'];
+                containers.forEach(selector => {
+                    const container = document.querySelector(selector);
+                    if (container) {
+                        this.mutationObserver.observe(container, {
+                            childList: true,
+                            subtree: true,
+                            attributes: true,
+                            attributeOldValue: true,
+                            characterData: true,
+                            characterDataOldValue: true
+                        });
+                    }
+                });
+                
+                this.updateObserverStatus('Active');
+            }
+            
+            handleMutations(mutations) {
+                const startTime = performance.now();
+                let shouldReindex = false;
+                
+                mutations.forEach(mutation => {
+                    this.mutationCounter++;
+                    this.logMutation(mutation);
+                    
+                    switch(mutation.type) {
+                        case 'childList':
+                            if (mutation.addedNodes.length > 0 || mutation.removedNodes.length > 0) {
+                                shouldReindex = true;
+                            }
+                            break;
+                        case 'attributes':
+                            if (this.isSearchableAttribute(mutation.attributeName)) {
+                                shouldReindex = true;
+                            }
+                            break;
+                        case 'characterData':
+                            shouldReindex = true;
+                            break;
+                    }
+                });
+                
+                // Auto re-index if enabled
+                if (shouldReindex && document.getElementById('autoReindex')?.checked) {
+                    this.reindexAndSearch();
+                }
+                
+                this.updateMutationStats();
+                this.updatePerformance('live-performance', performance.now() - startTime);
+            }
+            
+            isSearchableAttribute(attributeName) {
+                const searchableAttributes = ['data-category', 'data-priority', 'data-type', 'title', 'aria-label'];
+                return searchableAttributes.includes(attributeName);
+            }
+            
+            logMutation(mutation) {
+                if (!document.getElementById('showMutations')?.checked) return;
+                
+                const logContainer = document.getElementById('mutationLog');
+                logContainer.style.display = 'block';
+                
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = 'mutation-entry';
+                
+                let description = '';
+                switch(mutation.type) {
+                    case 'childList':
+                        if (mutation.addedNodes.length) {
+                            description = `Added ${mutation.addedNodes.length} node(s)`;
+                        }
+                        if (mutation.removedNodes.length) {
+                            description += `${description ? ', ' : ''}Removed ${mutation.removedNodes.length} node(s)`;
+                        }
+                        break;
+                    case 'attributes':
+                        description = `Changed attribute: ${mutation.attributeName}`;
+                        break;
+                    case 'characterData':
+                        description = 'Changed text content';
+                        break;
+                }
+                
+                entry.innerHTML = `<span class="timestamp">${timestamp}</span>${description}`;
+                logContainer.appendChild(entry);
+                
+                // Keep only last 20 entries
+                while (logContainer.children.length > 21) { // +1 for header
+                    logContainer.removeChild(logContainer.children[1]);
+                }
+                
+                logContainer.scrollTop = logContainer.scrollHeight;
+            }
+            
+            bindEvents() {
+                document.getElementById('liveSearch').addEventListener('input', 
+                    this.debounce((e) => this.performLiveSearch(e.target.value), 300));
+                    
+                document.getElementById('feedSearch').addEventListener('input', 
+                    this.debounce((e) => this.performFeedSearch(e.target.value), 300));
+                    
+                document.getElementById('advancedSearch').addEventListener('input', 
+                    this.debounce((e) => this.performAdvancedSearch(e.target.value), 300));
+                
+                // Options change handlers
+                document.querySelectorAll('.search-controls input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.handleOptionsChange());
+                });
+            }
+            
+            addInitialItems() {
+                // Add some initial items
+                for (let i = 0; i < 3; i++) {
+                    this.addRandomItem();
+                }
+            }
+            
+            addRandomItem() {
+                const item = this.sampleItems[Math.floor(Math.random() * this.sampleItems.length)];
+                const container = document.getElementById('liveContent');
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'dynamic-item new';
+                itemElement.dataset.itemId = ++this.itemCounter;
+                itemElement.dataset.type = item.type;
+                itemElement.dataset.priority = item.priority;
+                itemElement.innerHTML = `
+                    <div><strong>${item.type.charAt(0).toUpperCase() + item.type.slice(1)} #${this.itemCounter}:</strong></div>
+                    <div>${item.content}</div>
+                    <small>Priority: ${item.priority} | Added: ${new Date().toLocaleTimeString()}</small>
+                `;
+                
+                container.appendChild(itemElement);
+                
+                // Remove 'new' class after animation
+                setTimeout(() => {
+                    itemElement.classList.remove('new');
+                }, 500);
+                
+                this.updateLiveStats();
+                return itemElement;
+            }
+            
+            modifyRandomItem() {
+                const items = document.querySelectorAll('#liveContent .dynamic-item');
+                if (items.length === 0) return;
+                
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                const modifications = [
+                    () => {
+                        randomItem.dataset.priority = ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)];
+                        randomItem.querySelector('small').textContent = 
+                            randomItem.querySelector('small').textContent.replace(/Priority: \w+/, 
+                            `Priority: ${randomItem.dataset.priority}`);
+                    },
+                    () => {
+                        const content = randomItem.querySelector('div:nth-child(2)');
+                        content.textContent += ' (modified)';
+                    },
+                    () => {
+                        randomItem.style.backgroundColor = '#e3f2fd';
+                        setTimeout(() => {
+                            randomItem.style.backgroundColor = '';
+                        }, 1000);
+                    }
+                ];
+                
+                const modification = modifications[Math.floor(Math.random() * modifications.length)];
+                modification();
+                
+                this.updateLiveStats();
+            }
+            
+            removeRandomItem() {
+                const items = document.querySelectorAll('#liveContent .dynamic-item');
+                if (items.length === 0) return;
+                
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                randomItem.classList.add('removing');
+                
+                setTimeout(() => {
+                    randomItem.remove();
+                    this.updateLiveStats();
+                }, 300);
+            }
+            
+            addBulkItems(count) {
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => this.addRandomItem(), i * 100);
+                }
+            }
+            
+            clearAll() {
+                const container = document.getElementById('liveContent');
+                const items = container.querySelectorAll('.dynamic-item');
+                
+                items.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.classList.add('removing');
+                        setTimeout(() => item.remove(), 300);
+                    }, index * 50);
+                });
+                
+                setTimeout(() => this.updateLiveStats(), items.length * 50 + 300);
+            }
+            
+            performLiveSearch(query) {
+                const startTime = performance.now();
+                const items = document.querySelectorAll('#liveContent .dynamic-item');
+                let visibleCount = 0;
+                
+                this.lastSearchQuery = query;
+                
+                items.forEach(item => {
+                    item.classList.remove('highlighted', 'hidden');
+                    
+                    if (!query.trim()) {
+                        visibleCount++;
+                        return;
+                    }
+                    
+                    const searchableContent = [
+                        item.textContent,
+                        item.dataset.type,
+                        item.dataset.priority
+                    ].join(' ').toLowerCase();
+                    
+                    if (searchableContent.includes(query.toLowerCase())) {
+                        item.classList.add('highlighted');
+                        visibleCount++;
+                        
+                        if (document.getElementById('highlightMatches')?.checked) {
+                            this.highlightMatches(item, query);
+                        }
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                this.updateLiveStats(visibleCount);
+                this.updatePerformance('live-performance', performance.now() - startTime);
+            }
+            
+            startDataFeed() {
+                if (this.feedInterval) return;
+                
+                this.feedStartTime = Date.now();
+                this.feedCounter = 0;
+                
+                document.getElementById('startFeed').disabled = true;
+                document.getElementById('stopFeed').disabled = false;
+                document.getElementById('feedStatus').textContent = 'Feed Active';
+                document.getElementById('feedStatus').className = 'websocket-connected websocket-status';
+                document.getElementById('autoAddStatus').style.display = 'inline';
+                
+                // Clear existing feed
+                document.getElementById('dataFeed').innerHTML = '';
+                
+                this.feedInterval = setInterval(() => {
+                    this.addFeedItem();
+                }, 1500); // Add item every 1.5 seconds
+            }
+            
+            stopDataFeed() {
+                if (this.feedInterval) {
+                    clearInterval(this.feedInterval);
+                    this.feedInterval = null;
+                }
+                
+                document.getElementById('startFeed').disabled = false;
+                document.getElementById('stopFeed').disabled = true;
+                document.getElementById('feedStatus').textContent = 'Feed Stopped';
+                document.getElementById('feedStatus').className = 'websocket-disconnected websocket-status';
+                document.getElementById('autoAddStatus').style.display = 'none';
+            }
+            
+            addFeedItem() {
+                const feedData = this.feedItems[Math.floor(Math.random() * this.feedItems.length)];
+                const container = document.getElementById('dataFeed');
+                
+                this.feedCounter++;
+                
+                const itemElement = document.createElement('div');
+                itemElement.className = 'feed-item new';
+                itemElement.dataset.feedId = this.feedCounter;
+                itemElement.dataset.type = feedData.type;
+                itemElement.dataset.level = feedData.level;
+                itemElement.innerHTML = `
+                    <div><strong>[${feedData.level.toUpperCase()}]</strong> ${feedData.type}: ${feedData.message}</div>
+                    <small>Feed ID: ${this.feedCounter} | Time: ${new Date().toLocaleTimeString()}</small>
+                `;
+                
+                container.appendChild(itemElement);
+                
+                // Remove 'new' class after animation
+                setTimeout(() => {
+                    itemElement.classList.remove('new');
+                }, 2000);
+                
+                // Keep only last 20 items
+                while (container.children.length > 20) {
+                    container.removeChild(container.firstChild);
+                }
+                
+                // Auto-scroll to bottom
+                container.scrollTop = container.scrollHeight;
+                
+                this.updateFeedStats();
+                this.reindexFeedSearch();
+            }
+            
+            clearFeed() {
+                document.getElementById('dataFeed').innerHTML = 
+                    '<div class="feed-item">Real-time data will appear here when feed is started...</div>';
+                this.feedCounter = 0;
+                this.updateFeedStats();
+            }
+            
+            performFeedSearch(query) {
+                const items = document.querySelectorAll('#dataFeed .feed-item');
+                let visibleCount = 0;
+                
+                items.forEach(item => {
+                    item.classList.remove('highlighted', 'hidden');
+                    
+                    if (!query.trim()) {
+                        visibleCount++;
+                        return;
+                    }
+                    
+                    const searchableContent = [
+                        item.textContent,
+                        item.dataset.type || '',
+                        item.dataset.level || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (searchableContent.includes(query.toLowerCase())) {
+                        item.classList.add('highlighted');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                this.updateFeedSearchStats(visibleCount);
+            }
+            
+            reindexFeedSearch() {
+                const feedQuery = document.getElementById('feedSearch').value;
+                if (feedQuery.trim()) {
+                    this.performFeedSearch(feedQuery);
+                }
+            }
+            
+            testAttributeMutation() {
+                const items = document.querySelectorAll('#mutationTestArea .dynamic-item');
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                
+                const newCategory = ['test', 'example', 'demo', 'sample'][Math.floor(Math.random() * 4)];
+                randomItem.dataset.category = newCategory;
+                randomItem.style.borderColor = '#ff9800';
+                
+                setTimeout(() => {
+                    randomItem.style.borderColor = '';
+                }, 1000);
+            }
+            
+            testTextMutation() {
+                const items = document.querySelectorAll('#mutationTestArea .dynamic-item');
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                
+                const content = randomItem.querySelector('strong').nextSibling;
+                content.textContent = ' Content updated at ' + new Date().toLocaleTimeString();
+            }
+            
+            testStructureMutation() {
+                const items = document.querySelectorAll('#mutationTestArea .dynamic-item');
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+                
+                // Add or remove nested content
+                const nested = randomItem.querySelector('.nested-content');
+                if (nested) {
+                    nested.remove();
+                } else {
+                    const newNested = document.createElement('div');
+                    newNested.className = 'nested-content';
+                    newNested.textContent = 'Dynamically added nested content';
+                    randomItem.appendChild(newNested);
+                }
+            }
+            
+            testNestedMutation() {
+                const container = document.getElementById('mutationTestArea');
+                const newItem = document.createElement('div');
+                newItem.className = 'dynamic-item new';
+                newItem.dataset.category = 'generated';
+                newItem.innerHTML = `
+                    <strong>Generated Item:</strong> Created by nested mutation test
+                    <div class="nested-content">
+                        <div class="deeply-nested">Deep content level 1</div>
+                    </div>
+                `;
+                
+                container.appendChild(newItem);
+                
+                setTimeout(() => {
+                    newItem.classList.remove('new');
+                    
+                    // Add deeper nesting
+                    const deepContent = newItem.querySelector('.deeply-nested');
+                    const deeper = document.createElement('div');
+                    deeper.textContent = 'Deep content level 2';
+                    deepContent.appendChild(deeper);
+                }, 500);
+                
+                // Remove after a few seconds
+                setTimeout(() => {
+                    newItem.classList.add('removing');
+                    setTimeout(() => newItem.remove(), 300);
+                }, 3000);
+            }
+            
+            performAdvancedSearch(query) {
+                const items = document.querySelectorAll('#mutationTestArea .dynamic-item');
+                let visibleCount = 0;
+                
+                items.forEach(item => {
+                    item.classList.remove('highlighted', 'hidden');
+                    
+                    if (!query.trim()) {
+                        visibleCount++;
+                        return;
+                    }
+                    
+                    const searchableContent = [
+                        item.textContent,
+                        item.dataset.category || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (searchableContent.includes(query.toLowerCase())) {
+                        item.classList.add('highlighted');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                this.updateAdvancedStats();
+            }
+            
+            reindexAndSearch() {
+                // Re-run the last search with current content
+                if (this.lastSearchQuery) {
+                    this.performLiveSearch(this.lastSearchQuery);
+                }
+            }
+            
+            highlightMatches(element, query) {
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+                const textNodes = this.getTextNodes(element);
+                
+                textNodes.forEach(node => {
+                    let content = node.textContent;
+                    let highlightedContent = content;
+                    
+                    searchTerms.forEach(term => {
+                        const regex = new RegExp(`(${this.escapeRegExp(term)})`, 'gi');
+                        highlightedContent = highlightedContent.replace(regex, '<span class="match-highlight">$1</span>');
+                    });
+                    
+                    if (highlightedContent !== content) {
+                        const wrapper = document.createElement('span');
+                        wrapper.innerHTML = highlightedContent;
+                        node.parentNode.replaceChild(wrapper, node);
+                    }
+                });
+            }
+            
+            getTextNodes(element) {
+                const textNodes = [];
+                const walker = document.createTreeWalker(
+                    element,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {
+                    if (node.textContent.trim()) {
+                        textNodes.push(node);
+                    }
+                }
+                
+                return textNodes;
+            }
+            
+            handleOptionsChange() {
+                // Re-run searches when options change
+                const liveQuery = document.getElementById('liveSearch').value;
+                const feedQuery = document.getElementById('feedSearch').value;
+                const advancedQuery = document.getElementById('advancedSearch').value;
+                
+                if (liveQuery.trim()) this.performLiveSearch(liveQuery);
+                if (feedQuery.trim()) this.performFeedSearch(feedQuery);
+                if (advancedQuery.trim()) this.performAdvancedSearch(advancedQuery);
+                
+                // Toggle mutation log display
+                const showMutations = document.getElementById('showMutations').checked;
+                document.getElementById('mutationLog').style.display = showMutations ? 'block' : 'none';
+            }
+            
+            updateLiveStats(visibleCount = null) {
+                const totalItems = document.querySelectorAll('#liveContent .dynamic-item').length;
+                const actualVisible = visibleCount !== null ? visibleCount : totalItems;
+                
+                document.getElementById('live-visible').textContent = actualVisible;
+                document.getElementById('live-total').textContent = totalItems;
+            }
+            
+            updateFeedStats() {
+                const totalItems = document.querySelectorAll('#dataFeed .feed-item').length;
+                document.getElementById('feed-total').textContent = totalItems;
+                
+                if (this.feedStartTime) {
+                    const elapsed = (Date.now() - this.feedStartTime) / 1000;
+                    const rate = (this.feedCounter / elapsed).toFixed(1);
+                    document.getElementById('feed-rate').textContent = rate;
+                }
+            }
+            
+            updateFeedSearchStats(visibleCount) {
+                document.getElementById('feed-visible').textContent = visibleCount;
+            }
+            
+            updateMutationStats() {
+                document.getElementById('mutation-count').textContent = this.mutationCounter;
+            }
+            
+            updateAdvancedStats() {
+                // This could track more detailed mutation statistics
+                document.getElementById('mutation-types').textContent = this.mutationCounter;
+                document.getElementById('deep-changes').textContent = Math.floor(this.mutationCounter / 3);
+            }
+            
+            updatePerformance(elementId, duration) {
+                document.getElementById(elementId).textContent = `${duration.toFixed(2)}ms`;
+            }
+            
+            updateObserverStatus(status) {
+                document.getElementById('observer-status').textContent = status;
+                const indicator = document.getElementById('liveIndicator');
+                
+                if (status === 'Active') {
+                    indicator.classList.remove('paused');
+                } else {
+                    indicator.classList.add('paused');
+                }
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        }
+        
+        // Initialize when DOM is ready
+        let liveSearchDemo;
+        document.addEventListener('DOMContentLoaded', () => {
+            liveSearchDemo = new LiveSearchDemo();
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (liveSearchDemo && liveSearchDemo.mutationObserver) {
+                liveSearchDemo.mutationObserver.disconnect();
+            }
+            if (liveSearchDemo && liveSearchDemo.feedInterval) {
+                clearInterval(liveSearchDemo.feedInterval);
+            }
+        });
+    </script>
+</body>
+</html>

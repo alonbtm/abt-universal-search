@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Search Vanilla JS Demo</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .demo-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        
+        .stats {
+            margin: 20px 0;
+            padding: 10px;
+            background: #e7f3ff;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Universal Search Vanilla JS</h1>
+    <p style="text-align: center; color: #666;">
+        Zero-dependency search component - Just add a script tag!
+    </p>
+
+    <div class="demo-section">
+        <h2>Level 1: Zero Configuration (30 seconds)</h2>
+        <p>Just add data attributes to any element:</p>
+        
+        <div id="search1" 
+             data-universal-search
+             data-data='[
+                 {"title": "Getting Started Guide", "description": "Learn the basics of Universal Search"},
+                 {"title": "JavaScript Tutorial", "description": "Complete guide to JavaScript programming"},
+                 {"title": "TypeScript Handbook", "description": "Advanced TypeScript concepts and patterns"},
+                 {"title": "React Components", "description": "Building reusable React components"},
+                 {"title": "Vue.js Essentials", "description": "Modern Vue.js development techniques"},
+                 {"title": "Node.js Backend", "description": "Server-side JavaScript with Node.js"},
+                 {"title": "CSS Grid Layout", "description": "Mastering CSS Grid for layouts"},
+                 {"title": "Web Performance", "description": "Optimizing web application performance"}
+             ]'>
+        </div>
+    </div>
+
+    <div class="demo-section">
+        <h2>Level 2: Basic Configuration (5 minutes)</h2>
+        <p>Programmatic initialization with custom options:</p>
+        <div id="search2"></div>
+    </div>
+
+    <div class="demo-section">
+        <h2>Level 3: Advanced Features (30 minutes)</h2>
+        <p>Custom templates, event handling, and performance optimization:</p>
+        <div id="search3"></div>
+    </div>
+
+    <div class="stats">
+        <strong>Performance Stats:</strong>
+        <div id="performance-stats">Loading...</div>
+    </div>
+
+    <!-- Load the Universal Search library -->
+    <script src="dist/universal-search.js"></script>
+    
+    <script>
+        // Level 2: Basic Configuration
+        const search2 = new UniversalSearch({
+            ui: {
+                container: '#search2',
+                theme: 'light',
+                placeholder: 'Search documentation and tutorials...'
+            },
+            dataSource: {
+                type: 'memory',
+                data: [
+                    { id: 1, title: 'API Documentation', description: 'Complete API reference', category: 'docs' },
+                    { id: 2, title: 'Installation Guide', description: 'How to install and setup', category: 'guide' },
+                    { id: 3, title: 'Configuration Options', description: 'All available configuration options', category: 'config' },
+                    { id: 4, title: 'Event Handling', description: 'Working with search events', category: 'advanced' },
+                    { id: 5, title: 'Custom Templates', description: 'Creating custom result templates', category: 'advanced' },
+                    { id: 6, title: 'Performance Tuning', description: 'Optimizing search performance', category: 'advanced' }
+                ]
+            }
+        });
+
+        // Level 3: Advanced Features  
+        const search3 = new UniversalSearch({
+            ui: {
+                container: '#search3',
+                theme: 'auto',
+                placeholder: 'Search with custom templates...',
+                templates: {
+                    result: (result) => `
+                        <div style="border-left: 3px solid #007bff; padding-left: 12px;">
+                            <h4 style="margin: 0 0 4px 0; color: #333;">${result.title}</h4>
+                            <p style="margin: 0; color: #666; font-size: 14px;">${result.description}</p>
+                            ${result.metadata?.category ? `<span style="background: #e7f3ff; padding: 2px 8px; border-radius: 12px; font-size: 12px; color: #007bff;">${result.metadata.category}</span>` : ''}
+                        </div>
+                    `
+                }
+            },
+            dataSource: {
+                type: 'memory',
+                data: [
+                    { title: 'Machine Learning Basics', description: 'Introduction to ML concepts', category: 'AI', difficulty: 'beginner' },
+                    { title: 'Deep Learning Networks', description: 'Neural networks and deep learning', category: 'AI', difficulty: 'advanced' },
+                    { title: 'Data Science Workflow', description: 'End-to-end data science process', category: 'Data', difficulty: 'intermediate' },
+                    { title: 'Statistical Analysis', description: 'Statistical methods for data analysis', category: 'Data', difficulty: 'intermediate' },
+                    { title: 'Cloud Architecture', description: 'Designing scalable cloud systems', category: 'Cloud', difficulty: 'advanced' },
+                    { title: 'DevOps Practices', description: 'Modern DevOps and CI/CD', category: 'DevOps', difficulty: 'intermediate' }
+                ],
+                options: {
+                    searchFields: ['title', 'description', 'category', 'difficulty']
+                }
+            },
+            performance: {
+                cache: true,
+                cacheTTL: 300000 // 5 minutes
+            }
+        });
+
+        // Event handling for advanced search
+        search3.on('search', (event) => {
+            console.log('Advanced search query:', event.query);
+        });
+
+        search3.on('results', (event) => {
+            console.log(`Found ${event.results?.length || 0} results for "${event.query}"`);
+        });
+
+        search3.on('select', (event) => {
+            console.log('Selected result:', event.result);
+            alert(`You selected: ${event.result?.title}`);
+        });
+
+        // Performance monitoring
+        function updatePerformanceStats() {
+            const stats = document.getElementById('performance-stats');
+            const bundleSize = '4.77 KB (gzipped)';
+            const instances = document.querySelectorAll('.universal-search').length;
+            
+            stats.innerHTML = `
+                📦 Bundle Size: ${bundleSize} | 
+                🚀 Search Instances: ${instances} | 
+                ⚡ Load Time: ${Math.round(performance.now())}ms |
+                🧠 Memory: ~${Math.round(performance.memory?.usedJSHeapSize / 1024 / 1024 || 0)}MB
+            `;
+        }
+
+        // Update stats when page loads
+        window.addEventListener('load', () => {
+            setTimeout(updatePerformanceStats, 100);
+        });
+
+        // Log all search events for debugging
+        function logSearchEvent(event) {
+            console.log(`[${event.type.toUpperCase()}]`, event);
+        }
+
+        // Attach global event listener
+        [search2, search3].forEach(search => {
+            ['search', 'results', 'select', 'error'].forEach(eventType => {
+                search.on(eventType, logSearchEvent);
+            });
+        });
+
+        console.log('🎉 Universal Search Demo loaded!');
+        console.log('- Try searching in any of the search boxes above');
+        console.log('- Open browser dev tools to see event logs');
+        console.log('- Bundle size: 4.77 KB gzipped');
+    </script>
+</body>
+</html>

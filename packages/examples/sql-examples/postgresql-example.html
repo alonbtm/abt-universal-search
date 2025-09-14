@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL Integration Example - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .security-warning {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        .config-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .sql-example {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            background: white;
+        }
+        .sql-title {
+            font-weight: 600;
+            color: #1976d2;
+            margin-bottom: 10px;
+        }
+        .demo-controls {
+            margin: 20px 0;
+        }
+        .demo-controls label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+        }
+        .demo-controls input, .demo-controls select, .demo-controls textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .connection-string-input {
+            font-family: monospace;
+            background: #f8f8f8;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .search-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            z-index: 1000;
+            display: none;
+        }
+        .search-result {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .search-result:hover {
+            background: #f0f0f0;
+        }
+        .result-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .result-meta {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        .query-log {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        .db-schema {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #4caf50;
+        }
+    </style>
+</head>
+<body>
+    <h1>PostgreSQL Integration Example</h1>
+    <p>Learn how to configure the Universal Search Component to work with PostgreSQL databases using secure connection patterns and parameterized queries.</p>
+
+    <div class="security-warning">
+        <strong>⚠️ Security Notice:</strong> Never expose database credentials in client-side code. This example demonstrates configuration patterns. In production, use a secure proxy service to handle database connections.
+    </div>
+
+    <div class="example-section">
+        <h2>Database Schema Example</h2>
+        <div class="db-schema">
+            <strong>Sample PostgreSQL Schema:</strong>
+            <div class="config-display">-- Users table with full-text search support
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    department VARCHAR(100),
+    title VARCHAR(255),
+    active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT NOW(),
+    search_vector TSVECTOR
+);
+
+-- Full-text search index for performance
+CREATE INDEX idx_users_search ON users USING gin(search_vector);
+
+-- Trigger to update search vector automatically
+CREATE OR REPLACE FUNCTION update_users_search_vector()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.search_vector := to_tsvector('english', 
+        COALESCE(NEW.name, '') || ' ' || 
+        COALESCE(NEW.email, '') || ' ' || 
+        COALESCE(NEW.department, '') || ' ' || 
+        COALESCE(NEW.title, '')
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER users_search_vector_update
+    BEFORE INSERT OR UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_users_search_vector();
+
+-- Sample data
+INSERT INTO users (name, email, department, title) VALUES
+('John Doe', 'john.doe@company.com', 'Engineering', 'Senior Developer'),
+('Jane Smith', 'jane.smith@company.com', 'Design', 'UI/UX Designer'),
+('Bob Wilson', 'bob.wilson@company.com', 'Engineering', 'DevOps Engineer'),
+('Alice Johnson', 'alice.johnson@company.com', 'Product', 'Product Manager');</div>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>PostgreSQL Configuration Examples</h2>
+        
+        <div class="sql-example">
+            <div class="sql-title">1. Basic Configuration</div>
+            <div class="config-display">{
+  dataSource: {
+    type: 'sql',
+    sql: {
+      connectionString: 'postgresql://username:password@localhost:5432/database',
+      tableName: 'users',
+      searchFields: ['name', 'email', 'department'],
+      whereClause: 'active = true',
+      orderBy: 'name ASC',
+      limit: 50
+    }
+  }
+}</div>
+        </div>
+
+        <div class="sql-example">
+            <div class="sql-title">2. Full-Text Search Configuration</div>
+            <div class="config-display">{
+  dataSource: {
+    type: 'sql',
+    sql: {
+      connectionString: 'postgresql://username:password@localhost:5432/database',
+      customQuery: `
+        SELECT id, name, email, department, title,
+               ts_rank(search_vector, plainto_tsquery('english', $1)) as rank
+        FROM users 
+        WHERE search_vector @@ plainto_tsquery('english', $1)
+           AND active = true
+        ORDER BY rank DESC, name ASC
+        LIMIT $2
+      `,
+      parameterMapping: {
+        query: '$1',
+        limit: '$2'
+      }
+    }
+  }
+}</div>
+        </div>
+
+        <div class="sql-example">
+            <div class="sql-title">3. Advanced Search with Filters</div>
+            <div class="config-display">{
+  dataSource: {
+    type: 'sql',
+    sql: {
+      connectionString: process.env.DATABASE_URL,
+      customQuery: `
+        SELECT u.id, u.name, u.email, u.department, u.title,
+               d.name as department_name,
+               COUNT(*) OVER() as total_count
+        FROM users u
+        LEFT JOIN departments d ON u.department = d.code
+        WHERE (
+          u.name ILIKE '%' || $1 || '%' OR
+          u.email ILIKE '%' || $1 || '%' OR
+          u.title ILIKE '%' || $1 || '%'
+        )
+        AND ($2::text IS NULL OR u.department = $2)
+        AND u.active = true
+        ORDER BY 
+          CASE WHEN u.name ILIKE $1 || '%' THEN 1 ELSE 2 END,
+          u.name ASC
+        LIMIT $3 OFFSET $4
+      `,
+      parameterTypes: ['text', 'text', 'integer', 'integer']
+    }
+  }
+}</div>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Interactive Demo</h2>
+        <div class="demo-controls">
+            <label for="connection-string">PostgreSQL Connection String:</label>
+            <input type="text" id="connection-string" class="connection-string-input" 
+                   value="postgresql://demo:demo@localhost:5432/searchdemo" 
+                   placeholder="postgresql://username:password@host:port/database">
+            
+            <label for="table-name">Table Name:</label>
+            <input type="text" id="table-name" value="users" placeholder="users">
+            
+            <label for="search-fields">Search Fields (comma separated):</label>
+            <input type="text" id="search-fields" value="name,email,department" placeholder="name,email,department">
+            
+            <label for="where-clause">WHERE Clause (optional):</label>
+            <input type="text" id="where-clause" value="active = true" placeholder="active = true">
+            
+            <label for="order-by">ORDER BY Clause:</label>
+            <input type="text" id="order-by" value="name ASC" placeholder="name ASC">
+            
+            <label for="limit">Result Limit:</label>
+            <input type="number" id="limit" value="10" min="1" max="100">
+            
+            <button onclick="updateConfiguration()">Update Configuration</button>
+            <button onclick="testConnection()" class="secondary">Test Connection</button>
+            <button onclick="generateQuery()" class="secondary">Generate Query</button>
+        </div>
+
+        <div class="search-container">
+            <div style="position: relative;">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search PostgreSQL database... (demo mode)"
+                    aria-label="Search database"
+                    autocomplete="off"
+                >
+                <div id="search-dropdown" class="search-dropdown" role="listbox" aria-label="Search results"></div>
+            </div>
+        </div>
+        
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Configuration</h2>
+        <div class="config-display" id="config-display"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Generated SQL Query</h2>
+        <div id="generated-query" class="config-display">SELECT id, name, email FROM users WHERE (name ILIKE '%' || $1 || '%' OR email ILIKE '%' || $1 || '%') AND active = true ORDER BY name ASC LIMIT 10</div>
+    </div>
+
+    <div class="example-section">
+        <h2>Query Execution Log</h2>
+        <div id="query-log" class="query-log">No queries executed yet...</div>
+    </div>
+
+    <div class="example-section">
+        <h2>PostgreSQL-Specific Features</h2>
+        
+        <div class="sql-example">
+            <div class="sql-title">Full-Text Search with TSVECTOR</div>
+            <div class="config-display">-- Create full-text search index
+CREATE INDEX idx_users_fts ON users USING gin(to_tsvector('english', name || ' ' || email));
+
+-- Search query with ranking
+SELECT id, name, email,
+       ts_rank(to_tsvector('english', name || ' ' || email), plainto_tsquery('english', $1)) as rank
+FROM users 
+WHERE to_tsvector('english', name || ' ' || email) @@ plainto_tsquery('english', $1)
+ORDER BY rank DESC;
+
+// Component configuration
+{
+  sql: {
+    customQuery: `
+      SELECT id, name, email, ts_rank(...) as rank
+      FROM users 
+      WHERE to_tsvector('english', name || ' ' || email) @@ plainto_tsquery('english', $1)
+      ORDER BY rank DESC
+      LIMIT $2
+    `
+  }
+}</div>
+        </div>
+
+        <div class="sql-example">
+            <div class="sql-title">JSON/JSONB Field Search</div>
+            <div class="config-display">-- Table with JSONB metadata
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Search in JSONB fields
+SELECT id, name, metadata
+FROM products 
+WHERE name ILIKE '%' || $1 || '%'
+   OR metadata->>'description' ILIKE '%' || $1 || '%'
+   OR metadata->'tags' ? $1;
+
+// Component configuration for JSONB search
+{
+  sql: {
+    customQuery: `
+      SELECT id, name, metadata->>'description' as description,
+             metadata->'tags' as tags
+      FROM products 
+      WHERE name ILIKE '%' || $1 || '%'
+         OR metadata->>'description' ILIKE '%' || $1 || '%'
+         OR metadata->'tags' ? $1
+      ORDER BY name ASC
+      LIMIT $2
+    `
+  }
+}</div>
+        </div>
+
+        <div class="sql-example">
+            <div class="sql-title">Advanced Indexing Strategies</div>
+            <div class="config-display">-- GIN index for full-text search
+CREATE INDEX idx_users_gin_fts ON users USING gin(to_tsvector('english', name || ' ' || email));
+
+-- Partial index for active users only
+CREATE INDEX idx_users_active ON users (name) WHERE active = true;
+
+-- Composite index for complex queries
+CREATE INDEX idx_users_dept_name ON users (department, name) WHERE active = true;
+
+-- JSONB GIN index
+CREATE INDEX idx_products_metadata ON products USING gin(metadata);
+
+-- Trigram index for similarity search
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_users_name_trgm ON users USING gin(name gin_trgm_ops);
+
+-- Query using similarity
+SELECT id, name, similarity(name, $1) as sim
+FROM users 
+WHERE name % $1  -- % operator for similarity
+ORDER BY sim DESC;</div>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Connection String Security</h2>
+        <div class="config-display">// ✅ Environment variables (secure)
+const connectionString = process.env.DATABASE_URL;
+
+// ✅ Connection string builder with validation
+function buildConnectionString(config) {
+  const { host, port, database, username, password, ssl } = config;
+  
+  // Validate inputs
+  if (!host || !database || !username) {
+    throw new Error('Missing required connection parameters');
+  }
+  
+  const sslMode = ssl ? 'require' : 'prefer';
+  return `postgresql://${encodeURIComponent(username)}:${encodeURIComponent(password)}@${host}:${port || 5432}/${database}?sslmode=${sslMode}`;
+}
+
+// ❌ Hardcoded credentials (never do this)
+const badConnectionString = 'postgresql://admin:password123@localhost:5432/prod';
+
+// ✅ Secure proxy service configuration
+const secureConfig = {
+  dataSource: {
+    type: 'sql',
+    sql: {
+      proxyEndpoint: '/api/database-search',
+      authentication: {
+        type: 'bearer',
+        credentials: {
+          tokenProvider: () => getAuthToken()
+        }
+      }
+    }
+  }
+};</div>
+    </div>
+
+    <script>
+        // Mock data for demonstration
+        const mockUsers = [
+            { id: 1, name: 'John Doe', email: 'john.doe@company.com', department: 'Engineering', title: 'Senior Developer' },
+            { id: 2, name: 'Jane Smith', email: 'jane.smith@company.com', department: 'Design', title: 'UI/UX Designer' },
+            { id: 3, name: 'Bob Wilson', email: 'bob.wilson@company.com', department: 'Engineering', title: 'DevOps Engineer' },
+            { id: 4, name: 'Alice Johnson', email: 'alice.johnson@company.com', department: 'Product', title: 'Product Manager' },
+            { id: 5, name: 'Charlie Brown', email: 'charlie.brown@company.com', department: 'Engineering', title: 'Frontend Developer' },
+            { id: 6, name: 'Diana Prince', email: 'diana.prince@company.com', department: 'Marketing', title: 'Marketing Manager' }
+        ];
+
+        let currentConfig = {
+            dataSource: {
+                type: 'sql',
+                sql: {
+                    connectionString: 'postgresql://demo:demo@localhost:5432/searchdemo',
+                    tableName: 'users',
+                    searchFields: ['name', 'email', 'department'],
+                    whereClause: 'active = true',
+                    orderBy: 'name ASC',
+                    limit: 10,
+                    requestTransform: (query) => {
+                        const fields = currentConfig.dataSource.sql.searchFields;
+                        const table = currentConfig.dataSource.sql.tableName;
+                        const where = currentConfig.dataSource.sql.whereClause;
+                        const orderBy = currentConfig.dataSource.sql.orderBy;
+                        const limit = currentConfig.dataSource.sql.limit;
+                        
+                        // Build parameterized query
+                        const fieldConditions = fields.map((field, index) => 
+                            `${field} ILIKE '%' || $1 || '%'`
+                        ).join(' OR ');
+                        
+                        const sql = `
+                            SELECT id, ${fields.join(', ')}
+                            FROM ${table}
+                            WHERE (${fieldConditions})
+                            ${where ? `AND ${where}` : ''}
+                            ORDER BY ${orderBy}
+                            LIMIT ${limit}
+                        `.trim();
+                        
+                        logQuery(sql, [query]);
+                        
+                        return {
+                            query: sql,
+                            parameters: [query],
+                            connectionString: currentConfig.dataSource.sql.connectionString
+                        };
+                    },
+                    responseTransform: (rows) => {
+                        return rows.map(row => ({
+                            label: row.name,
+                            value: row.id,
+                            metadata: {
+                                subtitle: row.email,
+                                category: row.department || 'Unknown',
+                                details: row.title || 'No title'
+                            }
+                        }));
+                    }
+                }
+            },
+            queryHandling: {
+                minLength: 2,
+                debounceMs: 300,
+                triggerOn: 'change'
+            },
+            actionHandling: {
+                onSelect: (result) => {
+                    showStatus(`Selected: ${result.label} (ID: ${result.value})`, 'success');
+                    hideDropdown();
+                },
+                onError: (error) => {
+                    showStatus(`Error: ${error.message}`, 'error');
+                },
+                onLoading: (isLoading) => {
+                    if (isLoading) {
+                        showDropdown([{ type: 'loading', content: 'Searching PostgreSQL database...' }]);
+                    }
+                }
+            }
+        };
+
+        let debounceTimer;
+
+        function displayConfig() {
+            const configElement = document.getElementById('config-display');
+            configElement.textContent = JSON.stringify(currentConfig, null, 2);
+        }
+
+        function logQuery(sql, parameters) {
+            const log = document.getElementById('query-log');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = `[${timestamp}] SQL Query:\n${sql}\nParameters: ${JSON.stringify(parameters)}\n\n`;
+            log.textContent = logEntry + log.textContent;
+        }
+
+        function generateQuery() {
+            const query = 'example_search';
+            const requestConfig = currentConfig.dataSource.sql.requestTransform(query);
+            
+            document.getElementById('generated-query').textContent = requestConfig.query;
+            showStatus('Query generated successfully', 'success');
+        }
+
+        async function performSearch(query) {
+            if (query.length < currentConfig.queryHandling.minLength) {
+                hideDropdown();
+                return;
+            }
+
+            try {
+                currentConfig.actionHandling.onLoading(true);
+                
+                // Simulate database query execution
+                const requestConfig = currentConfig.dataSource.sql.requestTransform(query);
+                
+                // Mock database response
+                await new Promise(resolve => setTimeout(resolve, 300));
+                
+                const filteredUsers = mockUsers.filter(user => 
+                    user.name.toLowerCase().includes(query.toLowerCase()) ||
+                    user.email.toLowerCase().includes(query.toLowerCase()) ||
+                    user.department.toLowerCase().includes(query.toLowerCase()) ||
+                    user.title.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                const transformedResults = currentConfig.dataSource.sql.responseTransform(filteredUsers);
+                
+                if (transformedResults.length === 0) {
+                    showDropdown([{ type: 'message', content: 'No users found' }]);
+                } else {
+                    showDropdown(transformedResults);
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                currentConfig.actionHandling.onError(error);
+                hideDropdown();
+            }
+        }
+
+        function showDropdown(results) {
+            const dropdown = document.getElementById('search-dropdown');
+            dropdown.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultElement = document.createElement('div');
+                
+                if (result.type === 'loading') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                    resultElement.style.padding = '12px';
+                    resultElement.style.textAlign = 'center';
+                    resultElement.style.color = '#666';
+                } else if (result.type === 'message') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                    resultElement.style.padding = '12px';
+                    resultElement.style.textAlign = 'center';
+                    resultElement.style.color = '#666';
+                } else {
+                    resultElement.className = 'search-result';
+                    resultElement.innerHTML = `
+                        <div class="result-label">${escapeHtml(result.label)}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.subtitle || '')}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.details || '')} - ${escapeHtml(result.metadata?.category || '')}</div>
+                    `;
+                    
+                    resultElement.addEventListener('click', () => {
+                        currentConfig.actionHandling.onSelect(result);
+                    });
+                }
+                
+                dropdown.appendChild(resultElement);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateConfiguration() {
+            const connectionString = document.getElementById('connection-string').value;
+            const tableName = document.getElementById('table-name').value;
+            const searchFields = document.getElementById('search-fields').value.split(',').map(f => f.trim());
+            const whereClause = document.getElementById('where-clause').value;
+            const orderBy = document.getElementById('order-by').value;
+            const limit = parseInt(document.getElementById('limit').value);
+
+            currentConfig.dataSource.sql.connectionString = connectionString;
+            currentConfig.dataSource.sql.tableName = tableName;
+            currentConfig.dataSource.sql.searchFields = searchFields;
+            currentConfig.dataSource.sql.whereClause = whereClause;
+            currentConfig.dataSource.sql.orderBy = orderBy;
+            currentConfig.dataSource.sql.limit = limit;
+
+            displayConfig();
+            generateQuery();
+            showStatus('Configuration updated successfully', 'success');
+        }
+
+        async function testConnection() {
+            const connectionString = document.getElementById('connection-string').value;
+            
+            try {
+                showStatus('Testing PostgreSQL connection...', 'success');
+                
+                // Simulate connection test
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Mock validation
+                if (connectionString.startsWith('postgresql://')) {
+                    showStatus('PostgreSQL connection string format valid', 'success');
+                } else {
+                    showStatus('Invalid PostgreSQL connection string format', 'error');
+                }
+                
+            } catch (error) {
+                showStatus(`Connection test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, currentConfig.queryHandling.debounceMs);
+        });
+
+        document.getElementById('search-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                hideDropdown();
+            }
+        });
+
+        // Initialize
+        displayConfig();
+        generateQuery();
+    </script>
+</body>
+</html>

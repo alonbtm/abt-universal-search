@@ -1,0 +1,23 @@
+{
+  "name": "@universal-search/examples",
+  "version": "1.0.0",
+  "description": "Example implementations for universal search component",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Examples build placeholder'",
+    "dev": "echo 'Examples dev placeholder'",
+    "test": "echo 'Examples test placeholder'",
+    "lint": "echo 'Examples lint placeholder'",
+    "clean": "echo 'Examples clean placeholder'"
+  },
+  "dependencies": {
+    "@universal-search/core": "^1.0.0"
+  },
+  "devDependencies": {},
+  "keywords": [
+    "examples",
+    "search-component"
+  ],
+  "author": "Development Team",
+  "license": "MIT"
+}

@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Table Search Examples - DOM Element Search</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        tr {
+            transition: background-color 0.2s ease;
+        }
+        tr.hidden {
+            display: none;
+        }
+        tr.highlighted {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        tr.selected {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .match-highlight {
+            background-color: #ffeb3b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .search-stats {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .search-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .search-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .search-controls label {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .column-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .column-filter {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .column-filter.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        .performance-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .keyboard-hint {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>DOM Table Search Examples</h1>
+    
+    <div class="example-section">
+        <h2>📋 Interactive Employee Table Search</h2>
+        <p>Demonstrates real-time table row filtering with CSS selector patterns, highlighting, and keyboard navigation.</p>
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="casesensitive" />
+                Case Sensitive
+            </label>
+            <label>
+                <input type="checkbox" id="exactMatch" />
+                Exact Match
+            </label>
+            <label>
+                <input type="checkbox" id="highlightMatches" checked />
+                Highlight Matches
+            </label>
+            <label>
+                <input type="checkbox" id="showStats" checked />
+                Show Statistics
+            </label>
+        </div>
+        
+        <div class="column-filters">
+            <div class="column-filter active" data-column="all">All Columns</div>
+            <div class="column-filter" data-column="name">Name</div>
+            <div class="column-filter" data-column="department">Department</div>
+            <div class="column-filter" data-column="role">Role</div>
+            <div class="column-filter" data-column="email">Email</div>
+            <div class="column-filter" data-column="location">Location</div>
+        </div>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="employeeSearch" 
+            placeholder="Search employees... (try 'engineering', 'john', or 'manager')"
+            aria-label="Search employees table"
+            role="searchbox"
+            aria-describedby="search-stats"
+        />
+        
+        <div id="search-stats" class="search-stats" style="display: none;">
+            Showing <span id="visible-count">0</span> of <span id="total-count">0</span> employees
+            <span id="search-time"></span>
+        </div>
+        
+        <div class="keyboard-hint">
+            💡 <strong>Keyboard Navigation:</strong> Use ↑↓ arrows to navigate results, Enter to select, Esc to clear
+        </div>
+        
+        <div style="max-height: 400px; overflow-y: auto;">
+            <table id="employeeTable" role="table" aria-label="Employee directory">
+                <thead>
+                    <tr role="row">
+                        <th role="columnheader">Name</th>
+                        <th role="columnheader">Department</th>
+                        <th role="columnheader">Role</th>
+                        <th role="columnheader">Email</th>
+                        <th role="columnheader">Location</th>
+                        <th role="columnheader">Start Date</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeTableBody">
+                    <!-- Employee data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="performance-info">
+            <strong>Performance:</strong> <span id="performance-info">Ready to search</span>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>🎯 Advanced CSS Selector Patterns</h2>
+        <p>Explore various CSS selector patterns for precise table element targeting.</p>
+        
+        <div id="selector-demo">
+            <h3>Product Catalog Table</h3>
+            <input 
+                type="text" 
+                class="search-input" 
+                id="productSearch" 
+                placeholder="Search products or try CSS selector (e.g., '[data-category=\"electronics\"]')"
+                aria-label="Search products or use CSS selector"
+            />
+            
+            <div class="search-controls">
+                <label>
+                    <input type="checkbox" id="selectorMode" />
+                    CSS Selector Mode
+                </label>
+                <label>
+                    <input type="checkbox" id="showSelector" />
+                    Show Generated Selector
+                </label>
+            </div>
+            
+            <div id="generated-selector" style="background: #f5f5f5; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace; display: none;"></div>
+            
+            <table id="productTable">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Rating</th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody">
+                    <!-- Product data will be populated -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Employee data for demonstration
+        const employees = [
+            { name: 'John Smith', department: 'Engineering', role: 'Senior Developer', email: 'john.smith@company.com', location: 'New York', startDate: '2022-03-15' },
+            { name: 'Sarah Johnson', department: 'Engineering', role: 'Frontend Engineer', email: 'sarah.j@company.com', location: 'San Francisco', startDate: '2023-01-20' },
+            { name: 'Mike Davis', department: 'Marketing', role: 'Marketing Manager', email: 'mike.davis@company.com', location: 'Chicago', startDate: '2021-11-08' },
+            { name: 'Emily Chen', department: 'Design', role: 'UX Designer', email: 'emily.chen@company.com', location: 'Los Angeles', startDate: '2022-07-12' },
+            { name: 'David Wilson', department: 'Engineering', role: 'DevOps Engineer', email: 'david.w@company.com', location: 'Austin', startDate: '2023-02-28' },
+            { name: 'Lisa Anderson', department: 'Sales', role: 'Sales Director', email: 'lisa.a@company.com', location: 'Boston', startDate: '2020-09-14' },
+            { name: 'Robert Brown', department: 'Engineering', role: 'Backend Developer', email: 'robert.b@company.com', location: 'Seattle', startDate: '2022-12-05' },
+            { name: 'Jennifer Lee', department: 'HR', role: 'HR Manager', email: 'jennifer.lee@company.com', location: 'New York', startDate: '2021-04-22' },
+            { name: 'Thomas Garcia', department: 'Finance', role: 'Financial Analyst', email: 'thomas.g@company.com', location: 'Miami', startDate: '2023-05-10' },
+            { name: 'Amanda Taylor', department: 'Design', role: 'Product Designer', email: 'amanda.t@company.com', location: 'Portland', startDate: '2022-08-17' }
+        ];
+
+        // Product data for advanced examples
+        const products = [
+            { name: 'Laptop Pro 15"', category: 'Electronics', price: '$1299', status: 'In Stock', rating: 4.5 },
+            { name: 'Wireless Headphones', category: 'Electronics', price: '$199', status: 'Low Stock', rating: 4.2 },
+            { name: 'Office Chair', category: 'Furniture', price: '$299', status: 'In Stock', rating: 4.0 },
+            { name: 'Standing Desk', category: 'Furniture', price: '$599', status: 'Out of Stock', rating: 4.3 },
+            { name: 'Coffee Mug', category: 'Office Supplies', price: '$15', status: 'In Stock', rating: 3.8 },
+            { name: 'Notebook Set', category: 'Office Supplies', price: '$25', status: 'In Stock', rating: 4.1 },
+            { name: 'Monitor 27"', category: 'Electronics', price: '$399', status: 'In Stock', rating: 4.6 },
+            { name: 'Desk Lamp', category: 'Furniture', price: '$79', status: 'Low Stock', rating: 3.9 }
+        ];
+
+        class DOMTableSearch {
+            constructor() {
+                this.currentFilter = 'all';
+                this.selectedRowIndex = -1;
+                this.searchStartTime = 0;
+                this.searchCache = new Map();
+                
+                this.initializeEmployeeTable();
+                this.initializeProductTable();
+                this.bindEvents();
+                this.updateStats();
+            }
+            
+            initializeEmployeeTable() {
+                const tbody = document.getElementById('employeeTableBody');
+                tbody.innerHTML = employees.map((emp, index) => `
+                    <tr role="row" data-employee-id="${index}" 
+                        data-name="${emp.name.toLowerCase()}"
+                        data-department="${emp.department.toLowerCase()}"
+                        data-role="${emp.role.toLowerCase()}"
+                        data-email="${emp.email.toLowerCase()}"
+                        data-location="${emp.location.toLowerCase()}"
+                        tabindex="0">
+                        <td role="gridcell">${emp.name}</td>
+                        <td role="gridcell">${emp.department}</td>
+                        <td role="gridcell">${emp.role}</td>
+                        <td role="gridcell">${emp.email}</td>
+                        <td role="gridcell">${emp.location}</td>
+                        <td role="gridcell">${emp.startDate}</td>
+                    </tr>
+                `).join('');
+            }
+            
+            initializeProductTable() {
+                const tbody = document.getElementById('productTableBody');
+                tbody.innerHTML = products.map((product, index) => `
+                    <tr data-product-id="${index}"
+                        data-category="${product.category.toLowerCase()}"
+                        data-name="${product.name.toLowerCase()}"
+                        data-price="${product.price}"
+                        data-status="${product.status.toLowerCase().replace(' ', '-')}"
+                        data-rating="${product.rating}">
+                        <td>${product.name}</td>
+                        <td>${product.category}</td>
+                        <td>${product.price}</td>
+                        <td><span class="status-${product.status.toLowerCase().replace(' ', '-')}">${product.status}</span></td>
+                        <td>${product.rating} ⭐</td>
+                    </tr>
+                `).join('');
+            }
+            
+            bindEvents() {
+                // Employee search
+                const employeeSearch = document.getElementById('employeeSearch');
+                employeeSearch.addEventListener('input', this.debounce((e) => this.performEmployeeSearch(e.target.value), 300));
+                employeeSearch.addEventListener('keydown', (e) => this.handleKeyboardNavigation(e));
+                
+                // Product search
+                const productSearch = document.getElementById('productSearch');
+                productSearch.addEventListener('input', this.debounce((e) => this.performProductSearch(e.target.value), 300));
+                
+                // Column filters
+                document.querySelectorAll('.column-filter').forEach(filter => {
+                    filter.addEventListener('click', (e) => this.handleColumnFilter(e));
+                });
+                
+                // Search options
+                document.querySelectorAll('.search-controls input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.handleOptionsChange());
+                });
+                
+                // Product search options
+                document.getElementById('selectorMode').addEventListener('change', () => this.toggleSelectorMode());
+                document.getElementById('showSelector').addEventListener('change', () => this.toggleSelectorDisplay());
+            }
+            
+            performEmployeeSearch(query) {
+                this.searchStartTime = performance.now();
+                
+                const caseFormat = document.getElementById('caseySensitive')?.checked ? 'i' : 'i';
+                const exactMatch = document.getElementById('exactMatch')?.checked;
+                const highlightMatches = document.getElementById('highlightMatches')?.checked;
+                
+                // Create cache key
+                const cacheKey = `${query}-${this.currentFilter}-${caseFormat}-${exactMatch}`;
+                
+                let visibleRows;
+                if (this.searchCache.has(cacheKey)) {
+                    visibleRows = this.searchCache.get(cacheKey);
+                } else {
+                    visibleRows = this.executeEmployeeSearch(query, exactMatch);
+                    this.searchCache.set(cacheKey, visibleRows);
+                    
+                    // Limit cache size
+                    if (this.searchCache.size > 50) {
+                        const firstKey = this.searchCache.keys().next().value;
+                        this.searchCache.delete(firstKey);
+                    }
+                }
+                
+                this.displayEmployeeResults(visibleRows, query, highlightMatches);
+                this.updateStats(visibleRows.length);
+                this.updatePerformanceInfo();
+            }
+            
+            executeEmployeeSearch(query, exactMatch) {
+                if (!query.trim()) {
+                    return Array.from(document.querySelectorAll('#employeeTableBody tr'));
+                }
+                
+                const searchQuery = query.toLowerCase();
+                const rows = document.querySelectorAll('#employeeTableBody tr');
+                const visibleRows = [];
+                
+                rows.forEach(row => {
+                    let shouldShow = false;
+                    
+                    if (this.currentFilter === 'all') {
+                        // Search all data attributes
+                        const searchableContent = [
+                            row.dataset.name,
+                            row.dataset.department,
+                            row.dataset.role,
+                            row.dataset.email,
+                            row.dataset.location
+                        ].join(' ');
+                        
+                        shouldShow = exactMatch ? 
+                            searchableContent.includes(searchQuery) :
+                            this.fuzzyMatch(searchableContent, searchQuery);
+                    } else {
+                        // Search specific column
+                        const columnData = row.dataset[this.currentFilter];
+                        shouldShow = exactMatch ?
+                            columnData === searchQuery :
+                            columnData.includes(searchQuery);
+                    }
+                    
+                    if (shouldShow) {
+                        visibleRows.push(row);
+                    }
+                });
+                
+                return visibleRows;
+            }
+            
+            fuzzyMatch(text, query) {
+                // Simple fuzzy matching - could be enhanced with more sophisticated algorithms
+                const words = query.split(' ').filter(word => word.length > 0);
+                return words.every(word => text.includes(word));
+            }
+            
+            displayEmployeeResults(visibleRows, query, highlightMatches) {
+                const allRows = document.querySelectorAll('#employeeTableBody tr');
+                
+                // Hide all rows first
+                allRows.forEach(row => {
+                    row.classList.add('hidden');
+                    row.classList.remove('highlighted', 'selected');
+                });
+                
+                // Show matching rows
+                visibleRows.forEach((row, index) => {
+                    row.classList.remove('hidden');
+                    if (index === this.selectedRowIndex) {
+                        row.classList.add('selected');
+                    }
+                });
+                
+                // Highlight matches if enabled
+                if (highlightMatches && query.trim()) {
+                    this.highlightMatches(visibleRows, query);
+                }
+                
+                // Reset selection if no results
+                if (visibleRows.length === 0) {
+                    this.selectedRowIndex = -1;
+                }
+                
+                // Announce results to screen readers
+                this.announceResults(visibleRows.length);
+            }
+            
+            highlightMatches(rows, query) {
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+                
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    cells.forEach(cell => {
+                        let content = cell.textContent;
+                        let highlightedContent = content;
+                        
+                        searchTerms.forEach(term => {
+                            const regex = new RegExp(`(${this.escapeRegExp(term)})`, 'gi');
+                            highlightedContent = highlightedContent.replace(regex, '<span class="match-highlight">$1</span>');
+                        });
+                        
+                        if (highlightedContent !== content) {
+                            cell.innerHTML = highlightedContent;
+                        }
+                    });
+                });
+            }
+            
+            performProductSearch(query) {
+                const selectorMode = document.getElementById('selectorMode')?.checked;
+                const showSelector = document.getElementById('showSelector')?.checked;
+                
+                if (selectorMode) {
+                    this.performSelectorSearch(query);
+                } else {
+                    this.performTextSearch(query);
+                }
+                
+                if (showSelector) {
+                    this.displayGeneratedSelector(query, selectorMode);
+                }
+            }
+            
+            performSelectorSearch(selector) {
+                const rows = document.querySelectorAll('#productTableBody tr');
+                
+                // Reset all rows
+                rows.forEach(row => {
+                    row.classList.remove('hidden', 'highlighted');
+                });
+                
+                if (!selector.trim()) return;
+                
+                try {
+                    // Try to use the selector directly
+                    const matchingRows = document.querySelectorAll(`#productTableBody tr${selector}`);
+                    
+                    // Hide non-matching rows
+                    rows.forEach(row => {
+                        if (!Array.from(matchingRows).includes(row)) {
+                            row.classList.add('hidden');
+                        } else {
+                            row.classList.add('highlighted');
+                        }
+                    });
+                } catch (error) {
+                    // Invalid selector - show all rows
+                    console.warn('Invalid CSS selector:', selector);
+                }
+            }
+            
+            performTextSearch(query) {
+                const rows = document.querySelectorAll('#productTableBody tr');
+                const searchQuery = query.toLowerCase();
+                
+                rows.forEach(row => {
+                    row.classList.remove('hidden', 'highlighted');
+                    
+                    if (!query.trim()) return;
+                    
+                    const searchableContent = [
+                        row.dataset.name,
+                        row.dataset.category,
+                        row.textContent.toLowerCase()
+                    ].join(' ');
+                    
+                    if (searchableContent.includes(searchQuery)) {
+                        row.classList.add('highlighted');
+                    } else {
+                        row.classList.add('hidden');
+                    }
+                });
+            }
+            
+            displayGeneratedSelector(query, selectorMode) {
+                const selectorDiv = document.getElementById('generated-selector');
+                selectorDiv.style.display = 'block';
+                
+                if (selectorMode) {
+                    selectorDiv.textContent = `CSS Selector: #productTableBody tr${query}`;
+                } else {
+                    // Generate a CSS selector based on the text search
+                    const selector = this.generateCSSSelector(query);
+                    selectorDiv.textContent = `Generated Selector: ${selector}`;
+                }
+            }
+            
+            generateCSSSelector(query) {
+                if (!query.trim()) return '';
+                
+                // Simple selector generation based on common patterns
+                const words = query.toLowerCase().split(' ');
+                const selectors = [];
+                
+                words.forEach(word => {
+                    if (products.some(p => p.category.toLowerCase().includes(word))) {
+                        selectors.push(`[data-category*="${word}"]`);
+                    } else if (products.some(p => p.name.toLowerCase().includes(word))) {
+                        selectors.push(`[data-name*="${word}"]`);
+                    } else {
+                        selectors.push(`[data-name*="${word}"], [data-category*="${word}"]`);
+                    }
+                });
+                
+                return selectors.join(', ');
+            }
+            
+            handleColumnFilter(event) {
+                const filter = event.target;
+                const column = filter.dataset.column;
+                
+                // Update active filter
+                document.querySelectorAll('.column-filter').forEach(f => f.classList.remove('active'));
+                filter.classList.add('active');
+                
+                this.currentFilter = column;
+                
+                // Re-run search with new filter
+                const searchValue = document.getElementById('employeeSearch').value;
+                this.performEmployeeSearch(searchValue);
+            }
+            
+            handleOptionsChange() {
+                // Re-run search when options change
+                const searchValue = document.getElementById('employeeSearch').value;
+                this.performEmployeeSearch(searchValue);
+            }
+            
+            toggleSelectorMode() {
+                const productSearch = document.getElementById('productSearch');
+                const selectorMode = document.getElementById('selectorMode').checked;
+                
+                if (selectorMode) {
+                    productSearch.placeholder = 'Enter CSS selector (e.g., [data-category="electronics"])';
+                } else {
+                    productSearch.placeholder = 'Search products...';
+                }
+                
+                // Re-run search
+                this.performProductSearch(productSearch.value);
+            }
+            
+            toggleSelectorDisplay() {
+                const show = document.getElementById('showSelector').checked;
+                const selectorDiv = document.getElementById('generated-selector');
+                selectorDiv.style.display = show ? 'block' : 'none';
+            }
+            
+            handleKeyboardNavigation(event) {
+                const visibleRows = Array.from(document.querySelectorAll('#employeeTableBody tr:not(.hidden)'));
+                
+                switch(event.key) {
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        this.selectedRowIndex = Math.min(this.selectedRowIndex + 1, visibleRows.length - 1);
+                        this.updateSelection(visibleRows);
+                        break;
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        this.selectedRowIndex = Math.max(this.selectedRowIndex - 1, -1);
+                        this.updateSelection(visibleRows);
+                        break;
+                    case 'Enter':
+                        event.preventDefault();
+                        if (this.selectedRowIndex >= 0 && visibleRows[this.selectedRowIndex]) {
+                            this.selectEmployee(visibleRows[this.selectedRowIndex]);
+                        }
+                        break;
+                    case 'Escape':
+                        event.target.value = '';
+                        this.performEmployeeSearch('');
+                        this.selectedRowIndex = -1;
+                        break;
+                }
+            }
+            
+            updateSelection(visibleRows) {
+                // Remove previous selection
+                document.querySelectorAll('#employeeTableBody tr.selected').forEach(row => {
+                    row.classList.remove('selected');
+                });
+                
+                // Add new selection
+                if (this.selectedRowIndex >= 0 && visibleRows[this.selectedRowIndex]) {
+                    const selectedRow = visibleRows[this.selectedRowIndex];
+                    selectedRow.classList.add('selected');
+                    selectedRow.scrollIntoView({ block: 'nearest' });
+                    
+                    // Announce selection to screen readers
+                    const name = selectedRow.querySelector('td').textContent;
+                    this.announceSelection(name);
+                }
+            }
+            
+            selectEmployee(row) {
+                const employeeData = {
+                    name: row.children[0].textContent,
+                    department: row.children[1].textContent,
+                    role: row.children[2].textContent,
+                    email: row.children[3].textContent
+                };
+                
+                alert(`Selected: ${employeeData.name} - ${employeeData.role} in ${employeeData.department}`);
+                console.log('Selected employee:', employeeData);
+            }
+            
+            updateStats(visibleCount = null) {
+                const showStats = document.getElementById('showStats')?.checked;
+                const statsDiv = document.getElementById('search-stats');
+                
+                if (!showStats) {
+                    statsDiv.style.display = 'none';
+                    return;
+                }
+                
+                const totalCount = employees.length;
+                const actualVisibleCount = visibleCount !== null ? visibleCount : 
+                    document.querySelectorAll('#employeeTableBody tr:not(.hidden)').length;
+                
+                document.getElementById('visible-count').textContent = actualVisibleCount;
+                document.getElementById('total-count').textContent = totalCount;
+                
+                statsDiv.style.display = 'block';
+            }
+            
+            updatePerformanceInfo() {
+                if (this.searchStartTime) {
+                    const duration = performance.now() - this.searchStartTime;
+                    const perfInfo = document.getElementById('performance-info');
+                    perfInfo.textContent = `Search completed in ${duration.toFixed(2)}ms`;
+                }
+            }
+            
+            announceResults(count) {
+                // Create or update live region for screen readers
+                let liveRegion = document.getElementById('search-live-region');
+                if (!liveRegion) {
+                    liveRegion = document.createElement('div');
+                    liveRegion.id = 'search-live-region';
+                    liveRegion.setAttribute('aria-live', 'polite');
+                    liveRegion.setAttribute('aria-atomic', 'true');
+                    liveRegion.style.position = 'absolute';
+                    liveRegion.style.left = '-10000px';
+                    document.body.appendChild(liveRegion);
+                }
+                
+                liveRegion.textContent = `${count} employees found`;
+            }
+            
+            announceSelection(name) {
+                let liveRegion = document.getElementById('selection-live-region');
+                if (!liveRegion) {
+                    liveRegion = document.createElement('div');
+                    liveRegion.id = 'selection-live-region';
+                    liveRegion.setAttribute('aria-live', 'assertive');
+                    liveRegion.style.position = 'absolute';
+                    liveRegion.style.left = '-10000px';
+                    document.body.appendChild(liveRegion);
+                }
+                
+                liveRegion.textContent = `Selected ${name}`;
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        }
+        
+        // Initialize the table search when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new DOMTableSearch();
+        });
+    </script>
+</body>
+</html>

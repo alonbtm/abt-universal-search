@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Search Examples - DOM Element Search</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background: #f8f9fa;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .card.hidden {
+            display: none;
+        }
+        .card.highlighted {
+            border-color: #ffc107;
+            background: #fff9c4;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.3);
+        }
+        .card.selected {
+            border-color: #2196f3;
+            background: #e3f2fd;
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        }
+        .card.focused {
+            outline: 2px solid #2196f3;
+            outline-offset: 2px;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .card-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 12px;
+        }
+        .card-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin: 0 0 4px 0;
+        }
+        .card-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+        .card-content {
+            margin: 12px 0;
+            color: #333;
+        }
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 12px 0;
+        }
+        .card-tag {
+            padding: 4px 8px;
+            background: #f0f0f0;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #666;
+        }
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #999;
+        }
+        .match-highlight {
+            background-color: #ffeb3b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-controls label {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .search-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .search-controls select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .filter-pills {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .filter-pill.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        .filter-pill:hover:not(.active) {
+            border-color: #2196f3;
+            background: #f0f8ff;
+        }
+        .search-stats {
+            margin: 15px 0;
+            padding: 12px;
+            background: #e8f5e8;
+            border-radius: 6px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+        }
+        .view-button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .view-button.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        .cards-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .card.list-view {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+        }
+        .card.list-view .card-header {
+            margin-bottom: 0;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+        .card.list-view .card-content {
+            flex-grow: 1;
+            margin: 0;
+        }
+        .card.list-view .card-meta {
+            border: none;
+            padding: 0;
+            margin: 0 0 0 16px;
+            flex-shrink: 0;
+        }
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            grid-column: 1 / -1;
+        }
+        .no-results-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        .keyboard-hint {
+            background: #fff3e0;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .performance-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sort-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .masonry-grid {
+            column-count: auto;
+            column-width: 300px;
+            column-gap: 20px;
+            margin-top: 20px;
+        }
+        .masonry-card {
+            break-inside: avoid;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+    </style>
+</head>
+<body>
+    <h1>DOM Card Search Examples</h1>
+    
+    <div class="example-section">
+        <h2>👥 Employee Profile Cards</h2>
+        <p>Interactive card search with multiple view modes, sorting, and advanced filtering options.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="profileSearch" 
+            placeholder="Search profiles... (try names, skills, departments, or locations)"
+            aria-label="Search employee profiles"
+            role="searchbox"
+            aria-describedby="profile-stats"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="profileCaseSensitive" />
+                Case Sensitive
+            </label>
+            <label>
+                <input type="checkbox" id="profileHighlight" checked />
+                Highlight Matches
+            </label>
+            <label>
+                <input type="checkbox" id="profileFuzzy" checked />
+                Fuzzy Search
+            </label>
+            <div class="sort-controls">
+                <label>Sort by:</label>
+                <select id="sortBy">
+                    <option value="name">Name</option>
+                    <option value="department">Department</option>
+                    <option value="experience">Experience</option>
+                    <option value="location">Location</option>
+                </select>
+                <label>
+                    <input type="checkbox" id="sortReverse" />
+                    Reverse
+                </label>
+            </div>
+        </div>
+        
+        <div class="filter-pills">
+            <div class="filter-pill active" data-filter="all">All Profiles</div>
+            <div class="filter-pill" data-filter="engineering">Engineering</div>
+            <div class="filter-pill" data-filter="design">Design</div>
+            <div class="filter-pill" data-filter="marketing">Marketing</div>
+            <div class="filter-pill" data-filter="senior">Senior Level</div>
+            <div class="filter-pill" data-filter="remote">Remote</div>
+        </div>
+        
+        <div id="profile-stats" class="search-stats">
+            <span>Showing <strong id="profile-visible">0</strong> of <strong id="profile-total">0</strong> profiles</span>
+            <div class="view-toggle">
+                <button class="view-button active" data-view="grid">Grid View</button>
+                <button class="view-button" data-view="list">List View</button>
+                <button class="view-button" data-view="masonry">Masonry</button>
+            </div>
+        </div>
+        
+        <div class="keyboard-hint">
+            💡 <strong>Keyboard Navigation:</strong> Use ↑↓←→ to navigate cards, Enter to select, Esc to clear search
+        </div>
+        
+        <div id="profileCards" class="cards-grid" role="grid" aria-label="Employee profiles">
+            <!-- Profile cards will be populated -->
+        </div>
+        
+        <div class="performance-info">
+            <span>Search Performance: <strong id="profile-performance">Ready</strong></span>
+            <span>Cache Hits: <strong id="profile-cache-hits">0</strong></span>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>🛍️ Product Catalog Cards</h2>
+        <p>E-commerce style product cards with complex filtering, price ranges, and rating searches.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="productSearch" 
+            placeholder="Search products... (try 'laptop', 'electronics', '$500-$1000', or '4+ stars')"
+            aria-label="Search products"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="productAdvanced" />
+                Advanced Search Mode
+            </label>
+            <label>
+                <input type="checkbox" id="productInStock" />
+                In Stock Only
+            </label>
+            <label>Price Range:</label>
+            <select id="priceRange">
+                <option value="all">All Prices</option>
+                <option value="0-100">$0 - $100</option>
+                <option value="100-500">$100 - $500</option>
+                <option value="500-1000">$500 - $1000</option>
+                <option value="1000+">$1000+</option>
+            </select>
+            <label>Min Rating:</label>
+            <select id="minRating">
+                <option value="0">Any Rating</option>
+                <option value="3">3+ Stars</option>
+                <option value="4">4+ Stars</option>
+                <option value="4.5">4.5+ Stars</option>
+            </select>
+        </div>
+        
+        <div class="filter-pills">
+            <div class="filter-pill active" data-category="all">All Products</div>
+            <div class="filter-pill" data-category="electronics">Electronics</div>
+            <div class="filter-pill" data-category="furniture">Furniture</div>
+            <div class="filter-pill" data-category="clothing">Clothing</div>
+            <div class="filter-pill" data-category="books">Books</div>
+        </div>
+        
+        <div id="product-stats" class="search-stats">
+            <span>Showing <strong id="product-visible">0</strong> of <strong id="product-total">0</strong> products</span>
+            <span>Avg Price: <strong id="avg-price">$0</strong></span>
+        </div>
+        
+        <div id="productCards" class="cards-grid" role="grid" aria-label="Product catalog">
+            <!-- Product cards will be populated -->
+        </div>
+        
+        <div class="performance-info">
+            <span>Advanced Search: <strong id="product-performance">Ready</strong></span>
+        </div>
+    </div>
+
+    <script>
+        // Employee profile data
+        const profiles = [
+            { id: 1, name: 'Alice Johnson', department: 'Engineering', role: 'Senior Frontend Developer', location: 'San Francisco', experience: 6, skills: ['React', 'TypeScript', 'Node.js'], avatar: 'AJ', email: 'alice.j@company.com' },
+            { id: 2, name: 'Bob Smith', department: 'Design', role: 'UX Designer', location: 'Remote', experience: 4, skills: ['Figma', 'User Research', 'Prototyping'], avatar: 'BS', email: 'bob.s@company.com' },
+            { id: 3, name: 'Charlie Brown', department: 'Engineering', role: 'Backend Engineer', location: 'New York', experience: 8, skills: ['Python', 'PostgreSQL', 'AWS'], avatar: 'CB', email: 'charlie.b@company.com' },
+            { id: 4, name: 'Diana Prince', department: 'Marketing', role: 'Marketing Manager', location: 'Los Angeles', experience: 5, skills: ['Digital Marketing', 'Analytics', 'SEO'], avatar: 'DP', email: 'diana.p@company.com' },
+            { id: 5, name: 'Eve Wilson', department: 'Engineering', role: 'DevOps Engineer', location: 'Austin', experience: 7, skills: ['Kubernetes', 'Docker', 'CI/CD'], avatar: 'EW', email: 'eve.w@company.com' },
+            { id: 6, name: 'Frank Miller', department: 'Design', role: 'Product Designer', location: 'Seattle', experience: 3, skills: ['Sketch', 'Design Systems', 'Branding'], avatar: 'FM', email: 'frank.m@company.com' },
+            { id: 7, name: 'Grace Lee', department: 'Engineering', role: 'Full Stack Developer', location: 'Remote', experience: 5, skills: ['Vue.js', 'MongoDB', 'GraphQL'], avatar: 'GL', email: 'grace.l@company.com' },
+            { id: 8, name: 'Henry Davis', department: 'Marketing', role: 'Content Strategist', location: 'Chicago', experience: 4, skills: ['Content Marketing', 'Social Media', 'Copywriting'], avatar: 'HD', email: 'henry.d@company.com' }
+        ];
+
+        // Product data
+        const products = [
+            { id: 1, name: 'MacBook Pro 16"', category: 'Electronics', price: 2399, rating: 4.8, stock: 15, description: 'Powerful laptop for professionals', tags: ['laptop', 'apple', 'professional'] },
+            { id: 2, name: 'Ergonomic Office Chair', category: 'Furniture', price: 299, rating: 4.2, stock: 8, description: 'Comfortable chair for long work sessions', tags: ['chair', 'office', 'ergonomic'] },
+            { id: 3, name: 'Wireless Noise-Canceling Headphones', category: 'Electronics', price: 199, rating: 4.5, stock: 22, description: 'Premium audio experience', tags: ['headphones', 'wireless', 'audio'] },
+            { id: 4, name: 'Standing Desk Converter', category: 'Furniture', price: 159, rating: 4.1, stock: 0, description: 'Transform any desk into a standing desk', tags: ['desk', 'standing', 'converter'] },
+            { id: 5, name: 'JavaScript: The Good Parts', category: 'Books', price: 29, rating: 4.3, stock: 50, description: 'Classic programming book', tags: ['javascript', 'programming', 'book'] },
+            { id: 6, name: 'Premium Cotton T-Shirt', category: 'Clothing', price: 35, rating: 4.0, stock: 100, description: 'Comfortable everyday wear', tags: ['shirt', 'cotton', 'casual'] },
+            { id: 7, name: '4K Webcam', category: 'Electronics', price: 89, rating: 4.4, stock: 12, description: 'Crystal clear video calls', tags: ['webcam', '4k', 'video'] },
+            { id: 8, name: 'Modern Floor Lamp', category: 'Furniture', price: 125, rating: 4.6, stock: 6, description: 'Stylish lighting solution', tags: ['lamp', 'modern', 'lighting'] }
+        ];
+
+        class DOMCardSearch {
+            constructor() {
+                this.profileFilter = 'all';
+                this.productCategory = 'all';
+                this.selectedCardIndex = -1;
+                this.currentView = 'grid';
+                this.searchCache = new Map();
+                this.cacheHits = 0;
+                
+                this.initializeProfiles();
+                this.initializeProducts();
+                this.bindEvents();
+                this.updateStats();
+            }
+            
+            initializeProfiles() {
+                const container = document.getElementById('profileCards');
+                container.innerHTML = profiles.map((profile, index) => `
+                    <div class="card" 
+                         role="gridcell" 
+                         data-profile-id="${profile.id}"
+                         data-index="${index}"
+                         data-name="${profile.name.toLowerCase()}"
+                         data-department="${profile.department.toLowerCase()}"
+                         data-role="${profile.role.toLowerCase()}"
+                         data-location="${profile.location.toLowerCase()}"
+                         data-skills="${profile.skills.join(' ').toLowerCase()}"
+                         data-experience="${profile.experience}"
+                         tabindex="0"
+                         aria-label="${profile.name}, ${profile.role}">
+                        <div class="card-header">
+                            <div class="card-avatar">${profile.avatar}</div>
+                            <div>
+                                <h3 class="card-title">${profile.name}</h3>
+                                <p class="card-subtitle">${profile.role}</p>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p><strong>Department:</strong> ${profile.department}</p>
+                            <p><strong>Location:</strong> ${profile.location}</p>
+                            <p><strong>Experience:</strong> ${profile.experience} years</p>
+                        </div>
+                        <div class="card-tags">
+                            ${profile.skills.map(skill => `<span class="card-tag">${skill}</span>`).join('')}
+                        </div>
+                        <div class="card-meta">
+                            <span>${profile.email}</span>
+                            <span>${profile.location === 'Remote' ? '🏠' : '🏢'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            initializeProducts() {
+                const container = document.getElementById('productCards');
+                container.innerHTML = products.map((product, index) => `
+                    <div class="card" 
+                         role="gridcell"
+                         data-product-id="${product.id}"
+                         data-index="${index}"
+                         data-name="${product.name.toLowerCase()}"
+                         data-category="${product.category.toLowerCase()}"
+                         data-price="${product.price}"
+                         data-rating="${product.rating}"
+                         data-stock="${product.stock}"
+                         data-tags="${product.tags.join(' ').toLowerCase()}"
+                         tabindex="0"
+                         aria-label="${product.name}, $${product.price}">
+                        <div class="card-header">
+                            <div class="card-avatar">${product.category[0]}</div>
+                            <div>
+                                <h3 class="card-title">${product.name}</h3>
+                                <p class="card-subtitle">$${product.price}</p>
+                            </div>
+                        </div>
+                        <div class="card-content">
+                            <p>${product.description}</p>
+                            <div class="card-tags">
+                                ${product.tags.map(tag => `<span class="card-tag">${tag}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="card-meta">
+                            <span>${'⭐'.repeat(Math.floor(product.rating))} ${product.rating}</span>
+                            <span class="${product.stock === 0 ? 'out-of-stock' : 'in-stock'}">${product.stock === 0 ? 'Out of Stock' : `${product.stock} in stock`}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            bindEvents() {
+                // Profile search
+                const profileSearch = document.getElementById('profileSearch');
+                profileSearch.addEventListener('input', this.debounce((e) => this.performProfileSearch(e.target.value), 300));
+                profileSearch.addEventListener('keydown', (e) => this.handleKeyboardNavigation(e, 'profile'));
+                
+                // Product search
+                const productSearch = document.getElementById('productSearch');
+                productSearch.addEventListener('input', this.debounce((e) => this.performProductSearch(e.target.value), 300));
+                
+                // Filter pills
+                document.querySelectorAll('.filter-pill[data-filter]').forEach(pill => {
+                    pill.addEventListener('click', (e) => this.handleProfileFilter(e));
+                });
+                
+                document.querySelectorAll('.filter-pill[data-category]').forEach(pill => {
+                    pill.addEventListener('click', (e) => this.handleProductCategory(e));
+                });
+                
+                // View toggle
+                document.querySelectorAll('.view-button').forEach(button => {
+                    button.addEventListener('click', (e) => this.handleViewToggle(e));
+                });
+                
+                // Sort controls
+                document.getElementById('sortBy').addEventListener('change', () => this.handleSort());
+                document.getElementById('sortReverse').addEventListener('change', () => this.handleSort());
+                
+                // Product filters
+                document.getElementById('priceRange').addEventListener('change', () => this.handleProductFilters());
+                document.getElementById('minRating').addEventListener('change', () => this.handleProductFilters());
+                document.getElementById('productInStock').addEventListener('change', () => this.handleProductFilters());
+                
+                // Search options
+                document.querySelectorAll('.search-controls input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.handleOptionsChange());
+                });
+            }
+            
+            performProfileSearch(query) {
+                const startTime = performance.now();
+                
+                const caseSensitive = document.getElementById('profileCaseSensitive')?.checked;
+                const fuzzySearch = document.getElementById('profileFuzzy')?.checked;
+                const highlightMatches = document.getElementById('profileHighlight')?.checked;
+                
+                // Check cache
+                const cacheKey = `profiles-${query}-${this.profileFilter}-${caseSensitive}-${fuzzySearch}`;
+                let filteredProfiles;
+                
+                if (this.searchCache.has(cacheKey)) {
+                    filteredProfiles = this.searchCache.get(cacheKey);
+                    this.cacheHits++;
+                } else {
+                    filteredProfiles = this.filterProfiles(query, caseSensitive, fuzzySearch);
+                    this.searchCache.set(cacheKey, filteredProfiles);
+                    
+                    // Limit cache size
+                    if (this.searchCache.size > 50) {
+                        const firstKey = this.searchCache.keys().next().value;
+                        this.searchCache.delete(firstKey);
+                    }
+                }
+                
+                // Apply sorting
+                filteredProfiles = this.sortProfiles(filteredProfiles);
+                
+                this.displayProfileResults(filteredProfiles, query, highlightMatches);
+                this.updateProfileStats(filteredProfiles.length);
+                
+                const duration = performance.now() - startTime;
+                document.getElementById('profile-performance').textContent = `${duration.toFixed(2)}ms`;
+                document.getElementById('profile-cache-hits').textContent = this.cacheHits;
+            }
+            
+            filterProfiles(query, caseSensitive, fuzzySearch) {
+                let filtered = profiles.filter(profile => {
+                    // Filter by department/role
+                    if (this.profileFilter !== 'all') {
+                        const matchesFilter = 
+                            profile.department.toLowerCase().includes(this.profileFilter) ||
+                            profile.role.toLowerCase().includes(this.profileFilter) ||
+                            profile.location.toLowerCase().includes(this.profileFilter) ||
+                            (this.profileFilter === 'senior' && profile.experience >= 5) ||
+                            (this.profileFilter === 'remote' && profile.location === 'Remote');
+                        
+                        if (!matchesFilter) return false;
+                    }
+                    
+                    // Filter by search query
+                    if (!query.trim()) return true;
+                    
+                    const searchQuery = caseSensitive ? query : query.toLowerCase();
+                    const searchableContent = [
+                        profile.name,
+                        profile.department,
+                        profile.role,
+                        profile.location,
+                        ...profile.skills
+                    ].join(' ');
+                    
+                    const content = caseSensitive ? searchableContent : searchableContent.toLowerCase();
+                    
+                    if (fuzzySearch) {
+                        return this.fuzzyMatch(content, searchQuery);
+                    } else {
+                        return content.includes(searchQuery);
+                    }
+                });
+                
+                return filtered;
+            }
+            
+            sortProfiles(profiles) {
+                const sortBy = document.getElementById('sortBy')?.value || 'name';
+                const reverse = document.getElementById('sortReverse')?.checked || false;
+                
+                const sorted = [...profiles].sort((a, b) => {
+                    let comparison = 0;
+                    
+                    switch(sortBy) {
+                        case 'name':
+                            comparison = a.name.localeCompare(b.name);
+                            break;
+                        case 'department':
+                            comparison = a.department.localeCompare(b.department);
+                            break;
+                        case 'experience':
+                            comparison = a.experience - b.experience;
+                            break;
+                        case 'location':
+                            comparison = a.location.localeCompare(b.location);
+                            break;
+                    }
+                    
+                    return reverse ? -comparison : comparison;
+                });
+                
+                return sorted;
+            }
+            
+            performProductSearch(query) {
+                const startTime = performance.now();
+                const advancedMode = document.getElementById('productAdvanced')?.checked;
+                
+                let filteredProducts;
+                
+                if (advancedMode) {
+                    filteredProducts = this.performAdvancedProductSearch(query);
+                } else {
+                    filteredProducts = this.performSimpleProductSearch(query);
+                }
+                
+                this.displayProductResults(filteredProducts, query);
+                this.updateProductStats(filteredProducts);
+                
+                const duration = performance.now() - startTime;
+                document.getElementById('product-performance').textContent = 
+                    `${advancedMode ? 'Advanced' : 'Simple'} search: ${duration.toFixed(2)}ms`;
+            }
+            
+            performSimpleProductSearch(query) {
+                return products.filter(product => {
+                    // Filter by category
+                    if (this.productCategory !== 'all' && product.category.toLowerCase() !== this.productCategory) {
+                        return false;
+                    }
+                    
+                    // Filter by other controls
+                    if (!this.passesProductFilters(product)) {
+                        return false;
+                    }
+                    
+                    // Filter by search query
+                    if (!query.trim()) return true;
+                    
+                    const searchQuery = query.toLowerCase();
+                    const searchableContent = [
+                        product.name,
+                        product.category,
+                        product.description,
+                        ...product.tags
+                    ].join(' ').toLowerCase();
+                    
+                    return searchableContent.includes(searchQuery);
+                });
+            }
+            
+            performAdvancedProductSearch(query) {
+                return products.filter(product => {
+                    // Category filter
+                    if (this.productCategory !== 'all' && product.category.toLowerCase() !== this.productCategory) {
+                        return false;
+                    }
+                    
+                    if (!this.passesProductFilters(product)) {
+                        return false;
+                    }
+                    
+                    if (!query.trim()) return true;
+                    
+                    // Advanced search patterns
+                    const patterns = this.parseAdvancedQuery(query);
+                    
+                    for (const pattern of patterns) {
+                        if (pattern.type === 'price_range') {
+                            if (product.price < pattern.min || product.price > pattern.max) {
+                                return false;
+                            }
+                        } else if (pattern.type === 'rating') {
+                            if (product.rating < pattern.value) {
+                                return false;
+                            }
+                        } else if (pattern.type === 'text') {
+                            const searchableContent = [
+                                product.name,
+                                product.category,
+                                product.description,
+                                ...product.tags
+                            ].join(' ').toLowerCase();
+                            
+                            if (!searchableContent.includes(pattern.value.toLowerCase())) {
+                                return false;
+                            }
+                        }
+                    }
+                    
+                    return true;
+                });
+            }
+            
+            parseAdvancedQuery(query) {
+                const patterns = [];
+                const tokens = query.split(/\s+/);
+                
+                for (const token of tokens) {
+                    // Price range: $100-$500
+                    const priceMatch = token.match(/\$?(\d+)-\$?(\d+)/);
+                    if (priceMatch) {
+                        patterns.push({
+                            type: 'price_range',
+                            min: parseInt(priceMatch[1]),
+                            max: parseInt(priceMatch[2])
+                        });
+                        continue;
+                    }
+                    
+                    // Rating: 4+ or 4.5+
+                    const ratingMatch = token.match(/(\d+\.?\d*)\+/);
+                    if (ratingMatch) {
+                        patterns.push({
+                            type: 'rating',
+                            value: parseFloat(ratingMatch[1])
+                        });
+                        continue;
+                    }
+                    
+                    // Regular text
+                    if (token.trim()) {
+                        patterns.push({
+                            type: 'text',
+                            value: token
+                        });
+                    }
+                }
+                
+                return patterns;
+            }
+            
+            passesProductFilters(product) {
+                // Stock filter
+                const inStockOnly = document.getElementById('productInStock')?.checked;
+                if (inStockOnly && product.stock === 0) {
+                    return false;
+                }
+                
+                // Price range filter
+                const priceRange = document.getElementById('priceRange')?.value;
+                if (priceRange && priceRange !== 'all') {
+                    const [min, max] = priceRange.split('-').map(p => p === '' ? Infinity : parseInt(p));
+                    if (product.price < min || (max !== Infinity && product.price > max)) {
+                        return false;
+                    }
+                }
+                
+                // Rating filter
+                const minRating = parseFloat(document.getElementById('minRating')?.value || '0');
+                if (product.rating < minRating) {
+                    return false;
+                }
+                
+                return true;
+            }
+            
+            displayProfileResults(filteredProfiles, query, highlightMatches) {
+                const container = document.getElementById('profileCards');
+                const allCards = container.querySelectorAll('.card');
+                
+                // Hide all cards first
+                allCards.forEach(card => {
+                    card.classList.add('hidden');
+                    card.classList.remove('highlighted', 'selected');
+                });
+                
+                if (filteredProfiles.length === 0) {
+                    container.innerHTML = '<div class="no-results"><div class="no-results-icon">🔍</div><p>No profiles found matching your criteria.</p></div>';
+                } else {
+                    // Show matching cards
+                    filteredProfiles.forEach((profile, index) => {
+                        const card = container.querySelector(`[data-profile-id="${profile.id}"]`);
+                        if (card) {
+                            card.classList.remove('hidden');
+                            if (index === this.selectedCardIndex) {
+                                card.classList.add('selected');
+                            }
+                        }
+                    });
+                    
+                    if (highlightMatches && query.trim()) {
+                        this.highlightMatches(container, query);
+                    }
+                }
+                
+                this.applyViewMode();
+            }
+            
+            displayProductResults(filteredProducts, query) {
+                const container = document.getElementById('productCards');
+                const allCards = container.querySelectorAll('.card');
+                
+                // Hide all cards first
+                allCards.forEach(card => {
+                    card.classList.add('hidden');
+                    card.classList.remove('highlighted');
+                });
+                
+                if (filteredProducts.length === 0) {
+                    container.innerHTML = '<div class="no-results"><div class="no-results-icon">🛍️</div><p>No products found matching your criteria.</p></div>';
+                } else {
+                    filteredProducts.forEach(product => {
+                        const card = container.querySelector(`[data-product-id="${product.id}"]`);
+                        if (card) {
+                            card.classList.remove('hidden');
+                        }
+                    });
+                    
+                    if (query.trim()) {
+                        this.highlightMatches(container, query);
+                    }
+                }
+            }
+            
+            highlightMatches(container, query) {
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+                const visibleCards = container.querySelectorAll('.card:not(.hidden)');
+                
+                visibleCards.forEach(card => {
+                    const textElements = card.querySelectorAll('.card-title, .card-subtitle, .card-content, .card-tag');
+                    
+                    textElements.forEach(element => {
+                        let content = element.textContent;
+                        let highlightedContent = content;
+                        
+                        searchTerms.forEach(term => {
+                            // Skip advanced search patterns
+                            if (term.includes('$') || term.includes('+')) return;
+                            
+                            const regex = new RegExp(`(${this.escapeRegExp(term)})`, 'gi');
+                            highlightedContent = highlightedContent.replace(regex, '<span class="match-highlight">$1</span>');
+                        });
+                        
+                        if (highlightedContent !== content) {
+                            element.innerHTML = highlightedContent;
+                        }
+                    });
+                });
+            }
+            
+            fuzzyMatch(text, query) {
+                const words = query.split(' ').filter(word => word.length > 0);
+                return words.every(word => text.includes(word));
+            }
+            
+            handleProfileFilter(event) {
+                const filter = event.target.dataset.filter;
+                
+                // Update active filter
+                document.querySelectorAll('.filter-pill[data-filter]').forEach(pill => {
+                    pill.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.profileFilter = filter;
+                
+                // Re-run search
+                const searchValue = document.getElementById('profileSearch').value;
+                this.performProfileSearch(searchValue);
+            }
+            
+            handleProductCategory(event) {
+                const category = event.target.dataset.category;
+                
+                // Update active category
+                document.querySelectorAll('.filter-pill[data-category]').forEach(pill => {
+                    pill.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.productCategory = category;
+                
+                // Re-run search
+                const searchValue = document.getElementById('productSearch').value;
+                this.performProductSearch(searchValue);
+            }
+            
+            handleViewToggle(event) {
+                const view = event.target.dataset.view;
+                
+                // Update active view
+                document.querySelectorAll('.view-button').forEach(button => {
+                    button.classList.remove('active');
+                });
+                event.target.classList.add('active');
+                
+                this.currentView = view;
+                this.applyViewMode();
+            }
+            
+            applyViewMode() {
+                const container = document.getElementById('profileCards');
+                
+                container.className = {
+                    'grid': 'cards-grid',
+                    'list': 'cards-list',
+                    'masonry': 'masonry-grid'
+                }[this.currentView];
+                
+                const cards = container.querySelectorAll('.card:not(.hidden)');
+                cards.forEach(card => {
+                    card.classList.toggle('list-view', this.currentView === 'list');
+                    card.classList.toggle('masonry-card', this.currentView === 'masonry');
+                });
+            }
+            
+            handleSort() {
+                const searchValue = document.getElementById('profileSearch').value;
+                this.performProfileSearch(searchValue);
+            }
+            
+            handleProductFilters() {
+                const searchValue = document.getElementById('productSearch').value;
+                this.performProductSearch(searchValue);
+            }
+            
+            handleOptionsChange() {
+                const profileSearch = document.getElementById('profileSearch').value;
+                const productSearch = document.getElementById('productSearch').value;
+                
+                this.performProfileSearch(profileSearch);
+                this.performProductSearch(productSearch);
+            }
+            
+            handleKeyboardNavigation(event, type) {
+                const container = document.getElementById(type === 'profile' ? 'profileCards' : 'productCards');
+                const visibleCards = Array.from(container.querySelectorAll('.card:not(.hidden)'));
+                
+                switch(event.key) {
+                    case 'ArrowDown':
+                    case 'ArrowRight':
+                        event.preventDefault();
+                        this.selectedCardIndex = Math.min(this.selectedCardIndex + 1, visibleCards.length - 1);
+                        this.updateCardSelection(visibleCards);
+                        break;
+                    case 'ArrowUp':
+                    case 'ArrowLeft':
+                        event.preventDefault();
+                        this.selectedCardIndex = Math.max(this.selectedCardIndex - 1, -1);
+                        this.updateCardSelection(visibleCards);
+                        break;
+                    case 'Enter':
+                        event.preventDefault();
+                        if (this.selectedCardIndex >= 0 && visibleCards[this.selectedCardIndex]) {
+                            this.selectCard(visibleCards[this.selectedCardIndex]);
+                        }
+                        break;
+                    case 'Escape':
+                        event.target.value = '';
+                        if (type === 'profile') {
+                            this.performProfileSearch('');
+                        } else {
+                            this.performProductSearch('');
+                        }
+                        this.selectedCardIndex = -1;
+                        break;
+                }
+            }
+            
+            updateCardSelection(visibleCards) {
+                // Remove previous selection
+                document.querySelectorAll('.card.selected').forEach(card => {
+                    card.classList.remove('selected');
+                });
+                
+                // Add new selection
+                if (this.selectedCardIndex >= 0 && visibleCards[this.selectedCardIndex]) {
+                    const selectedCard = visibleCards[this.selectedCardIndex];
+                    selectedCard.classList.add('selected');
+                    selectedCard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+            }
+            
+            selectCard(card) {
+                const isProfile = card.dataset.profileId;
+                if (isProfile) {
+                    const profileId = parseInt(card.dataset.profileId);
+                    const profile = profiles.find(p => p.id === profileId);
+                    console.log('Selected profile:', profile);
+                    alert(`Selected: ${profile.name} - ${profile.role}`);
+                } else {
+                    const productId = parseInt(card.dataset.productId);
+                    const product = products.find(p => p.id === productId);
+                    console.log('Selected product:', product);
+                    alert(`Selected: ${product.name} - $${product.price}`);
+                }
+            }
+            
+            updateStats() {
+                this.updateProfileStats(profiles.length);
+                this.updateProductStats(products);
+            }
+            
+            updateProfileStats(visibleCount) {
+                document.getElementById('profile-visible').textContent = visibleCount;
+                document.getElementById('profile-total').textContent = profiles.length;
+            }
+            
+            updateProductStats(filteredProducts) {
+                const visibleCount = Array.isArray(filteredProducts) ? filteredProducts.length : products.length;
+                document.getElementById('product-visible').textContent = visibleCount;
+                document.getElementById('product-total').textContent = products.length;
+                
+                if (Array.isArray(filteredProducts) && filteredProducts.length > 0) {
+                    const avgPrice = filteredProducts.reduce((sum, p) => sum + p.price, 0) / filteredProducts.length;
+                    document.getElementById('avg-price').textContent = `$${avgPrice.toFixed(0)}`;
+                }
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new DOMCardSearch();
+        });
+    </script>
+</body>
+</html>

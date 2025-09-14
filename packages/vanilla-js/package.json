@@ -1,0 +1,77 @@
+{
+  "name": "@universal-search/vanilla",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Universal Search vanilla JavaScript library - CDN ready, zero dependencies",
+  "main": "dist/universal-search.js",
+  "module": "dist/universal-search.esm.js",
+  "browser": "dist/universal-search.min.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "src/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "npm run clean && npm run build:rollup && npm run build:types",
+    "build:rollup": "rollup -c",
+    "build:types": "tsc --emitDeclarationOnly --outDir dist/types",
+    "build:dev": "rollup -c --environment NODE_ENV:development",
+    "build:watch": "rollup -c --watch",
+    "clean": "rimraf dist",
+    "dev": "npm run build:watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.{js,ts}",
+    "lint:fix": "eslint src/**/*.{js,ts} --fix",
+    "size-check": "bundlesize",
+    "analyze": "npm run build && npm run size-check"
+  },
+  "keywords": [
+    "search",
+    "vanilla-js",
+    "cdn",
+    "universal",
+    "zero-dependencies",
+    "browser",
+    "javascript"
+  ],
+  "author": "Universal Search Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/jest": "^29.5.8",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "bundlesize": "^0.18.1",
+    "eslint": "^8.54.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "rimraf": "^5.0.5",
+    "rollup": "^4.6.1",
+    "rollup-plugin-filesize": "^10.0.0",
+    "typescript": "^5.3.0"
+  },
+  "bundlesize": [
+    {
+      "path": "./dist/universal-search.min.js",
+      "maxSize": "50kb"
+    }
+  ],
+  "cdn": {
+    "jsdelivr": "https://cdn.jsdelivr.net/npm/@universal-search/vanilla@latest/dist/universal-search.min.js",
+    "unpkg": "https://unpkg.com/@universal-search/vanilla@latest/dist/universal-search.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/universal-search-component.git",
+    "directory": "packages/vanilla-js"
+  }
+}

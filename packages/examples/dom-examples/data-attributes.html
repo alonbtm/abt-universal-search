@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Attribute Targeting Examples - DOM Element Search</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        .searchable-item {
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .searchable-item:hover {
+            border-color: #2196f3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+        }
+        .searchable-item.hidden {
+            display: none;
+        }
+        .searchable-item.highlighted {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        }
+        .searchable-item.selected {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.3);
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .item-title {
+            font-weight: 600;
+            color: #333;
+        }
+        .item-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        .item-tags {
+            display: flex;
+            gap: 6px;
+            margin: 8px 0;
+            flex-wrap: wrap;
+        }
+        .item-tag {
+            padding: 2px 8px;
+            background: #e8f5e8;
+            border-radius: 12px;
+            font-size: 12px;
+            color: #2e7d32;
+        }
+        .match-highlight {
+            background-color: #ffeb3b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-controls label {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .search-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .search-controls select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-mode {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .mode-button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        .mode-button.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        .attribute-builder {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #e9ecef;
+        }
+        .attribute-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .attribute-row select, .attribute-row input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .add-rule-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .remove-rule-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .generated-selector {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+        }
+        .search-stats {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .performance-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .validation-error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #f44336;
+        }
+        .category-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .category-document { background-color: #4caf50; }
+        .category-image { background-color: #ff9800; }
+        .category-video { background-color: #f44336; }
+        .category-audio { background-color: #9c27b0; }
+        .category-archive { background-color: #795548; }
+        .keyboard-hint {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Data Attribute Targeting Examples</h1>
+    
+    <div class="example-section">
+        <h2>🎯 Interactive Data Attribute Search Builder</h2>
+        <p>Build complex searches using data attributes with a visual query builder interface.</p>
+        
+        <div class="search-mode">
+            <button class="mode-button active" data-mode="simple">Simple Search</button>
+            <button class="mode-button" data-mode="builder">Visual Builder</button>
+            <button class="mode-button" data-mode="advanced">CSS Selector</button>
+        </div>
+        
+        <!-- Simple Search Mode -->
+        <div id="simple-search" class="search-mode-panel">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="simpleSearch" 
+                placeholder="Search content... (try 'document', 'important', 'pdf')"
+                aria-label="Simple search"
+            />
+        </div>
+        
+        <!-- Visual Builder Mode -->
+        <div id="builder-search" class="search-mode-panel" style="display: none;">
+            <div class="attribute-builder">
+                <div class="attribute-row">
+                    <span>Find items where:</span>
+                </div>
+                <div id="attribute-rules">
+                    <div class="attribute-row" data-rule-id="0">
+                        <select class="attribute-name">
+                            <option value="data-searchable">Content</option>
+                            <option value="data-category">Category</option>
+                            <option value="data-priority">Priority</option>
+                            <option value="data-tags">Tags</option>
+                            <option value="data-author">Author</option>
+                            <option value="data-status">Status</option>
+                            <option value="data-date">Date</option>
+                            <option value="data-size">Size</option>
+                        </select>
+                        <select class="attribute-operator">
+                            <option value="contains">contains</option>
+                            <option value="equals">equals</option>
+                            <option value="starts-with">starts with</option>
+                            <option value="ends-with">ends with</option>
+                            <option value="not-contains">doesn't contain</option>
+                        </select>
+                        <input type="text" class="attribute-value" placeholder="value" />
+                        <button type="button" class="add-rule-btn">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="generated-selector" id="generatedSelector">
+                [data-searchable*=""]
+            </div>
+        </div>
+        
+        <!-- Advanced CSS Selector Mode -->
+        <div id="advanced-search" class="search-mode-panel" style="display: none;">
+            <input 
+                type="text" 
+                class="search-input" 
+                id="advancedSearch" 
+                placeholder="Enter CSS selector... (e.g., [data-category='document'][data-priority='high'])"
+                aria-label="CSS selector search"
+            />
+            <div id="selectorValidation" class="validation-error" style="display: none;">
+                Invalid CSS selector
+            </div>
+        </div>
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="highlightMatches" checked />
+                Highlight Matches
+            </label>
+            <label>
+                <input type="checkbox" id="caseSensitive" />
+                Case Sensitive
+            </label>
+            <label>
+                <input type="checkbox" id="showAttributes" />
+                Show Data Attributes
+            </label>
+            <label>Search In:</label>
+            <select id="searchScope">
+                <option value="all">All Attributes</option>
+                <option value="data-searchable">Content Only</option>
+                <option value="data-category">Category</option>
+                <option value="data-tags">Tags</option>
+            </select>
+        </div>
+        
+        <div id="search-stats" class="search-stats">
+            Showing <span id="visible-count">0</span> of <span id="total-count">0</span> items
+        </div>
+        
+        <div class="keyboard-hint">
+            💡 <strong>Tips:</strong> Use the Visual Builder for complex queries, or try CSS selectors like <code>[data-category="document"]</code>
+        </div>
+        
+        <div id="searchResults">
+            <!-- Searchable items will be populated here -->
+        </div>
+        
+        <div class="performance-info">
+            <span>Performance: <strong id="search-performance">Ready</strong></span>
+            <span>Matches: <strong id="match-count">0</strong></span>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>📂 File System with Rich Metadata</h2>
+        <p>Search through files with comprehensive data attributes including metadata, categories, and custom properties.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="fileSystemSearch" 
+            placeholder="Search files by name, type, author, or metadata... (try 'John', 'pdf', 'large')"
+            aria-label="Search file system"
+        />
+        
+        <div class="search-controls">
+            <label>Filter by Category:</label>
+            <select id="categoryFilter">
+                <option value="all">All Files</option>
+                <option value="document">Documents</option>
+                <option value="image">Images</option>
+                <option value="video">Videos</option>
+                <option value="audio">Audio</option>
+                <option value="archive">Archives</option>
+            </select>
+            <label>Size:</label>
+            <select id="sizeFilter">
+                <option value="all">Any Size</option>
+                <option value="small">Small (&lt; 1MB)</option>
+                <option value="medium">Medium (1-10MB)</option>
+                <option value="large">Large (&gt; 10MB)</option>
+            </select>
+        </div>
+        
+        <div id="file-stats" class="search-stats">
+            Found <span id="file-visible">0</span> files | Total size: <span id="total-size">0 MB</span>
+        </div>
+        
+        <div id="fileSystemResults">
+            <!-- File system items will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        // Sample data with rich data attributes
+        const searchableItems = [
+            {
+                id: 1,
+                title: 'Project Documentation',
+                content: 'Complete documentation for the new search component project',
+                attributes: {
+                    'data-searchable': 'project documentation search component guide',
+                    'data-category': 'document',
+                    'data-priority': 'high',
+                    'data-tags': 'documentation,project,search,component',
+                    'data-author': 'John Smith',
+                    'data-status': 'published',
+                    'data-date': '2025-01-10',
+                    'data-size': 'large'
+                }
+            },
+            {
+                id: 2,
+                title: 'User Interface Mockups',
+                content: 'Design mockups for the user interface components',
+                attributes: {
+                    'data-searchable': 'user interface mockups design components ui ux',
+                    'data-category': 'design',
+                    'data-priority': 'medium',
+                    'data-tags': 'design,ui,mockups,interface',
+                    'data-author': 'Sarah Johnson',
+                    'data-status': 'draft',
+                    'data-date': '2025-01-08',
+                    'data-size': 'medium'
+                }
+            },
+            {
+                id: 3,
+                title: 'API Integration Guide',
+                content: 'How to integrate with external APIs and data sources',
+                attributes: {
+                    'data-searchable': 'api integration guide external data sources REST GraphQL',
+                    'data-category': 'document',
+                    'data-priority': 'high',
+                    'data-tags': 'api,integration,guide,REST,GraphQL',
+                    'data-author': 'Mike Davis',
+                    'data-status': 'published',
+                    'data-date': '2025-01-09',
+                    'data-size': 'medium'
+                }
+            },
+            {
+                id: 4,
+                title: 'Performance Testing Results',
+                content: 'Benchmarks and performance analysis of the search functionality',
+                attributes: {
+                    'data-searchable': 'performance testing results benchmarks analysis search',
+                    'data-category': 'report',
+                    'data-priority': 'medium',
+                    'data-tags': 'performance,testing,benchmarks,analysis',
+                    'data-author': 'Emily Chen',
+                    'data-status': 'published',
+                    'data-date': '2025-01-07',
+                    'data-size': 'small'
+                }
+            },
+            {
+                id: 5,
+                title: 'Security Assessment',
+                content: 'Security review and vulnerability assessment report',
+                attributes: {
+                    'data-searchable': 'security assessment vulnerability review report audit',
+                    'data-category': 'security',
+                    'data-priority': 'critical',
+                    'data-tags': 'security,assessment,vulnerability,audit',
+                    'data-author': 'David Wilson',
+                    'data-status': 'confidential',
+                    'data-date': '2025-01-11',
+                    'data-size': 'medium'
+                }
+            }
+        ];
+
+        // File system data with rich metadata
+        const fileSystemItems = [
+            {
+                id: 1,
+                name: 'presentation.pdf',
+                path: '/documents/',
+                attributes: {
+                    'data-searchable': 'quarterly report presentation slides',
+                    'data-category': 'document',
+                    'data-type': 'pdf',
+                    'data-author': 'John Smith',
+                    'data-created': '2025-01-08',
+                    'data-modified': '2025-01-10',
+                    'data-size-mb': '5.2',
+                    'data-size-category': 'medium',
+                    'data-tags': 'report,quarterly,presentation'
+                }
+            },
+            {
+                id: 2,
+                name: 'hero-image.jpg',
+                path: '/assets/images/',
+                attributes: {
+                    'data-searchable': 'hero banner image homepage',
+                    'data-category': 'image',
+                    'data-type': 'jpg',
+                    'data-author': 'Sarah Design',
+                    'data-created': '2025-01-05',
+                    'data-modified': '2025-01-05',
+                    'data-size-mb': '2.1',
+                    'data-size-category': 'medium',
+                    'data-tags': 'hero,banner,homepage'
+                }
+            },
+            {
+                id: 3,
+                name: 'tutorial-video.mp4',
+                path: '/media/videos/',
+                attributes: {
+                    'data-searchable': 'tutorial howto guide video training',
+                    'data-category': 'video',
+                    'data-type': 'mp4',
+                    'data-author': 'Mike Producer',
+                    'data-created': '2025-01-01',
+                    'data-modified': '2025-01-03',
+                    'data-size-mb': '45.8',
+                    'data-size-category': 'large',
+                    'data-tags': 'tutorial,training,guide'
+                }
+            },
+            {
+                id: 4,
+                name: 'app-data.json',
+                path: '/config/',
+                attributes: {
+                    'data-searchable': 'application configuration data settings',
+                    'data-category': 'document',
+                    'data-type': 'json',
+                    'data-author': 'System',
+                    'data-created': '2024-12-15',
+                    'data-modified': '2025-01-10',
+                    'data-size-mb': '0.3',
+                    'data-size-category': 'small',
+                    'data-tags': 'config,settings,json'
+                }
+            },
+            {
+                id: 5,
+                name: 'backup.zip',
+                path: '/backups/',
+                attributes: {
+                    'data-searchable': 'backup archive compressed files',
+                    'data-category': 'archive',
+                    'data-type': 'zip',
+                    'data-author': 'Auto-Backup',
+                    'data-created': '2025-01-09',
+                    'data-modified': '2025-01-09',
+                    'data-size-mb': '125.7',
+                    'data-size-category': 'large',
+                    'data-tags': 'backup,archive,compressed'
+                }
+            }
+        ];
+
+        class DataAttributeSearch {
+            constructor() {
+                this.currentMode = 'simple';
+                this.attributeRules = [{ id: 0, attribute: 'data-searchable', operator: 'contains', value: '' }];
+                this.ruleIdCounter = 1;
+                this.searchCache = new Map();
+                
+                this.initializeSearchableItems();
+                this.initializeFileSystem();
+                this.bindEvents();
+                this.updateStats();
+            }
+            
+            initializeSearchableItems() {
+                const container = document.getElementById('searchResults');
+                container.innerHTML = searchableItems.map(item => {
+                    const attributeString = Object.entries(item.attributes)
+                        .map(([key, value]) => `${key}="${value}"`)
+                        .join(' ');
+                    
+                    return `
+                        <div class="searchable-item" 
+                             data-item-id="${item.id}"
+                             ${attributeString}
+                             tabindex="0"
+                             aria-label="${item.title}">
+                            <div class="item-header">
+                                <div class="item-title">${item.title}</div>
+                                <div class="item-meta">
+                                    <span class="category-indicator category-${item.attributes['data-category']}"></span>
+                                    ${item.attributes['data-category']} | ${item.attributes['data-priority']} priority
+                                </div>
+                            </div>
+                            <div class="item-content">${item.content}</div>
+                            <div class="item-tags">
+                                ${item.attributes['data-tags'].split(',').map(tag => 
+                                    `<span class="item-tag">${tag.trim()}</span>`
+                                ).join('')}
+                            </div>
+                            <div class="item-meta">
+                                By: ${item.attributes['data-author']} | ${item.attributes['data-date']} | Status: ${item.attributes['data-status']}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            initializeFileSystem() {
+                const container = document.getElementById('fileSystemResults');
+                container.innerHTML = fileSystemItems.map(item => {
+                    const attributeString = Object.entries(item.attributes)
+                        .map(([key, value]) => `${key}="${value}"`)
+                        .join(' ');
+                    
+                    return `
+                        <div class="searchable-item" 
+                             data-file-id="${item.id}"
+                             ${attributeString}
+                             tabindex="0"
+                             aria-label="${item.name}">
+                            <div class="item-header">
+                                <div class="item-title">
+                                    <span class="category-indicator category-${item.attributes['data-category']}"></span>
+                                    ${item.name}
+                                </div>
+                                <div class="item-meta">
+                                    ${item.attributes['data-size-mb']} MB | ${item.attributes['data-type'].toUpperCase()}
+                                </div>
+                            </div>
+                            <div class="item-content">
+                                <strong>Path:</strong> ${item.path}<br/>
+                                <strong>Created:</strong> ${item.attributes['data-created']} by ${item.attributes['data-author']}<br/>
+                                <strong>Modified:</strong> ${item.attributes['data-modified']}
+                            </div>
+                            <div class="item-tags">
+                                ${item.attributes['data-tags'].split(',').map(tag => 
+                                    `<span class="item-tag">${tag.trim()}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            bindEvents() {
+                // Mode switching
+                document.querySelectorAll('.mode-button').forEach(button => {
+                    button.addEventListener('click', (e) => this.switchMode(e.target.dataset.mode));
+                });
+                
+                // Search inputs
+                document.getElementById('simpleSearch').addEventListener('input', 
+                    this.debounce((e) => this.performSimpleSearch(e.target.value), 300));
+                    
+                document.getElementById('advancedSearch').addEventListener('input', 
+                    this.debounce((e) => this.performAdvancedSearch(e.target.value), 300));
+                    
+                document.getElementById('fileSystemSearch').addEventListener('input', 
+                    this.debounce((e) => this.performFileSystemSearch(e.target.value), 300));
+                
+                // Attribute builder
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('add-rule-btn')) {
+                        this.addAttributeRule(e.target);
+                    } else if (e.target.classList.contains('remove-rule-btn')) {
+                        this.removeAttributeRule(e.target);
+                    }
+                });
+                
+                document.addEventListener('change', (e) => {
+                    if (e.target.closest('#attribute-rules')) {
+                        this.updateBuilderSearch();
+                    }
+                });
+                
+                document.addEventListener('input', (e) => {
+                    if (e.target.closest('#attribute-rules')) {
+                        this.updateBuilderSearch();
+                    }
+                });
+                
+                // Filters
+                document.getElementById('categoryFilter').addEventListener('change', 
+                    () => this.applyFileSystemFilters());
+                document.getElementById('sizeFilter').addEventListener('change', 
+                    () => this.applyFileSystemFilters());
+                
+                // Search options
+                document.querySelectorAll('.search-controls input, .search-controls select').forEach(control => {
+                    control.addEventListener('change', () => this.handleOptionsChange());
+                });
+            }
+            
+            switchMode(mode) {
+                // Update active button
+                document.querySelectorAll('.mode-button').forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+                
+                // Show/hide panels
+                document.querySelectorAll('.search-mode-panel').forEach(panel => {
+                    panel.style.display = 'none';
+                });
+                document.getElementById(`${mode}-search`).style.display = 'block';
+                
+                this.currentMode = mode;
+                
+                // Trigger search based on mode
+                this.performCurrentModeSearch();
+            }
+            
+            performCurrentModeSearch() {
+                switch(this.currentMode) {
+                    case 'simple':
+                        const simpleQuery = document.getElementById('simpleSearch').value;
+                        this.performSimpleSearch(simpleQuery);
+                        break;
+                    case 'builder':
+                        this.updateBuilderSearch();
+                        break;
+                    case 'advanced':
+                        const advancedQuery = document.getElementById('advancedSearch').value;
+                        this.performAdvancedSearch(advancedQuery);
+                        break;
+                }
+            }
+            
+            performSimpleSearch(query) {
+                const startTime = performance.now();
+                const caseSensitive = document.getElementById('caseSensitive')?.checked;
+                const searchScope = document.getElementById('searchScope')?.value || 'all';
+                const highlightMatches = document.getElementById('highlightMatches')?.checked;
+                
+                const searchQuery = caseSensitive ? query : query.toLowerCase();
+                const items = document.querySelectorAll('#searchResults .searchable-item');
+                let visibleCount = 0;
+                
+                items.forEach(item => {
+                    item.classList.remove('hidden', 'highlighted');
+                    
+                    if (!query.trim()) {
+                        visibleCount++;
+                        return;
+                    }
+                    
+                    let shouldShow = false;
+                    
+                    if (searchScope === 'all') {
+                        // Search all data attributes
+                        const allAttributes = Array.from(item.attributes)
+                            .filter(attr => attr.name.startsWith('data-'))
+                            .map(attr => attr.value)
+                            .join(' ');
+                        
+                        const content = caseSensitive ? allAttributes : allAttributes.toLowerCase();
+                        shouldShow = content.includes(searchQuery);
+                    } else {
+                        // Search specific attribute
+                        const attributeValue = item.getAttribute(searchScope) || '';
+                        const content = caseSensitive ? attributeValue : attributeValue.toLowerCase();
+                        shouldShow = content.includes(searchQuery);
+                    }
+                    
+                    if (shouldShow) {
+                        item.classList.add('highlighted');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                if (highlightMatches && query.trim()) {
+                    this.highlightMatches('#searchResults', query);
+                }
+                
+                this.updateSearchStats(visibleCount, searchableItems.length);
+                this.updatePerformance(performance.now() - startTime, visibleCount);
+            }
+            
+            performAdvancedSearch(selector) {
+                const startTime = performance.now();
+                const items = document.querySelectorAll('#searchResults .searchable-item');
+                const validationDiv = document.getElementById('selectorValidation');
+                
+                // Reset all items
+                items.forEach(item => {
+                    item.classList.remove('hidden', 'highlighted');
+                });
+                
+                if (!selector.trim()) {
+                    validationDiv.style.display = 'none';
+                    this.updateSearchStats(items.length, searchableItems.length);
+                    this.updatePerformance(performance.now() - startTime, items.length);
+                    return;
+                }
+                
+                try {
+                    // Test selector validity
+                    document.querySelector('#searchResults');
+                    const matchingItems = document.querySelectorAll(`#searchResults .searchable-item${selector}`);
+                    
+                    validationDiv.style.display = 'none';
+                    
+                    let visibleCount = 0;
+                    items.forEach(item => {
+                        if (Array.from(matchingItems).includes(item)) {
+                            item.classList.add('highlighted');
+                            visibleCount++;
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+                    
+                    this.updateSearchStats(visibleCount, searchableItems.length);
+                    this.updatePerformance(performance.now() - startTime, visibleCount);
+                    
+                } catch (error) {
+                    validationDiv.style.display = 'block';
+                    validationDiv.textContent = `Invalid CSS selector: ${error.message}`;
+                }
+            }
+            
+            updateBuilderSearch() {
+                const rules = this.collectBuilderRules();
+                const selector = this.generateCSSSelector(rules);
+                
+                document.getElementById('generatedSelector').textContent = selector;
+                
+                // Apply the generated selector
+                this.performAdvancedSearch(selector);
+            }
+            
+            collectBuilderRules() {
+                const rules = [];
+                document.querySelectorAll('#attribute-rules .attribute-row[data-rule-id]').forEach(row => {
+                    const attribute = row.querySelector('.attribute-name').value;
+                    const operator = row.querySelector('.attribute-operator').value;
+                    const value = row.querySelector('.attribute-value').value;
+                    
+                    if (value.trim()) {
+                        rules.push({ attribute, operator, value });
+                    }
+                });
+                return rules;
+            }
+            
+            generateCSSSelector(rules) {
+                if (rules.length === 0) return '';
+                
+                const selectors = rules.map(rule => {
+                    const { attribute, operator, value } = rule;
+                    
+                    switch(operator) {
+                        case 'equals':
+                            return `[${attribute}="${value}"]`;
+                        case 'contains':
+                            return `[${attribute}*="${value}"]`;
+                        case 'starts-with':
+                            return `[${attribute}^="${value}"]`;
+                        case 'ends-with':
+                            return `[${attribute}$="${value}"]`;
+                        case 'not-contains':
+                            return `:not([${attribute}*="${value}"])`;
+                        default:
+                            return `[${attribute}*="${value}"]`;
+                    }
+                });
+                
+                return selectors.join('');
+            }
+            
+            addAttributeRule(button) {
+                const ruleId = this.ruleIdCounter++;
+                const newRule = document.createElement('div');
+                newRule.className = 'attribute-row';
+                newRule.setAttribute('data-rule-id', ruleId);
+                
+                newRule.innerHTML = `
+                    <select class="attribute-name">
+                        <option value="data-searchable">Content</option>
+                        <option value="data-category">Category</option>
+                        <option value="data-priority">Priority</option>
+                        <option value="data-tags">Tags</option>
+                        <option value="data-author">Author</option>
+                        <option value="data-status">Status</option>
+                        <option value="data-date">Date</option>
+                        <option value="data-size">Size</option>
+                    </select>
+                    <select class="attribute-operator">
+                        <option value="contains">contains</option>
+                        <option value="equals">equals</option>
+                        <option value="starts-with">starts with</option>
+                        <option value="ends-with">ends with</option>
+                        <option value="not-contains">doesn't contain</option>
+                    </select>
+                    <input type="text" class="attribute-value" placeholder="value" />
+                    <button type="button" class="remove-rule-btn">-</button>
+                `;
+                
+                button.closest('.attribute-row').insertAdjacentElement('afterend', newRule);
+                
+                // Update the first rule's button if it doesn't have a remove button
+                const firstRule = document.querySelector('#attribute-rules .attribute-row[data-rule-id]');
+                if (firstRule && !firstRule.querySelector('.remove-rule-btn')) {
+                    const addBtn = firstRule.querySelector('.add-rule-btn');
+                    addBtn.outerHTML = '<button type="button" class="remove-rule-btn">-</button>';
+                }
+                
+                this.updateBuilderSearch();
+            }
+            
+            removeAttributeRule(button) {
+                const rule = button.closest('.attribute-row');
+                const allRules = document.querySelectorAll('#attribute-rules .attribute-row[data-rule-id]');
+                
+                if (allRules.length > 1) {
+                    rule.remove();
+                    
+                    // If only one rule remains, add the + button back
+                    if (document.querySelectorAll('#attribute-rules .attribute-row[data-rule-id]').length === 1) {
+                        const lastRule = document.querySelector('#attribute-rules .attribute-row[data-rule-id]');
+                        const removeBtn = lastRule.querySelector('.remove-rule-btn');
+                        if (removeBtn) {
+                            removeBtn.outerHTML = '<button type="button" class="add-rule-btn">+</button>';
+                        }
+                    }
+                }
+                
+                this.updateBuilderSearch();
+            }
+            
+            performFileSystemSearch(query) {
+                const startTime = performance.now();
+                const categoryFilter = document.getElementById('categoryFilter').value;
+                const sizeFilter = document.getElementById('sizeFilter').value;
+                
+                const items = document.querySelectorAll('#fileSystemResults .searchable-item');
+                let visibleCount = 0;
+                let totalSize = 0;
+                
+                items.forEach(item => {
+                    item.classList.remove('hidden', 'highlighted');
+                    
+                    let shouldShow = true;
+                    
+                    // Apply category filter
+                    if (categoryFilter !== 'all') {
+                        const itemCategory = item.getAttribute('data-category');
+                        if (itemCategory !== categoryFilter) {
+                            shouldShow = false;
+                        }
+                    }
+                    
+                    // Apply size filter
+                    if (sizeFilter !== 'all' && shouldShow) {
+                        const sizeCategory = item.getAttribute('data-size-category');
+                        if (sizeCategory !== sizeFilter) {
+                            shouldShow = false;
+                        }
+                    }
+                    
+                    // Apply text search
+                    if (query.trim() && shouldShow) {
+                        const searchableContent = item.getAttribute('data-searchable') + ' ' + 
+                                                item.getAttribute('data-tags') + ' ' +
+                                                item.querySelector('.item-title').textContent;
+                        
+                        if (!searchableContent.toLowerCase().includes(query.toLowerCase())) {
+                            shouldShow = false;
+                        }
+                    }
+                    
+                    if (shouldShow) {
+                        item.classList.add('highlighted');
+                        visibleCount++;
+                        totalSize += parseFloat(item.getAttribute('data-size-mb') || 0);
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                this.updateFileSystemStats(visibleCount, totalSize);
+                document.getElementById('search-performance').textContent = 
+                    `${(performance.now() - startTime).toFixed(2)}ms`;
+            }
+            
+            applyFileSystemFilters() {
+                const query = document.getElementById('fileSystemSearch').value;
+                this.performFileSystemSearch(query);
+            }
+            
+            highlightMatches(containerSelector, query) {
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+                const items = document.querySelectorAll(`${containerSelector} .searchable-item:not(.hidden)`);
+                
+                items.forEach(item => {
+                    const textElements = item.querySelectorAll('.item-title, .item-content, .item-tag');
+                    
+                    textElements.forEach(element => {
+                        let content = element.textContent;
+                        let highlightedContent = content;
+                        
+                        searchTerms.forEach(term => {
+                            const regex = new RegExp(`(${this.escapeRegExp(term)})`, 'gi');
+                            highlightedContent = highlightedContent.replace(regex, '<span class="match-highlight">$1</span>');
+                        });
+                        
+                        if (highlightedContent !== content) {
+                            element.innerHTML = highlightedContent;
+                        }
+                    });
+                });
+            }
+            
+            handleOptionsChange() {
+                // Re-run current search when options change
+                this.performCurrentModeSearch();
+                this.applyFileSystemFilters();
+            }
+            
+            updateStats() {
+                this.updateSearchStats(searchableItems.length, searchableItems.length);
+                this.updateFileSystemStats(fileSystemItems.length, 
+                    fileSystemItems.reduce((sum, item) => sum + parseFloat(item.attributes['data-size-mb']), 0));
+            }
+            
+            updateSearchStats(visible, total) {
+                document.getElementById('visible-count').textContent = visible;
+                document.getElementById('total-count').textContent = total;
+            }
+            
+            updateFileSystemStats(visible, totalSize) {
+                document.getElementById('file-visible').textContent = visible;
+                document.getElementById('total-size').textContent = totalSize.toFixed(1);
+            }
+            
+            updatePerformance(duration, matches) {
+                document.getElementById('search-performance').textContent = `${duration.toFixed(2)}ms`;
+                document.getElementById('match-count').textContent = matches;
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new DataAttributeSearch();
+        });
+    </script>
+</body>
+</html>

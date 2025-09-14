@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>List Search Examples - DOM Element Search</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        .list-container {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+        .list-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        .list-item:hover {
+            background-color: #f5f5f5;
+        }
+        .list-item.hidden {
+            display: none;
+        }
+        .list-item.highlighted {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+        .list-item.selected {
+            background-color: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .list-item.focused {
+            outline: 2px solid #2196f3;
+            outline-offset: -2px;
+        }
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        .item-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .item-meta {
+            color: #999;
+            font-size: 12px;
+            display: flex;
+            gap: 15px;
+        }
+        .match-highlight {
+            background-color: #ffeb3b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .search-stats {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .search-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .search-controls label {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .search-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .filter-tags {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-tag {
+            padding: 4px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .filter-tag.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+        .filter-tag:hover:not(.active) {
+            border-color: #2196f3;
+        }
+        .hierarchical-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .hierarchical-item {
+            margin-bottom: 8px;
+        }
+        .hierarchical-item ul {
+            margin-left: 20px;
+            margin-top: 8px;
+            list-style: none;
+            padding: 0;
+        }
+        .hierarchical-item > .item-content {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #dee2e6;
+            cursor: pointer;
+        }
+        .hierarchical-item.expanded > .item-content {
+            border-left-color: #2196f3;
+        }
+        .hierarchical-item.collapsed ul {
+            display: none;
+        }
+        .expand-icon {
+            margin-right: 8px;
+            transition: transform 0.2s ease;
+            display: inline-block;
+        }
+        .hierarchical-item.expanded .expand-icon {
+            transform: rotate(90deg);
+        }
+        .virtual-list {
+            height: 300px;
+            overflow-y: auto;
+        }
+        .virtual-item {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+        .keyboard-hint {
+            background: #fff3e0;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .performance-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>DOM List Search Examples</h1>
+    
+    <div class="example-section">
+        <h2>📋 Task List Search with Filtering</h2>
+        <p>Interactive task list with real-time search, category filtering, and keyboard navigation.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="taskSearch" 
+            placeholder="Search tasks... (try 'design', 'urgent', or 'completed')"
+            aria-label="Search tasks"
+            role="searchbox"
+            aria-describedby="task-stats"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="taskCaseSensitive" />
+                Case Sensitive
+            </label>
+            <label>
+                <input type="checkbox" id="taskHighlight" checked />
+                Highlight Matches
+            </label>
+            <label>
+                <input type="checkbox" id="taskShowCompleted" checked />
+                Show Completed
+            </label>
+        </div>
+        
+        <div class="filter-tags">
+            <div class="filter-tag active" data-filter="all">All Tasks</div>
+            <div class="filter-tag" data-filter="development">Development</div>
+            <div class="filter-tag" data-filter="design">Design</div>
+            <div class="filter-tag" data-filter="marketing">Marketing</div>
+            <div class="filter-tag" data-filter="urgent">Urgent</div>
+            <div class="filter-tag" data-filter="completed">Completed</div>
+        </div>
+        
+        <div id="task-stats" class="search-stats" style="display: none;">
+            Showing <span id="task-visible-count">0</span> of <span id="task-total-count">0</span> tasks
+        </div>
+        
+        <div class="keyboard-hint">
+            💡 <strong>Keyboard Navigation:</strong> Use ↑↓ to navigate, Enter to toggle completion, Space to select
+        </div>
+        
+        <div class="list-container" role="listbox" aria-label="Task list">
+            <div id="taskList">
+                <!-- Tasks will be populated by JavaScript -->
+            </div>
+            <div id="taskNoResults" class="no-results" style="display: none;">
+                No tasks found matching your search criteria.
+            </div>
+        </div>
+        
+        <div class="performance-info">
+            <strong>Performance:</strong> <span id="task-performance">Ready to search</span>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>🌲 Hierarchical List Search</h2>
+        <p>Search through nested file/folder structure with expand/collapse functionality.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="fileSearch" 
+            placeholder="Search files and folders... (try '.js', 'component', or 'test')"
+            aria-label="Search files and folders"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="fileExpandAll" />
+                Expand All on Search
+            </label>
+            <label>
+                <input type="checkbox" id="fileShowPath" />
+                Show Full Paths
+            </label>
+        </div>
+        
+        <ul class="hierarchical-list" id="fileList" role="tree" aria-label="File system">
+            <!-- File structure will be populated -->
+        </ul>
+    </div>
+
+    <div class="example-section">
+        <h2>🚀 Virtual List Search</h2>
+        <p>Performance-optimized search for large datasets with virtual scrolling.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="virtualSearch" 
+            placeholder="Search through 10,000 items... (try 'item-5' or numbers)"
+            aria-label="Search virtual list"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="virtualDebounce" checked />
+                Debounced Search (300ms)
+            </label>
+            <label>
+                <input type="checkbox" id="virtualCache" checked />
+                Enable Result Caching
+            </label>
+        </div>
+        
+        <div id="virtual-stats" class="search-stats" style="display: none;">
+            Showing <span id="virtual-visible-count">0</span> of <span id="virtual-total-count">10000</span> items
+            | Cache size: <span id="virtual-cache-size">0</span>
+        </div>
+        
+        <div class="virtual-list" id="virtualList" role="listbox">
+            <!-- Virtual items will be rendered -->
+        </div>
+        
+        <div class="performance-info">
+            <strong>Virtual List Performance:</strong> <span id="virtual-performance">Ready</span>
+        </div>
+    </div>
+
+    <script>
+        // Task data
+        const tasks = [
+            { id: 1, title: 'Implement user authentication', category: 'development', priority: 'high', completed: false, assignee: 'John', dueDate: '2025-01-15' },
+            { id: 2, title: 'Design login page mockups', category: 'design', priority: 'medium', completed: true, assignee: 'Sarah', dueDate: '2025-01-10' },
+            { id: 3, title: 'Create marketing campaign', category: 'marketing', priority: 'urgent', completed: false, assignee: 'Mike', dueDate: '2025-01-12' },
+            { id: 4, title: 'Fix responsive layout issues', category: 'development', priority: 'high', completed: false, assignee: 'Emily', dueDate: '2025-01-14' },
+            { id: 5, title: 'Update brand guidelines', category: 'design', priority: 'low', completed: true, assignee: 'David', dueDate: '2025-01-08' },
+            { id: 6, title: 'Setup CI/CD pipeline', category: 'development', priority: 'medium', completed: false, assignee: 'Lisa', dueDate: '2025-01-16' },
+            { id: 7, title: 'Conduct user testing', category: 'design', priority: 'urgent', completed: false, assignee: 'Robert', dueDate: '2025-01-13' },
+            { id: 8, title: 'Write API documentation', category: 'development', priority: 'medium', completed: true, assignee: 'Jennifer', dueDate: '2025-01-09' },
+            { id: 9, title: 'Launch product announcement', category: 'marketing', priority: 'urgent', completed: false, assignee: 'Thomas', dueDate: '2025-01-11' },
+            { id: 10, title: 'Optimize database queries', category: 'development', priority: 'high', completed: false, assignee: 'Amanda', dueDate: '2025-01-17' }
+        ];
+
+        // File system structure
+        const fileStructure = [
+            {
+                name: 'src',
+                type: 'folder',
+                children: [
+                    {
+                        name: 'components',
+                        type: 'folder',
+                        children: [
+                            { name: 'Header.tsx', type: 'file', size: '2.1KB' },
+                            { name: 'Navigation.tsx', type: 'file', size: '1.8KB' },
+                            { name: 'SearchBox.tsx', type: 'file', size: '3.2KB' }
+                        ]
+                    },
+                    {
+                        name: 'utils',
+                        type: 'folder',
+                        children: [
+                            { name: 'api.ts', type: 'file', size: '1.5KB' },
+                            { name: 'helpers.ts', type: 'file', size: '0.9KB' }
+                        ]
+                    },
+                    { name: 'App.tsx', type: 'file', size: '4.1KB' },
+                    { name: 'index.tsx', type: 'file', size: '0.8KB' }
+                ]
+            },
+            {
+                name: 'tests',
+                type: 'folder',
+                children: [
+                    { name: 'Header.test.tsx', type: 'file', size: '1.2KB' },
+                    { name: 'SearchBox.test.tsx', type: 'file', size: '2.1KB' },
+                    { name: 'utils.test.ts', type: 'file', size: '1.0KB' }
+                ]
+            },
+            { name: 'package.json', type: 'file', size: '1.8KB' },
+            { name: 'tsconfig.json', type: 'file', size: '0.5KB' },
+            { name: 'README.md', type: 'file', size: '3.2KB' }
+        ];
+
+        class DOMListSearch {
+            constructor() {
+                this.taskFilter = 'all';
+                this.selectedTaskIndex = -1;
+                this.searchCache = new Map();
+                this.virtualCache = new Map();
+                this.virtualItems = this.generateVirtualItems(10000);
+                this.virtualVisibleStart = 0;
+                this.virtualVisibleEnd = 20;
+                this.virtualItemHeight = 60;
+                
+                this.initializeTasks();
+                this.initializeFileSystem();
+                this.initializeVirtualList();
+                this.bindEvents();
+                this.updateTaskStats();
+            }
+            
+            generateVirtualItems(count) {
+                const items = [];
+                for (let i = 0; i < count; i++) {
+                    items.push({
+                        id: i,
+                        title: `Virtual Item ${i + 1}`,
+                        subtitle: `Item description ${i + 1}`,
+                        category: ['urgent', 'normal', 'low'][i % 3],
+                        value: Math.floor(Math.random() * 1000)
+                    });
+                }
+                return items;
+            }
+            
+            initializeTasks() {
+                const taskList = document.getElementById('taskList');
+                taskList.innerHTML = tasks.map((task, index) => `
+                    <div class="list-item" 
+                         role="option" 
+                         data-task-id="${task.id}"
+                         data-index="${index}"
+                         data-category="${task.category}"
+                         data-priority="${task.priority}"
+                         data-completed="${task.completed}"
+                         tabindex="0"
+                         aria-selected="false">
+                        <div class="item-title">${task.title}</div>
+                        <div class="item-subtitle">Assigned to: ${task.assignee} | Due: ${task.dueDate}</div>
+                        <div class="item-meta">
+                            <span>Category: ${task.category}</span>
+                            <span>Priority: ${task.priority}</span>
+                            <span>Status: ${task.completed ? 'Completed' : 'In Progress'}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            initializeFileSystem() {
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = this.renderFileStructure(fileStructure);
+            }
+            
+            renderFileStructure(items, level = 0) {
+                return items.map(item => {
+                    const hasChildren = item.children && item.children.length > 0;
+                    const expandIcon = hasChildren ? '<span class="expand-icon">▶</span>' : '<span class="expand-icon" style="visibility: hidden;">▶</span>';
+                    const itemIcon = item.type === 'folder' ? '📁' : '📄';
+                    
+                    return `
+                        <li class="hierarchical-item ${hasChildren ? 'collapsed' : ''}" 
+                            data-name="${item.name.toLowerCase()}"
+                            data-type="${item.type}"
+                            role="treeitem"
+                            aria-expanded="${hasChildren ? 'false' : null}">
+                            <div class="item-content" tabindex="0">
+                                ${expandIcon}
+                                ${itemIcon} ${item.name}
+                                ${item.size ? ` (${item.size})` : ''}
+                            </div>
+                            ${hasChildren ? `<ul role="group">${this.renderFileStructure(item.children, level + 1)}</ul>` : ''}
+                        </li>
+                    `;
+                }).join('');
+            }
+            
+            initializeVirtualList() {
+                this.renderVirtualItems();
+            }
+            
+            renderVirtualItems(filteredItems = this.virtualItems) {
+                const virtualList = document.getElementById('virtualList');
+                const startIndex = Math.floor(virtualList.scrollTop / this.virtualItemHeight);
+                const endIndex = Math.min(startIndex + Math.ceil(virtualList.clientHeight / this.virtualItemHeight) + 5, filteredItems.length);
+                
+                virtualList.innerHTML = '';
+                
+                if (filteredItems.length === 0) {
+                    virtualList.innerHTML = '<div class="no-results">No items found</div>';
+                    return;
+                }
+                
+                // Add spacer for items above viewport
+                if (startIndex > 0) {
+                    const spacer = document.createElement('div');
+                    spacer.style.height = `${startIndex * this.virtualItemHeight}px`;
+                    virtualList.appendChild(spacer);
+                }
+                
+                // Render visible items
+                for (let i = startIndex; i < endIndex; i++) {
+                    const item = filteredItems[i];
+                    if (!item) continue;
+                    
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'virtual-item';
+                    itemElement.innerHTML = `
+                        <div>
+                            <div style="font-weight: 600;">${item.title}</div>
+                            <div style="font-size: 12px; color: #666;">${item.subtitle} | Value: ${item.value}</div>
+                        </div>
+                    `;
+                    virtualList.appendChild(itemElement);
+                }
+                
+                // Add spacer for items below viewport
+                const remainingItems = filteredItems.length - endIndex;
+                if (remainingItems > 0) {
+                    const spacer = document.createElement('div');
+                    spacer.style.height = `${remainingItems * this.virtualItemHeight}px`;
+                    virtualList.appendChild(spacer);
+                }
+            }
+            
+            bindEvents() {
+                // Task search
+                const taskSearch = document.getElementById('taskSearch');
+                taskSearch.addEventListener('input', this.debounce((e) => this.performTaskSearch(e.target.value), 300));
+                taskSearch.addEventListener('keydown', (e) => this.handleTaskKeyboard(e));
+                
+                // File search
+                const fileSearch = document.getElementById('fileSearch');
+                fileSearch.addEventListener('input', this.debounce((e) => this.performFileSearch(e.target.value), 300));
+                
+                // Virtual search
+                const virtualSearch = document.getElementById('virtualSearch');
+                virtualSearch.addEventListener('input', (e) => {
+                    const debounced = document.getElementById('virtualDebounce').checked;
+                    if (debounced) {
+                        this.debouncedVirtualSearch(e.target.value);
+                    } else {
+                        this.performVirtualSearch(e.target.value);
+                    }
+                });
+                
+                // Filter tags
+                document.querySelectorAll('.filter-tag').forEach(tag => {
+                    tag.addEventListener('click', (e) => this.handleFilterTag(e));
+                });
+                
+                // File system expand/collapse
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.hierarchical-item .item-content')) {
+                        this.toggleFileExpansion(e.target.closest('.hierarchical-item'));
+                    }
+                });
+                
+                // Virtual list scroll
+                document.getElementById('virtualList').addEventListener('scroll', 
+                    this.throttle(() => this.handleVirtualScroll(), 16));
+                
+                // Search options
+                document.querySelectorAll('.search-controls input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.handleOptionsChange());
+                });
+            }
+            
+            performTaskSearch(query) {
+                const startTime = performance.now();
+                const caseSensitive = document.getElementById('taskCaseSensitive')?.checked;
+                const showCompleted = document.getElementById('taskShowCompleted')?.checked;
+                const highlightMatches = document.getElementById('taskHighlight')?.checked;
+                
+                const searchQuery = caseSensitive ? query : query.toLowerCase();
+                const filteredTasks = this.filterTasks(searchQuery, showCompleted);
+                
+                this.displayTaskResults(filteredTasks, query, highlightMatches);
+                this.updateTaskStats(filteredTasks.length);
+                
+                const duration = performance.now() - startTime;
+                document.getElementById('task-performance').textContent = 
+                    `Search completed in ${duration.toFixed(2)}ms`;
+            }
+            
+            filterTasks(query, showCompleted) {
+                let filtered = tasks.filter(task => {
+                    // Filter by completion status
+                    if (!showCompleted && task.completed) return false;
+                    
+                    // Filter by category
+                    if (this.taskFilter !== 'all' && task.category !== this.taskFilter && task.priority !== this.taskFilter && !task.completed !== (this.taskFilter === 'completed')) return false;
+                    
+                    // Filter by search query
+                    if (!query.trim()) return true;
+                    
+                    const searchableContent = [
+                        task.title,
+                        task.category,
+                        task.priority,
+                        task.assignee
+                    ].join(' ').toLowerCase();
+                    
+                    return searchableContent.includes(query.toLowerCase());
+                });
+                
+                return filtered;
+            }
+            
+            displayTaskResults(filteredTasks, query, highlightMatches) {
+                const allItems = document.querySelectorAll('#taskList .list-item');
+                const noResults = document.getElementById('taskNoResults');
+                
+                // Hide all items first
+                allItems.forEach(item => {
+                    item.classList.add('hidden');
+                    item.classList.remove('highlighted', 'selected');
+                });
+                
+                if (filteredTasks.length === 0) {
+                    noResults.style.display = 'block';
+                } else {
+                    noResults.style.display = 'none';
+                    
+                    filteredTasks.forEach((task, index) => {
+                        const item = document.querySelector(`[data-task-id="${task.id}"]`);
+                        if (item) {
+                            item.classList.remove('hidden');
+                            if (index === this.selectedTaskIndex) {
+                                item.classList.add('selected');
+                            }
+                        }
+                    });
+                    
+                    if (highlightMatches && query.trim()) {
+                        this.highlightTaskMatches(filteredTasks, query);
+                    }
+                }
+            }
+            
+            highlightTaskMatches(tasks, query) {
+                const searchTerms = query.toLowerCase().split(' ').filter(term => term.length > 0);
+                
+                tasks.forEach(task => {
+                    const item = document.querySelector(`[data-task-id="${task.id}"]`);
+                    if (!item) return;
+                    
+                    const title = item.querySelector('.item-title');
+                    const subtitle = item.querySelector('.item-subtitle');
+                    
+                    [title, subtitle].forEach(element => {
+                        if (!element) return;
+                        
+                        let content = element.textContent;
+                        let highlightedContent = content;
+                        
+                        searchTerms.forEach(term => {
+                            const regex = new RegExp(`(${this.escapeRegExp(term)})`, 'gi');
+                            highlightedContent = highlightedContent.replace(regex, '<span class="match-highlight">$1</span>');
+                        });
+                        
+                        if (highlightedContent !== content) {
+                            element.innerHTML = highlightedContent;
+                        }
+                    });
+                });
+            }
+            
+            performFileSearch(query) {
+                const expandAll = document.getElementById('fileExpandAll')?.checked;
+                const showPath = document.getElementById('fileShowPath')?.checked;
+                
+                const allItems = document.querySelectorAll('.hierarchical-item');
+                const searchQuery = query.toLowerCase();
+                
+                if (!query.trim()) {
+                    // Show all items and collapse all
+                    allItems.forEach(item => {
+                        item.style.display = '';
+                        item.classList.remove('highlighted');
+                        if (!expandAll) {
+                            item.classList.add('collapsed');
+                            item.setAttribute('aria-expanded', 'false');
+                        }
+                    });
+                    return;
+                }
+                
+                allItems.forEach(item => {
+                    const name = item.dataset.name;
+                    const type = item.dataset.type;
+                    
+                    if (name.includes(searchQuery) || type.includes(searchQuery)) {
+                        item.style.display = '';
+                        item.classList.add('highlighted');
+                        
+                        // Expand parents
+                        let parent = item.parentElement;
+                        while (parent && parent.classList.contains('hierarchical-item')) {
+                            parent.classList.remove('collapsed');
+                            parent.classList.add('expanded');
+                            parent.setAttribute('aria-expanded', 'true');
+                            parent = parent.parentElement?.parentElement;
+                        }
+                    } else {
+                        item.style.display = 'none';
+                        item.classList.remove('highlighted');
+                    }
+                });
+            }
+            
+            performVirtualSearch(query) {
+                const startTime = performance.now();
+                const useCache = document.getElementById('virtualCache')?.checked;
+                
+                let filteredItems;
+                
+                if (useCache && this.virtualCache.has(query)) {
+                    filteredItems = this.virtualCache.get(query);
+                } else {
+                    const searchQuery = query.toLowerCase();
+                    filteredItems = this.virtualItems.filter(item => 
+                        item.title.toLowerCase().includes(searchQuery) ||
+                        item.subtitle.toLowerCase().includes(searchQuery) ||
+                        item.category.toLowerCase().includes(searchQuery) ||
+                        item.value.toString().includes(searchQuery)
+                    );
+                    
+                    if (useCache) {
+                        this.virtualCache.set(query, filteredItems);
+                        // Limit cache size
+                        if (this.virtualCache.size > 100) {
+                            const firstKey = this.virtualCache.keys().next().value;
+                            this.virtualCache.delete(firstKey);
+                        }
+                    }
+                }
+                
+                this.renderVirtualItems(filteredItems);
+                this.updateVirtualStats(filteredItems.length);
+                
+                const duration = performance.now() - startTime;
+                document.getElementById('virtual-performance').textContent = 
+                    `Search: ${duration.toFixed(2)}ms | Showing ${filteredItems.length} items`;
+            }
+            
+            toggleFileExpansion(item) {
+                const hasChildren = item.querySelector('ul');
+                if (!hasChildren) return;
+                
+                const isCollapsed = item.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    item.classList.remove('collapsed');
+                    item.classList.add('expanded');
+                    item.setAttribute('aria-expanded', 'true');
+                } else {
+                    item.classList.remove('expanded');
+                    item.classList.add('collapsed');
+                    item.setAttribute('aria-expanded', 'false');
+                }
+            }
+            
+            handleFilterTag(event) {
+                const tag = event.target;
+                const filter = tag.dataset.filter;
+                
+                // Update active filter
+                document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                
+                this.taskFilter = filter;
+                
+                // Re-run search
+                const searchValue = document.getElementById('taskSearch').value;
+                this.performTaskSearch(searchValue);
+            }
+            
+            handleTaskKeyboard(event) {
+                const visibleItems = Array.from(document.querySelectorAll('#taskList .list-item:not(.hidden)'));
+                
+                switch(event.key) {
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        this.selectedTaskIndex = Math.min(this.selectedTaskIndex + 1, visibleItems.length - 1);
+                        this.updateTaskSelection(visibleItems);
+                        break;
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        this.selectedTaskIndex = Math.max(this.selectedTaskIndex - 1, -1);
+                        this.updateTaskSelection(visibleItems);
+                        break;
+                    case 'Enter':
+                        event.preventDefault();
+                        if (this.selectedTaskIndex >= 0 && visibleItems[this.selectedTaskIndex]) {
+                            this.toggleTaskCompletion(visibleItems[this.selectedTaskIndex]);
+                        }
+                        break;
+                    case ' ':
+                        event.preventDefault();
+                        if (this.selectedTaskIndex >= 0 && visibleItems[this.selectedTaskIndex]) {
+                            visibleItems[this.selectedTaskIndex].click();
+                        }
+                        break;
+                    case 'Escape':
+                        event.target.value = '';
+                        this.performTaskSearch('');
+                        this.selectedTaskIndex = -1;
+                        break;
+                }
+            }
+            
+            updateTaskSelection(visibleItems) {
+                // Remove previous selection
+                document.querySelectorAll('#taskList .list-item.selected').forEach(item => {
+                    item.classList.remove('selected');
+                    item.setAttribute('aria-selected', 'false');
+                });
+                
+                // Add new selection
+                if (this.selectedTaskIndex >= 0 && visibleItems[this.selectedTaskIndex]) {
+                    const selectedItem = visibleItems[this.selectedTaskIndex];
+                    selectedItem.classList.add('selected');
+                    selectedItem.setAttribute('aria-selected', 'true');
+                    selectedItem.scrollIntoView({ block: 'nearest' });
+                }
+            }
+            
+            toggleTaskCompletion(item) {
+                const taskId = parseInt(item.dataset.taskId);
+                const task = tasks.find(t => t.id === taskId);
+                
+                if (task) {
+                    task.completed = !task.completed;
+                    item.dataset.completed = task.completed.toString();
+                    
+                    // Update display
+                    const metaElement = item.querySelector('.item-meta span:last-child');
+                    if (metaElement) {
+                        metaElement.textContent = `Status: ${task.completed ? 'Completed' : 'In Progress'}`;
+                    }
+                    
+                    // Re-filter if necessary
+                    const searchValue = document.getElementById('taskSearch').value;
+                    this.performTaskSearch(searchValue);
+                }
+            }
+            
+            handleVirtualScroll() {
+                const searchValue = document.getElementById('virtualSearch').value;
+                if (searchValue.trim()) {
+                    this.performVirtualSearch(searchValue);
+                } else {
+                    this.renderVirtualItems();
+                }
+            }
+            
+            handleOptionsChange() {
+                // Re-run searches when options change
+                const taskSearch = document.getElementById('taskSearch').value;
+                const fileSearch = document.getElementById('fileSearch').value;
+                const virtualSearch = document.getElementById('virtualSearch').value;
+                
+                this.performTaskSearch(taskSearch);
+                this.performFileSearch(fileSearch);
+                this.performVirtualSearch(virtualSearch);
+            }
+            
+            updateTaskStats(visibleCount = null) {
+                const statsDiv = document.getElementById('task-stats');
+                const actualVisibleCount = visibleCount !== null ? visibleCount : 
+                    document.querySelectorAll('#taskList .list-item:not(.hidden)').length;
+                
+                document.getElementById('task-visible-count').textContent = actualVisibleCount;
+                document.getElementById('task-total-count').textContent = tasks.length;
+                
+                statsDiv.style.display = actualVisibleCount !== tasks.length ? 'block' : 'none';
+            }
+            
+            updateVirtualStats(visibleCount) {
+                const statsDiv = document.getElementById('virtual-stats');
+                document.getElementById('virtual-visible-count').textContent = visibleCount;
+                document.getElementById('virtual-cache-size').textContent = this.virtualCache.size;
+                statsDiv.style.display = 'block';
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+            
+            throttle(func, limit) {
+                let inThrottle;
+                return function() {
+                    const args = arguments;
+                    const context = this;
+                    if (!inThrottle) {
+                        func.apply(context, args);
+                        inThrottle = true;
+                        setTimeout(() => inThrottle = false, limit);
+                    }
+                }
+            }
+        }
+        
+        // Initialize debounced virtual search
+        const domListSearch = new DOMListSearch();
+        domListSearch.debouncedVirtualSearch = domListSearch.debounce((query) => {
+            domListSearch.performVirtualSearch(query);
+        }, 300);
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Already initialized above
+        });
+    </script>
+</body>
+</html>

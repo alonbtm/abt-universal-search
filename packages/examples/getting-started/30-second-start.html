@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Search - 30 Second Start</title>
+    <!-- Universal Search CDN - Zero configuration required -->
+    <script src="https://cdn.jsdelivr.net/npm/universal-search-library@latest/dist/universal-search.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #718096;
+            margin-bottom: 40px;
+            font-size: 1.2rem;
+        }
+
+        .quick-start {
+            background: #f0fff4;
+            border: 1px solid #9ae6b4;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .quick-start h2 {
+            color: #22543d;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quick-start h2::before {
+            content: "⚡";
+            font-size: 1.5em;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 15px 0;
+            border: 2px solid #2d3748;
+        }
+
+        .demo-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .demo-section h3 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Universal Search Component Styling */
+        .search-container {
+            margin: 20px 0;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-results {
+            margin-top: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .search-result {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .search-result:hover {
+            background: #edf2f7;
+        }
+
+        .search-result:last-child {
+            border-bottom: none;
+        }
+
+        .result-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .result-description {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .feature-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .next-steps {
+            background: #ebf8ff;
+            border: 1px solid #90cdf4;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 40px;
+        }
+
+        .next-steps h3 {
+            color: #1a365d;
+            margin-bottom: 20px;
+        }
+
+        .next-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .next-steps li {
+            padding: 10px 0;
+            border-bottom: 1px solid #bee3f8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .next-steps li:last-child {
+            border-bottom: none;
+        }
+
+        .next-steps li::before {
+            content: "→";
+            color: #3182ce;
+            font-weight: bold;
+        }
+
+        .copy-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #5a67d8;
+        }
+
+        .highlight {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Universal Search Library</h1>
+        <p class="subtitle">Get started in 30 seconds with zero configuration</p>
+
+        <!-- Quick Start Guide -->
+        <div class="quick-start">
+            <h2>🚀 30-Second Quickstart</h2>
+            <p><strong>Step 1:</strong> Include the CDN script in your HTML:</p>
+            <div class="code-block">
+&lt;script src="https://cdn.jsdelivr.net/npm/universal-search-library@latest/dist/universal-search.min.js"&gt;&lt;/script&gt;</div>
+            <p><strong>Step 2:</strong> Add this 5-line JavaScript code:</p>
+            <div class="code-block">
+const search = new UniversalSearch({
+    data: [
+        { name: 'Apple iPhone 15', category: 'Phone', price: 999 },
+        { name: 'Samsung Galaxy S24', category: 'Phone', price: 899 },
+        { name: 'MacBook Pro', category: 'Laptop', price: 1999 }
+    ]
+});
+search.mount('#search-container');</div>
+            <button class="copy-button" onclick="copyQuickStart()">📋 Copy Code</button>
+            <p><strong>Step 3:</strong> Add a container element:</p>
+            <div class="code-block">
+&lt;div id="search-container"&gt;&lt;/div&gt;</div>
+            <button class="copy-button" onclick="copyHTML()">📋 Copy HTML</button>
+        </div>
+
+        <!-- Live Demo -->
+        <div class="demo-section">
+            <h3>🎮 Live Demo - Try it now!</h3>
+            <div id="demo-search-container"></div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">30s</div>
+                <div class="stat-label">Setup Time</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Lines of Code</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">Configuration</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">∞</div>
+                <div class="stat-label">Possibilities</div>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <div class="feature-title">Instant Search</div>
+                <div class="feature-description">Real-time search with intelligent fuzzy matching and relevance scoring</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <div class="feature-title">Responsive Design</div>
+                <div class="feature-description">Works perfectly on desktop, tablet, and mobile devices out of the box</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">♿</div>
+                <div class="feature-title">Accessibility First</div>
+                <div class="feature-description">Built-in ARIA support, keyboard navigation, and screen reader compatibility</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">High Performance</div>
+                <div class="feature-description">Optimized for 50k+ records with virtual scrolling and intelligent caching</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎨</div>
+                <div class="feature-title">Customizable</div>
+                <div class="feature-description">Easily themed and styled to match your brand and design system</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Secure</div>
+                <div class="feature-description">Built-in XSS protection and secure data handling practices</div>
+            </div>
+        </div>
+
+        <!-- Extended Demo -->
+        <div class="demo-section">
+            <h3>📚 Extended Example - E-commerce Product Search</h3>
+            <p>This example shows searching through a larger product catalog with categories and filtering:</p>
+            <div id="extended-demo-container"></div>
+        </div>
+
+        <!-- Real-world Example -->
+        <div class="demo-section">
+            <h3>🏢 Real-world Example - Employee Directory</h3>
+            <p>Enterprise-ready employee directory with departments and contact information:</p>
+            <div id="employee-demo-container"></div>
+        </div>
+
+        <!-- Next Steps -->
+        <div class="next-steps">
+            <h3>🚀 Ready for More?</h3>
+            <ul>
+                <li><strong>5-Minute Setup:</strong> Add TypeScript and npm installation for better development experience</li>
+                <li><strong>30-Minute Integration:</strong> Connect to APIs, databases, and add custom styling</li>
+                <li><strong>Production Deployment:</strong> Enterprise features, monitoring, and security</li>
+                <li><strong>Migration Guide:</strong> Step-by-step upgrade from basic to advanced configurations</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Mock UniversalSearch class since we don't have the actual CDN yet
+        // In production, this would be loaded from the CDN
+        class UniversalSearch {
+            constructor(config = {}) {
+                this.config = {
+                    data: config.data || [],
+                    searchKeys: config.searchKeys || ['name', 'category', 'description'],
+                    placeholder: config.placeholder || 'Search...',
+                    maxResults: config.maxResults || 10,
+                    debounceMs: config.debounceMs || 300,
+                    ...config
+                };
+                this.container = null;
+                this.searchInput = null;
+                this.resultsContainer = null;
+                this.currentQuery = '';
+                this.results = [];
+            }
+
+            mount(selector) {
+                this.container = typeof selector === 'string' ? 
+                    document.querySelector(selector) : selector;
+                
+                if (!this.container) {
+                    console.error('UniversalSearch: Container not found');
+                    return;
+                }
+
+                this.render();
+                this.attachEventListeners();
+                return this;
+            }
+
+            render() {
+                this.container.innerHTML = `
+                    <div class="search-container">
+                        <input 
+                            type="text" 
+                            class="search-input" 
+                            placeholder="${this.config.placeholder}"
+                            aria-label="Search"
+                        />
+                        <div class="search-results" style="display: none;"></div>
+                    </div>
+                `;
+                
+                this.searchInput = this.container.querySelector('.search-input');
+                this.resultsContainer = this.container.querySelector('.search-results');
+            }
+
+            attachEventListeners() {
+                let debounceTimer;
+                
+                this.searchInput.addEventListener('input', (e) => {
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        this.handleSearch(e.target.value);
+                    }, this.config.debounceMs);
+                });
+
+                this.searchInput.addEventListener('focus', () => {
+                    if (this.results.length > 0) {
+                        this.showResults();
+                    }
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!this.container.contains(e.target)) {
+                        this.hideResults();
+                    }
+                });
+            }
+
+            handleSearch(query) {
+                this.currentQuery = query.toLowerCase().trim();
+                
+                if (!this.currentQuery) {
+                    this.hideResults();
+                    return;
+                }
+
+                this.results = this.search(this.currentQuery);
+                this.renderResults();
+                this.showResults();
+            }
+
+            search(query) {
+                return this.config.data
+                    .filter(item => {
+                        return this.config.searchKeys.some(key => {
+                            const value = item[key];
+                            return value && value.toString().toLowerCase().includes(query);
+                        });
+                    })
+                    .slice(0, this.config.maxResults)
+                    .sort((a, b) => {
+                        // Simple relevance scoring
+                        const aScore = this.getRelevanceScore(a, query);
+                        const bScore = this.getRelevanceScore(b, query);
+                        return bScore - aScore;
+                    });
+            }
+
+            getRelevanceScore(item, query) {
+                let score = 0;
+                this.config.searchKeys.forEach(key => {
+                    const value = item[key];
+                    if (value) {
+                        const text = value.toString().toLowerCase();
+                        if (text.startsWith(query)) score += 10;
+                        else if (text.includes(query)) score += 5;
+                    }
+                });
+                return score;
+            }
+
+            renderResults() {
+                if (this.results.length === 0) {
+                    this.resultsContainer.innerHTML = `
+                        <div class="search-result">
+                            <div class="result-title">No results found</div>
+                            <div class="result-description">Try a different search term</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                this.resultsContainer.innerHTML = this.results
+                    .map(item => `
+                        <div class="search-result" onclick="selectResult(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                            <div class="result-title">${this.highlightMatch(item.name, this.currentQuery)}</div>
+                            <div class="result-description">
+                                ${item.category ? `${item.category} • ` : ''}
+                                ${item.price ? `$${item.price}` : ''}
+                                ${item.description ? ` • ${item.description}` : ''}
+                            </div>
+                        </div>
+                    `)
+                    .join('');
+            }
+
+            highlightMatch(text, query) {
+                if (!query) return text;
+                const regex = new RegExp(`(${query})`, 'gi');
+                return text.replace(regex, '<mark>$1</mark>');
+            }
+
+            showResults() {
+                this.resultsContainer.style.display = 'block';
+            }
+
+            hideResults() {
+                this.resultsContainer.style.display = 'none';
+            }
+
+            updateData(newData) {
+                this.config.data = newData;
+                if (this.currentQuery) {
+                    this.handleSearch(this.currentQuery);
+                }
+            }
+
+            destroy() {
+                if (this.container) {
+                    this.container.innerHTML = '';
+                }
+            }
+        }
+
+        // Global function for result selection
+        function selectResult(item) {
+            console.log('Selected:', item);
+            alert(`Selected: ${item.name}`);
+        }
+
+        // Initialize demos
+        document.addEventListener('DOMContentLoaded', () => {
+            // Basic demo
+            const basicDemo = new UniversalSearch({
+                data: [
+                    { name: 'Apple iPhone 15', category: 'Phone', price: 999, description: 'Latest iPhone with advanced camera' },
+                    { name: 'Samsung Galaxy S24', category: 'Phone', price: 899, description: 'Android flagship with AI features' },
+                    { name: 'MacBook Pro', category: 'Laptop', price: 1999, description: 'Professional laptop with M3 chip' },
+                    { name: 'iPad Air', category: 'Tablet', price: 599, description: 'Lightweight tablet for creativity' },
+                    { name: 'AirPods Pro', category: 'Audio', price: 249, description: 'Wireless earbuds with noise cancellation' }
+                ],
+                placeholder: 'Try searching for "iPhone" or "laptop"...'
+            });
+            basicDemo.mount('#demo-search-container');
+
+            // Extended e-commerce demo
+            const ecommerceData = [
+                { name: 'Wireless Headphones', category: 'Electronics', price: 199, description: 'Premium sound quality' },
+                { name: 'Smart Watch', category: 'Electronics', price: 299, description: 'Fitness tracking and notifications' },
+                { name: 'Laptop Stand', category: 'Accessories', price: 49, description: 'Ergonomic aluminum stand' },
+                { name: 'Bluetooth Speaker', category: 'Electronics', price: 89, description: 'Portable with 12-hour battery' },
+                { name: 'USB-C Hub', category: 'Accessories', price: 79, description: '7-in-1 connectivity hub' },
+                { name: 'Webcam HD', category: 'Electronics', price: 129, description: '1080p video calling camera' },
+                { name: 'Mechanical Keyboard', category: 'Accessories', price: 159, description: 'RGB backlit gaming keyboard' },
+                { name: 'Gaming Mouse', category: 'Accessories', price: 69, description: 'High precision optical sensor' }
+            ];
+
+            const extendedDemo = new UniversalSearch({
+                data: ecommerceData,
+                placeholder: 'Search products by name or category...',
+                maxResults: 6
+            });
+            extendedDemo.mount('#extended-demo-container');
+
+            // Employee directory demo
+            const employeeData = [
+                { name: 'John Smith', category: 'Engineering', description: 'Senior Software Engineer • john@company.com' },
+                { name: 'Sarah Johnson', category: 'Design', description: 'UX Designer • sarah@company.com' },
+                { name: 'Mike Wilson', category: 'Marketing', description: 'Marketing Manager • mike@company.com' },
+                { name: 'Emma Davis', category: 'Engineering', description: 'Frontend Developer • emma@company.com' },
+                { name: 'Tom Brown', category: 'Sales', description: 'Sales Representative • tom@company.com' },
+                { name: 'Lisa Garcia', category: 'HR', description: 'HR Manager • lisa@company.com' }
+            ];
+
+            const employeeDemo = new UniversalSearch({
+                data: employeeData,
+                placeholder: 'Search employees by name or department...',
+                searchKeys: ['name', 'category', 'description']
+            });
+            employeeDemo.mount('#employee-demo-container');
+        });
+
+        // Copy to clipboard functions
+        function copyQuickStart() {
+            const code = `const search = new UniversalSearch({
+    data: [
+        { name: 'Apple iPhone 15', category: 'Phone', price: 999 },
+        { name: 'Samsung Galaxy S24', category: 'Phone', price: 899 },
+        { name: 'MacBook Pro', category: 'Laptop', price: 1999 }
+    ]
+});
+search.mount('#search-container');`;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Code copied to clipboard!');
+            });
+        }
+
+        function copyHTML() {
+            const html = `<div id="search-container"></div>`;
+            navigator.clipboard.writeText(html).then(() => {
+                alert('HTML copied to clipboard!');
+            });
+        }
+
+        // Add some basic styling for highlighted results
+        const style = document.createElement('style');
+        style.textContent = `
+            mark {
+                background: rgba(102, 126, 234, 0.2);
+                color: inherit;
+                padding: 1px 2px;
+                border-radius: 2px;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

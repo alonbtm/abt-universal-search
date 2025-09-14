@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Connection String Configuration - Universal Search Component</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        .section {
+            background: white;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .section-header {
+            background: #e67e22;
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        .section-content {
+            padding: 20px;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .danger {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .tab.active {
+            color: #e67e22;
+            border-bottom-color: #e67e22;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .config-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            background: #f8f9fa;
+        }
+        .config-header {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .env-var {
+            background: #28a745;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        .connection-builder {
+            background: #e8f4f8;
+            border: 2px solid #17a2b8;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #495057;
+        }
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        button:hover {
+            background: #d35400;
+        }
+        .generated-string {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            margin-top: 15px;
+            word-break: break-all;
+        }
+        .security-checklist {
+            background: #fff5f5;
+            border-left: 4px solid #e53e3e;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .security-checklist ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .security-checklist li {
+            padding: 5px 0;
+            position: relative;
+            padding-left: 25px;
+        }
+        .security-checklist li:before {
+            content: '⚠️';
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>SQL Connection String Configuration</h1>
+            <div class="subtitle">Secure database connection patterns with environment variables and best practices</div>
+        </div>
+
+        <!-- Database Types Overview -->
+        <div class="section">
+            <div class="section-header">Connection String Formats by Database Type</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showTab('postgresql-format')">PostgreSQL</div>
+                    <div class="tab" onclick="showTab('mysql-format')">MySQL</div>
+                    <div class="tab" onclick="showTab('sqlite-format')">SQLite</div>
+                    <div class="tab" onclick="showTab('comparison')">Comparison</div>
+                </div>
+
+                <div id="postgresql-format" class="tab-content active">
+                    <h3>PostgreSQL Connection String Formats</h3>
+                    
+                    <div class="config-card">
+                        <div class="config-header">
+                            Standard URI Format <span class="env-var">RECOMMENDED</span>
+                        </div>
+                        <div class="code-block">
+# Basic format
+postgresql://username:password@hostname:port/database
+
+# With SSL and additional parameters
+postgresql://user:pass@host:5432/dbname?sslmode=require&connect_timeout=10&application_name=MyApp
+
+# Example configurations
+postgresql://myuser:mypassword@localhost:5432/search_db
+postgresql://admin:secret123@db.example.com:5432/production_db?sslmode=require
+postgresql://readonly:readpass@replica.db.com:5432/analytics?sslmode=prefer&connect_timeout=30
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="config-header">
+                            Key-Value Pairs Format
+                        </div>
+                        <div class="code-block">
+# Space-separated key-value pairs
+host=localhost port=5432 dbname=search_db user=myuser password=mypassword sslmode=require
+
+# Multi-line format for readability
+host=localhost
+port=5432
+dbname=search_db
+user=myuser
+password=mypassword
+sslmode=require
+connect_timeout=10
+application_name=SearchApp
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="config-header">
+                            Environment Variable Pattern
+                        </div>
+                        <div class="code-block">
+# .env file
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=search_db
+POSTGRES_USER=myuser
+POSTGRES_PASSWORD=mypassword
+POSTGRES_SSL_MODE=require
+POSTGRES_CONNECTION_TIMEOUT=10
+
+# Application code
+const connectionString = `postgresql://${process.env.POSTGRES_USER}:${process.env.POSTGRES_PASSWORD}@${process.env.POSTGRES_HOST}:${process.env.POSTGRES_PORT}/${process.env.POSTGRES_DATABASE}?sslmode=${process.env.POSTGRES_SSL_MODE}`;
+
+# Or using URL constructor for better security
+const dbUrl = new URL('postgresql://');
+dbUrl.hostname = process.env.POSTGRES_HOST;
+dbUrl.port = process.env.POSTGRES_PORT;
+dbUrl.pathname = `/${process.env.POSTGRES_DATABASE}`;
+dbUrl.username = process.env.POSTGRES_USER;
+dbUrl.password = process.env.POSTGRES_PASSWORD;
+dbUrl.searchParams.set('sslmode', process.env.POSTGRES_SSL_MODE);
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mysql-format" class="tab-content">
+                    <h3>MySQL Connection String Formats</h3>
+                    
+                    <div class="config-card">
+                        <div class="config-header">
+                            MySQL URI Format <span class="env-var">RECOMMENDED</span>
+                        </div>
+                        <div class="code-block">
+# Basic format
+mysql://username:password@hostname:port/database
+
+# With SSL and charset
+mysql://user:pass@host:3306/dbname?ssl=true&charset=utf8mb4&timezone=%2B00%3A00
+
+# Example configurations
+mysql://myuser:mypassword@localhost:3306/search_db
+mysql://admin:secret123@mysql.example.com:3306/production_db?ssl=true&charset=utf8mb4
+mysql://app_user:app_pass@cluster.mysql.com:3306/app_db?ssl=true&acquireTimeout=60000
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="config-header">
+                            Traditional MySQL Format
+                        </div>
+                        <div class="code-block">
+# Traditional format (mysql2 specific)
+mysql2://user:password@host:port/database
+
+# With connection pool options
+mysql2://user:pass@host:3306/db?connectionLimit=10&acquireTimeout=60000&timeout=60000
+
+# Example with SSL
+mysql2://myuser:mypass@mysql.server.com:3306/mydb?ssl=Amazon%20RDS&charset=utf8mb4
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="config-header">
+                            Environment Variable Pattern
+                        </div>
+                        <div class="code-block">
+# .env file
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=search_db
+MYSQL_USER=myuser
+MYSQL_PASSWORD=mypassword
+MYSQL_SSL=true
+MYSQL_CHARSET=utf8mb4
+MYSQL_CONNECTION_LIMIT=10
+
+# Application code
+const connectionString = `mysql://${process.env.MYSQL_USER}:${process.env.MYSQL_PASSWORD}@${process.env.MYSQL_HOST}:${process.env.MYSQL_PORT}/${process.env.MYSQL_DATABASE}?ssl=${process.env.MYSQL_SSL}&charset=${process.env.MYSQL_CHARSET}`;
+
+# Configuration object approach (recommended for MySQL)
+const mysqlConfig = {
+    host: process.env.MYSQL_HOST,
+    port: parseInt(process.env.MYSQL_PORT),
+    user: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE,
+    ssl: process.env.MYSQL_SSL === 'true',
+    charset: process.env.MYSQL_CHARSET,
+    connectionLimit: parseInt(process.env.MYSQL_CONNECTION_LIMIT)
+};
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sqlite-format" class="tab-content">
+                    <h3>SQLite Connection String Formats</h3>
+                    
+                    <div class="config-card">
+                        <div class="config-header">
+                            File Path Format <span class="env-var">MOST COMMON</span>
+                        </div>
+                        <div class="code-block">
+# Absolute file path
+/path/to/database/search.db
+/home/user/data/app.sqlite
+/var/lib/myapp/database.sqlite3
+
+# Relative file path
+./data/search.db
+../shared/database.sqlite
+search.db
+
+# Windows paths
+C:\data\search.db
+.\data\search.db
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="config-header">
+                            SQLite URI Format
+                        </div>
+                        <div class="code-block">
+# File URI format
+file:/path/to/database.db
+file:///absolute/path/to/database.db
+file://./relative/path/database.db
+
+# With parameters
+file:database.db?cache=shared&mode=rwc
+file:/path/to/db.sqlite?cache=private&mode=ro
+
+# Special databases
+:memory:          # In-memory database
+""               # Temporary database
+file::memory:    # Named in-memory database
+file:memdb1?mode=memory&cache=shared  # Shared in-memory database
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <div class="config-header">
+                            Environment Variable Pattern
+                        </div>
+                        <div class="code-block">
+# .env file
+SQLITE_DATABASE_PATH=./data/search.db
+SQLITE_DATABASE_MODE=rwc
+SQLITE_CACHE_MODE=shared
+SQLITE_TIMEOUT=5000
+SQLITE_MEMORY_LIMIT=50000000
+
+# Application code
+const databasePath = process.env.SQLITE_DATABASE_PATH || './default.db';
+const connectionString = `file:${databasePath}?mode=${process.env.SQLITE_DATABASE_MODE}&cache=${process.env.SQLITE_CACHE_MODE}`;
+
+# Configuration object for better-sqlite3
+const sqliteConfig = {
+    path: process.env.SQLITE_DATABASE_PATH,
+    options: {
+        readonly: process.env.SQLITE_MODE === 'ro',
+        fileMustExist: process.env.SQLITE_MUST_EXIST === 'true',
+        timeout: parseInt(process.env.SQLITE_TIMEOUT),
+        verbose: process.env.NODE_ENV === 'development' ? console.log : null
+    }
+};
+                        </div>
+                    </div>
+                </div>
+
+                <div id="comparison" class="tab-content">
+                    <h3>Database Connection Comparison</h3>
+                    
+                    <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                        <thead>
+                            <tr style="background: #f8f9fa;">
+                                <th style="padding: 12px; border: 1px solid #dee2e6; text-align: left;">Feature</th>
+                                <th style="padding: 12px; border: 1px solid #dee2e6;">PostgreSQL</th>
+                                <th style="padding: 12px; border: 1px solid #dee2e6;">MySQL</th>
+                                <th style="padding: 12px; border: 1px solid #dee2e6;">SQLite</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: 600;">Connection Type</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">Network</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">Network</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">File-based</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: 600;">Default Port</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">5432</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">3306</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">N/A</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: 600;">SSL/TLS</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">Built-in (sslmode)</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">Supported (ssl=true)</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">N/A</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: 600;">Connection Pooling</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">External (pgpool)</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">Built-in</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">WAL mode</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 12px; border: 1px solid #dee2e6; font-weight: 600;">URI Format</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">postgresql://</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">mysql://</td>
+                                <td style="padding: 12px; border: 1px solid #dee2e6;">file:</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Connection Builder -->
+        <div class="section">
+            <div class="section-header">Interactive Connection String Builder</div>
+            <div class="section-content">
+                <div class="connection-builder">
+                    <h4>Build Your Connection String</h4>
+                    <p>Select database type and fill in the details to generate a connection string:</p>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="db-type">Database Type:</label>
+                            <select id="db-type" onchange="updateConnectionForm()">
+                                <option value="postgresql">PostgreSQL</option>
+                                <option value="mysql">MySQL</option>
+                                <option value="sqlite">SQLite</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="format-type">Format Type:</label>
+                            <select id="format-type" onchange="buildConnectionString()">
+                                <option value="uri">URI Format</option>
+                                <option value="env">Environment Variables</option>
+                                <option value="object">Configuration Object</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="connection-fields">
+                        <!-- Dynamic fields will be inserted here -->
+                    </div>
+                    
+                    <button onclick="buildConnectionString()">Generate Connection String</button>
+                    
+                    <div id="generated-connection" class="generated-string" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Best Practices -->
+        <div class="section">
+            <div class="section-header">Security Best Practices</div>
+            <div class="section-content">
+                <div class="danger">
+                    <h4>⚠️ NEVER DO THIS:</h4>
+                    <div class="code-block">
+// DON'T: Hardcoded credentials in source code
+const connectionString = 'postgresql://admin:password123@prod-db.com:5432/production';
+
+// DON'T: Credentials in version control
+const config = {
+    database: 'mysql://root:admin123@localhost/app'
+};
+
+// DON'T: Credentials in client-side code
+window.DB_CONNECTION = 'postgresql://user:pass@server/db';
+
+// DON'T: Unencrypted storage of connection strings
+localStorage.setItem('db_connection', 'mysql://user:pass@server/db');
+                    </div>
+                </div>
+
+                <div class="success">
+                    <h4>✅ SECURITY BEST PRACTICES:</h4>
+                    <div class="code-block">
+// DO: Use environment variables
+const connectionString = process.env.DATABASE_URL;
+
+// DO: Use secure credential management
+const config = {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,  // From AWS Secrets Manager, HashiCorp Vault, etc.
+    database: process.env.DB_NAME
+};
+
+// DO: Validate connection string format
+function validateConnectionString(connectionString) {
+    try {
+        const url = new URL(connectionString);
+        if (!['postgresql:', 'mysql:', 'file:'].includes(url.protocol)) {
+            throw new Error('Invalid database protocol');
+        }
+        return true;
+    } catch (error) {
+        throw new Error('Invalid connection string format');
+    }
+}
+
+// DO: Use proxy services for client-side applications
+const searchConfig = {
+    dataSource: {
+        type: 'sql',
+        sql: {
+            proxyEndpoint: 'https://api.myservice.com/search',  // No direct DB access
+            tableName: 'documents',
+            searchFields: ['title', 'content']
+        }
+    }
+};
+                    </div>
+                </div>
+
+                <div class="security-checklist">
+                    <h4>Security Checklist:</h4>
+                    <ul>
+                        <li>Never hardcode credentials in source code</li>
+                        <li>Use environment variables or secure secret management</li>
+                        <li>Enable SSL/TLS for network database connections</li>
+                        <li>Implement connection timeouts and retry logic</li>
+                        <li>Use least-privilege database users</li>
+                        <li>Validate and sanitize connection parameters</li>
+                        <li>Use proxy services for client-side database access</li>
+                        <li>Regularly rotate database passwords</li>
+                        <li>Monitor and log database connection attempts</li>
+                        <li>Use connection pooling to prevent connection exhaustion</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Environment Configuration Examples -->
+        <div class="section">
+            <div class="section-header">Environment Configuration Examples</div>
+            <div class="section-content">
+                <div class="tabs">
+                    <div class="tab active" onclick="showEnvTab('development')">Development</div>
+                    <div class="tab" onclick="showEnvTab('staging')">Staging</div>
+                    <div class="tab" onclick="showEnvTab('production')">Production</div>
+                    <div class="tab" onclick="showEnvTab('docker')">Docker</div>
+                </div>
+
+                <div id="development" class="tab-content active">
+                    <h3>Development Environment</h3>
+                    <div class="code-block">
+# .env.development
+NODE_ENV=development
+
+# PostgreSQL (local development)
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=search_dev
+POSTGRES_USER=dev_user
+POSTGRES_PASSWORD=dev_password
+POSTGRES_SSL_MODE=disable
+POSTGRES_CONNECTION_TIMEOUT=10
+
+# MySQL (local development)
+MYSQL_HOST=localhost
+MYSQL_PORT=3306
+MYSQL_DATABASE=search_dev
+MYSQL_USER=dev_user
+MYSQL_PASSWORD=dev_password
+MYSQL_SSL=false
+MYSQL_CONNECTION_LIMIT=5
+
+# SQLite (local development)
+SQLITE_DATABASE_PATH=./data/development.db
+SQLITE_DATABASE_MODE=rwc
+SQLITE_CACHE_MODE=private
+
+# Universal Search Component Configuration
+SEARCH_DATABASE_TYPE=postgresql
+SEARCH_TABLE_NAME=documents
+SEARCH_FIELDS=title,content,category
+SEARCH_LIMIT=50
+                    </div>
+                </div>
+
+                <div id="staging" class="tab-content">
+                    <h3>Staging Environment</h3>
+                    <div class="code-block">
+# .env.staging
+NODE_ENV=staging
+
+# PostgreSQL (staging server)
+POSTGRES_HOST=staging-db.internal.com
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=search_staging
+POSTGRES_USER=staging_user
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # From secret manager
+POSTGRES_SSL_MODE=require
+POSTGRES_CONNECTION_TIMEOUT=30
+
+# MySQL (staging server)
+MYSQL_HOST=mysql-staging.internal.com
+MYSQL_PORT=3306
+MYSQL_DATABASE=search_staging
+MYSQL_USER=staging_user
+MYSQL_PASSWORD=${MYSQL_PASSWORD}  # From secret manager
+MYSQL_SSL=true
+MYSQL_CONNECTION_LIMIT=10
+
+# Search Component Configuration
+SEARCH_DATABASE_TYPE=postgresql
+SEARCH_PROXY_ENDPOINT=https://staging-api.myservice.com/search
+SEARCH_TABLE_NAME=documents
+SEARCH_FIELDS=title,content,category,tags
+SEARCH_LIMIT=25
+
+# Security
+ENABLE_QUERY_LOGGING=true
+MAX_QUERY_TIME_MS=5000
+                    </div>
+                </div>
+
+                <div id="production" class="tab-content">
+                    <h3>Production Environment</h3>
+                    <div class="code-block">
+# .env.production
+NODE_ENV=production
+
+# PostgreSQL (production cluster)
+POSTGRES_HOST=prod-db-cluster.example.com
+POSTGRES_PORT=5432
+POSTGRES_DATABASE=search_production
+POSTGRES_USER=prod_readonly  # Read-only user for search
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}  # From AWS Secrets Manager
+POSTGRES_SSL_MODE=require
+POSTGRES_CONNECTION_TIMEOUT=60
+
+# MySQL (production cluster)
+MYSQL_HOST=mysql-cluster.prod.example.com
+MYSQL_PORT=3306
+MYSQL_DATABASE=search_production
+MYSQL_USER=search_service
+MYSQL_PASSWORD=${MYSQL_PASSWORD}  # From HashiCorp Vault
+MYSQL_SSL=true
+MYSQL_CONNECTION_LIMIT=20
+MYSQL_ACQUIRE_TIMEOUT=60000
+
+# Search Component Configuration (Production)
+SEARCH_DATABASE_TYPE=postgresql
+SEARCH_PROXY_ENDPOINT=https://api.myservice.com/search/v1
+SEARCH_TABLE_NAME=search_documents
+SEARCH_FIELDS=title,content,category,metadata
+SEARCH_LIMIT=20
+
+# Production Security
+ENABLE_RATE_LIMITING=true
+MAX_QUERIES_PER_MINUTE=100
+REQUIRE_API_KEY=true
+ENABLE_QUERY_CACHING=true
+CACHE_TTL_SECONDS=300
+
+# Monitoring
+ENABLE_METRICS=true
+LOG_LEVEL=warn
+SENTRY_DSN=${SENTRY_DSN}
+                    </div>
+                </div>
+
+                <div id="docker" class="tab-content">
+                    <h3>Docker Configuration</h3>
+                    <div class="code-block">
+# docker-compose.yml
+version: '3.8'
+services:
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/search_app
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: search_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: search_app
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_password
+      MYSQL_ROOT_PASSWORD: root_password
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass password
+
+volumes:
+  postgres_data:
+  mysql_data:
+
+# .env file for Docker
+DATABASE_TYPE=postgresql
+DATABASE_URL=postgresql://postgres:password@localhost:5432/search_app
+REDIS_URL=redis://:password@localhost:6379
+
+# Docker secrets (for production)
+version: '3.8'
+services:
+  app:
+    secrets:
+      - db_password
+      - api_key
+    environment:
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db_password
+      - API_KEY_FILE=/run/secrets/api_key
+
+secrets:
+  db_password:
+    file: ./secrets/db_password.txt
+  api_key:
+    file: ./secrets/api_key.txt
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Connection string builder state
+        let currentDbType = 'postgresql';
+        let currentFields = {};
+
+        function showTab(tabName) {
+            // Hide all main tab contents
+            document.querySelectorAll('.section:nth-child(2) .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from main tabs
+            document.querySelectorAll('.section:nth-child(2) .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function showEnvTab(tabName) {
+            // Hide all env tab contents
+            document.querySelectorAll('.section:nth-child(5) .tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from env tabs
+            document.querySelectorAll('.section:nth-child(5) .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function updateConnectionForm() {
+            currentDbType = document.getElementById('db-type').value;
+            const fieldsContainer = document.getElementById('connection-fields');
+            
+            let fieldsHTML = '';
+            
+            switch (currentDbType) {
+                case 'postgresql':
+                    fieldsHTML = `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pg-host">Host:</label>
+                                <input type="text" id="pg-host" placeholder="localhost" value="localhost">
+                            </div>
+                            <div class="form-group">
+                                <label for="pg-port">Port:</label>
+                                <input type="number" id="pg-port" placeholder="5432" value="5432">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pg-user">Username:</label>
+                                <input type="text" id="pg-user" placeholder="postgres" value="myuser">
+                            </div>
+                            <div class="form-group">
+                                <label for="pg-password">Password:</label>
+                                <input type="password" id="pg-password" placeholder="password" value="mypassword">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="pg-database">Database:</label>
+                                <input type="text" id="pg-database" placeholder="mydatabase" value="search_db">
+                            </div>
+                            <div class="form-group">
+                                <label for="pg-sslmode">SSL Mode:</label>
+                                <select id="pg-sslmode">
+                                    <option value="disable">disable</option>
+                                    <option value="allow">allow</option>
+                                    <option value="prefer">prefer</option>
+                                    <option value="require" selected>require</option>
+                                    <option value="verify-ca">verify-ca</option>
+                                    <option value="verify-full">verify-full</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'mysql':
+                    fieldsHTML = `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mysql-host">Host:</label>
+                                <input type="text" id="mysql-host" placeholder="localhost" value="localhost">
+                            </div>
+                            <div class="form-group">
+                                <label for="mysql-port">Port:</label>
+                                <input type="number" id="mysql-port" placeholder="3306" value="3306">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mysql-user">Username:</label>
+                                <input type="text" id="mysql-user" placeholder="root" value="myuser">
+                            </div>
+                            <div class="form-group">
+                                <label for="mysql-password">Password:</label>
+                                <input type="password" id="mysql-password" placeholder="password" value="mypassword">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="mysql-database">Database:</label>
+                                <input type="text" id="mysql-database" placeholder="mydatabase" value="search_db">
+                            </div>
+                            <div class="form-group">
+                                <label for="mysql-ssl">Enable SSL:</label>
+                                <select id="mysql-ssl">
+                                    <option value="false">false</option>
+                                    <option value="true" selected>true</option>
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                    break;
+                    
+                case 'sqlite':
+                    fieldsHTML = `
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sqlite-path">Database Path:</label>
+                                <input type="text" id="sqlite-path" placeholder="./database.db" value="./data/search.db">
+                            </div>
+                            <div class="form-group">
+                                <label for="sqlite-mode">Mode:</label>
+                                <select id="sqlite-mode">
+                                    <option value="rwc" selected>rwc (read/write/create)</option>
+                                    <option value="rw">rw (read/write)</option>
+                                    <option value="ro">ro (read-only)</option>
+                                    <option value="memory">memory (in-memory)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="sqlite-cache">Cache Mode:</label>
+                                <select id="sqlite-cache">
+                                    <option value="shared">shared</option>
+                                    <option value="private" selected>private</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="sqlite-timeout">Timeout (ms):</label>
+                                <input type="number" id="sqlite-timeout" placeholder="5000" value="5000">
+                            </div>
+                        </div>
+                    `;
+                    break;
+            }
+            
+            fieldsContainer.innerHTML = fieldsHTML;
+            buildConnectionString();
+        }
+
+        function buildConnectionString() {
+            const formatType = document.getElementById('format-type').value;
+            const resultDiv = document.getElementById('generated-connection');
+            let output = '';
+
+            switch (currentDbType) {
+                case 'postgresql':
+                    output = buildPostgreSQLConnection(formatType);
+                    break;
+                case 'mysql':
+                    output = buildMySQLConnection(formatType);
+                    break;
+                case 'sqlite':
+                    output = buildSQLiteConnection(formatType);
+                    break;
+            }
+
+            resultDiv.innerHTML = output;
+            resultDiv.style.display = 'block';
+        }
+
+        function buildPostgreSQLConnection(formatType) {
+            const host = document.getElementById('pg-host')?.value || 'localhost';
+            const port = document.getElementById('pg-port')?.value || '5432';
+            const user = document.getElementById('pg-user')?.value || 'postgres';
+            const password = document.getElementById('pg-password')?.value || 'password';
+            const database = document.getElementById('pg-database')?.value || 'database';
+            const sslmode = document.getElementById('pg-sslmode')?.value || 'require';
+
+            switch (formatType) {
+                case 'uri':
+                    return `postgresql://${user}:${password}@${host}:${port}/${database}?sslmode=${sslmode}`;
+                case 'env':
+                    return `# Environment Variables
+POSTGRES_HOST=${host}
+POSTGRES_PORT=${port}
+POSTGRES_USER=${user}
+POSTGRES_PASSWORD=${password}
+POSTGRES_DATABASE=${database}
+POSTGRES_SSL_MODE=${sslmode}
+
+# Usage in code:
+const connectionString = \`postgresql://\${process.env.POSTGRES_USER}:\${process.env.POSTGRES_PASSWORD}@\${process.env.POSTGRES_HOST}:\${process.env.POSTGRES_PORT}/\${process.env.POSTGRES_DATABASE}?sslmode=\${process.env.POSTGRES_SSL_MODE}\`;`;
+                case 'object':
+                    return `const config = {
+  host: '${host}',
+  port: ${port},
+  user: '${user}',
+  password: '${password}',
+  database: '${database}',
+  ssl: ${sslmode !== 'disable'},
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000
+};`;
+            }
+        }
+
+        function buildMySQLConnection(formatType) {
+            const host = document.getElementById('mysql-host')?.value || 'localhost';
+            const port = document.getElementById('mysql-port')?.value || '3306';
+            const user = document.getElementById('mysql-user')?.value || 'root';
+            const password = document.getElementById('mysql-password')?.value || 'password';
+            const database = document.getElementById('mysql-database')?.value || 'database';
+            const ssl = document.getElementById('mysql-ssl')?.value || 'true';
+
+            switch (formatType) {
+                case 'uri':
+                    return `mysql://${user}:${password}@${host}:${port}/${database}?ssl=${ssl}&charset=utf8mb4`;
+                case 'env':
+                    return `# Environment Variables
+MYSQL_HOST=${host}
+MYSQL_PORT=${port}
+MYSQL_USER=${user}
+MYSQL_PASSWORD=${password}
+MYSQL_DATABASE=${database}
+MYSQL_SSL=${ssl}
+
+# Usage in code:
+const connectionString = \`mysql://\${process.env.MYSQL_USER}:\${process.env.MYSQL_PASSWORD}@\${process.env.MYSQL_HOST}:\${process.env.MYSQL_PORT}/\${process.env.MYSQL_DATABASE}?ssl=\${process.env.MYSQL_SSL}\`;`;
+                case 'object':
+                    return `const config = {
+  host: '${host}',
+  port: ${port},
+  user: '${user}',
+  password: '${password}',
+  database: '${database}',
+  ssl: ${ssl === 'true'},
+  charset: 'utf8mb4',
+  connectionLimit: 10,
+  acquireTimeout: 60000,
+  timeout: 60000
+};`;
+            }
+        }
+
+        function buildSQLiteConnection(formatType) {
+            const path = document.getElementById('sqlite-path')?.value || './database.db';
+            const mode = document.getElementById('sqlite-mode')?.value || 'rwc';
+            const cache = document.getElementById('sqlite-cache')?.value || 'private';
+            const timeout = document.getElementById('sqlite-timeout')?.value || '5000';
+
+            switch (formatType) {
+                case 'uri':
+                    return mode === 'memory' ? ':memory:' : `file:${path}?mode=${mode}&cache=${cache}`;
+                case 'env':
+                    return `# Environment Variables
+SQLITE_DATABASE_PATH=${path}
+SQLITE_DATABASE_MODE=${mode}
+SQLITE_CACHE_MODE=${cache}
+SQLITE_TIMEOUT=${timeout}
+
+# Usage in code:
+const databasePath = process.env.SQLITE_DATABASE_PATH;
+const connectionString = \`file:\${databasePath}?mode=\${process.env.SQLITE_DATABASE_MODE}&cache=\${process.env.SQLITE_CACHE_MODE}\`;`;
+                case 'object':
+                    return `const config = {
+  path: '${path}',
+  options: {
+    readonly: ${mode === 'ro'},
+    fileMustExist: ${mode === 'ro'},
+    timeout: ${timeout},
+    verbose: process.env.NODE_ENV === 'development' ? console.log : null
+  }
+};`;
+            }
+        }
+
+        // Initialize the form on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateConnectionForm();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow DOM Search Examples - DOM Element Search</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+        }
+        .shadow-host {
+            margin: 15px 0;
+            padding: 10px;
+            border: 2px dashed #666;
+            border-radius: 8px;
+            position: relative;
+        }
+        .shadow-host::before {
+            content: 'Shadow Host';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: #f9f9f9;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #666;
+        }
+        .search-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .search-controls label {
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+        }
+        .search-controls input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .search-stats {
+            margin: 10px 0;
+            padding: 10px;
+            background: #e8f5e8;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        .performance-info {
+            background: #f0f8ff;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .shadow-info {
+            background: #fff3e0;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        .code-example {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+            margin: 15px 0;
+        }
+        .component-demo {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+        }
+        .search-results {
+            margin-top: 15px;
+        }
+        .result-item {
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: white;
+            transition: background-color 0.2s ease;
+        }
+        .result-item.highlighted {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+        .shadow-boundary {
+            border: 2px solid #e91e63;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            position: relative;
+        }
+        .shadow-boundary::before {
+            content: 'Shadow Boundary';
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            background: white;
+            padding: 2px 8px;
+            font-size: 12px;
+            color: #e91e63;
+            font-weight: bold;
+        }
+        .match-highlight {
+            background-color: #ffeb3b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .cross-shadow-result {
+            border-left: 4px solid #9c27b0;
+            padding-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Shadow DOM Search Examples</h1>
+    
+    <div class="example-section">
+        <h2>🔍 Basic Shadow DOM Search</h2>
+        <p>Demonstrate searching within individual Shadow DOM boundaries and across multiple shadow roots.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="basicShadowSearch" 
+            placeholder="Search across shadow components... (try 'product', 'user', or 'content')"
+            aria-label="Search shadow DOM components"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="searchAllShadows" checked />
+                Search All Shadow Roots
+            </label>
+            <label>
+                <input type="checkbox" id="includeLightDOM" checked />
+                Include Light DOM
+            </label>
+            <label>
+                <input type="checkbox" id="highlightMatches" checked />
+                Highlight Matches
+            </label>
+        </div>
+        
+        <div id="basic-stats" class="search-stats">
+            Found <span id="basic-matches">0</span> matches across <span id="shadow-count">0</span> shadow roots
+        </div>
+        
+        <div class="shadow-info">
+            💡 <strong>Shadow DOM Info:</strong> This example creates multiple web components with Shadow DOM. 
+            The search function traverses shadow boundaries to find content within encapsulated components.
+        </div>
+        
+        <div class="component-demo">
+            <h3>Custom Web Components</h3>
+            
+            <!-- These will be populated with custom elements -->
+            <product-card 
+                product-name="Wireless Headphones" 
+                description="High-quality audio with noise cancellation"
+                category="electronics"
+                price="199">
+            </product-card>
+            
+            <user-profile 
+                user-name="John Smith" 
+                role="Frontend Developer"
+                department="Engineering"
+                bio="Passionate about creating great user experiences">
+            </user-profile>
+            
+            <content-panel 
+                title="Getting Started Guide" 
+                content="Learn how to integrate shadow DOM search functionality into your applications"
+                tags="guide,tutorial,shadow-dom">
+            </content-panel>
+            
+            <search-widget 
+                placeholder="Internal search widget"
+                results-count="5">
+            </search-widget>
+        </div>
+        
+        <div id="basicSearchResults" class="search-results">
+            <!-- Search results will appear here -->
+        </div>
+        
+        <div class="performance-info">
+            Search Performance: <strong id="basic-performance">Ready</strong> | 
+            Shadow Roots Traversed: <strong id="traversed-count">0</strong>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>🌐 Cross-Shadow Communication</h2>
+        <p>Advanced example showing search coordination between multiple shadow boundaries with event-based communication.</p>
+        
+        <input 
+            type="text" 
+            class="search-input" 
+            id="crossShadowSearch" 
+            placeholder="Search with cross-shadow communication... (try 'notification', 'message')"
+            aria-label="Cross-shadow search"
+        />
+        
+        <div class="search-controls">
+            <label>
+                <input type="checkbox" id="enableCommunication" checked />
+                Enable Cross-Shadow Events
+            </label>
+            <label>
+                <input type="checkbox" id="showShadowBoundaries" />
+                Show Shadow Boundaries
+            </label>
+        </div>
+        
+        <div id="cross-stats" class="search-stats">
+            Cross-shadow results: <span id="cross-matches">0</span> | 
+            Events fired: <span id="events-fired">0</span>
+        </div>
+        
+        <div class="component-demo">
+            <h3>Communicating Shadow Components</h3>
+            
+            <notification-center id="notificationCenter">
+            </notification-center>
+            
+            <message-list id="messageList">
+            </message-list>
+            
+            <data-grid id="dataGrid">
+            </data-grid>
+        </div>
+        
+        <div id="crossShadowResults" class="search-results">
+            <!-- Cross-shadow search results -->
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>🔧 Shadow DOM Implementation Details</h2>
+        <p>Code examples showing how to implement shadow DOM traversal and search functionality.</p>
+        
+        <h3>Shadow Root Traversal Function</h3>
+        <div class="code-example">
+function traverseShadowDOM(element, callback, visited = new WeakSet()) {
+    // Prevent infinite loops with circular references
+    if (visited.has(element)) return;
+    visited.add(element);
+    
+    // Process current element
+    callback(element);
+    
+    // Traverse children in light DOM
+    for (const child of element.children) {
+        traverseShadowDOM(child, callback, visited);
+    }
+    
+    // Traverse shadow root if it exists
+    if (element.shadowRoot) {
+        for (const shadowChild of element.shadowRoot.children) {
+            traverseShadowDOM(shadowChild, callback, visited);
+        }
+    }
+    
+    // Handle slotted content
+    if (element.tagName === 'SLOT') {
+        const assignedElements = element.assignedElements();
+        for (const assigned of assignedElements) {
+            traverseShadowDOM(assigned, callback, visited);
+        }
+    }
+}
+        </div>
+        
+        <h3>Shadow-Aware Search Implementation</h3>
+        <div class="code-example">
+class ShadowDOMSearch {
+    search(query, options = {}) {
+        const results = [];
+        const searchRegex = new RegExp(query, 'gi');
+        
+        const processElement = (element) => {
+            // Skip non-visible elements
+            if (!this.isVisible(element)) return;
+            
+            // Search text content
+            const textContent = element.textContent || '';
+            if (searchRegex.test(textContent)) {
+                results.push({
+                    element,
+                    shadowRoot: this.findContainingShadowRoot(element),
+                    matches: textContent.match(searchRegex) || []
+                });
+            }
+            
+            // Search attributes if enabled
+            if (options.searchAttributes) {
+                this.searchAttributes(element, searchRegex, results);
+            }
+        };
+        
+        // Start traversal from document or specified root
+        const root = options.root || document.body;
+        this.traverseShadowDOM(root, processElement);
+        
+        return results;
+    }
+    
+    findContainingShadowRoot(element) {
+        let current = element.parentNode;
+        while (current) {
+            if (current instanceof ShadowRoot) {
+                return current;
+            }
+            current = current.parentNode || current.host;
+        }
+        return null;
+    }
+}
+        </div>
+    </div>
+
+    <script>
+        // Custom Web Components for Shadow DOM examples
+        
+        // Product Card Component
+        class ProductCard extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+            
+            connectedCallback() {
+                const productName = this.getAttribute('product-name') || '';
+                const description = this.getAttribute('description') || '';
+                const category = this.getAttribute('category') || '';
+                const price = this.getAttribute('price') || '';
+                
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .product-card {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: white;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                        }
+                        .product-title {
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin-bottom: 8px;
+                            color: #333;
+                        }
+                        .product-description {
+                            color: #666;
+                            margin-bottom: 12px;
+                        }
+                        .product-meta {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+                        .product-category {
+                            background: #e3f2fd;
+                            color: #1976d2;
+                            padding: 4px 8px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                        }
+                        .product-price {
+                            font-size: 20px;
+                            font-weight: bold;
+                            color: #2e7d32;
+                        }
+                    </style>
+                    <div class="product-card">
+                        <div class="product-title">${productName}</div>
+                        <div class="product-description">${description}</div>
+                        <div class="product-meta">
+                            <span class="product-category">${category}</span>
+                            <span class="product-price">$${price}</span>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // User Profile Component
+        class UserProfile extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+            
+            connectedCallback() {
+                const userName = this.getAttribute('user-name') || '';
+                const role = this.getAttribute('role') || '';
+                const department = this.getAttribute('department') || '';
+                const bio = this.getAttribute('bio') || '';
+                
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .user-profile {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: #fafafa;
+                        }
+                        .user-header {
+                            display: flex;
+                            align-items: center;
+                            margin-bottom: 12px;
+                        }
+                        .user-avatar {
+                            width: 50px;
+                            height: 50px;
+                            border-radius: 50%;
+                            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: bold;
+                            margin-right: 12px;
+                        }
+                        .user-name {
+                            font-size: 18px;
+                            font-weight: bold;
+                            margin-bottom: 4px;
+                        }
+                        .user-role {
+                            color: #666;
+                            font-size: 14px;
+                        }
+                        .user-bio {
+                            margin-top: 8px;
+                            color: #555;
+                        }
+                    </style>
+                    <div class="user-profile">
+                        <div class="user-header">
+                            <div class="user-avatar">${userName.split(' ').map(n => n[0]).join('')}</div>
+                            <div>
+                                <div class="user-name">${userName}</div>
+                                <div class="user-role">${role} - ${department}</div>
+                            </div>
+                        </div>
+                        <div class="user-bio">${bio}</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Content Panel Component
+        class ContentPanel extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+            
+            connectedCallback() {
+                const title = this.getAttribute('title') || '';
+                const content = this.getAttribute('content') || '';
+                const tags = this.getAttribute('tags') || '';
+                
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .content-panel {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: white;
+                        }
+                        .content-title {
+                            font-size: 16px;
+                            font-weight: bold;
+                            margin-bottom: 12px;
+                            color: #333;
+                        }
+                        .content-body {
+                            color: #555;
+                            line-height: 1.6;
+                            margin-bottom: 12px;
+                        }
+                        .content-tags {
+                            display: flex;
+                            gap: 6px;
+                            flex-wrap: wrap;
+                        }
+                        .content-tag {
+                            background: #f0f0f0;
+                            color: #666;
+                            padding: 4px 8px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                        }
+                    </style>
+                    <div class="content-panel">
+                        <div class="content-title">${title}</div>
+                        <div class="content-body">${content}</div>
+                        <div class="content-tags">
+                            ${tags.split(',').map(tag => `<span class="content-tag">${tag.trim()}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Search Widget Component
+        class SearchWidget extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+            }
+            
+            connectedCallback() {
+                const placeholder = this.getAttribute('placeholder') || 'Search...';
+                const resultsCount = this.getAttribute('results-count') || '3';
+                
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .search-widget {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: #f8f9fa;
+                        }
+                        .widget-title {
+                            font-weight: bold;
+                            margin-bottom: 12px;
+                            color: #333;
+                        }
+                        .widget-search {
+                            width: 100%;
+                            padding: 8px 12px;
+                            border: 1px solid #ddd;
+                            border-radius: 4px;
+                            margin-bottom: 12px;
+                        }
+                        .widget-results {
+                            font-size: 14px;
+                            color: #666;
+                        }
+                        .widget-result {
+                            padding: 6px 0;
+                            border-bottom: 1px solid #eee;
+                        }
+                        .widget-result:last-child {
+                            border-bottom: none;
+                        }
+                    </style>
+                    <div class="search-widget">
+                        <div class="widget-title">Internal Search Widget</div>
+                        <input type="text" class="widget-search" placeholder="${placeholder}" />
+                        <div class="widget-results">
+                            <div class="widget-result">Sample search result 1</div>
+                            <div class="widget-result">Sample search result 2</div>
+                            <div class="widget-result">Sample search result 3</div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        // Communication-enabled components
+        class NotificationCenter extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.notifications = [
+                    { id: 1, type: 'info', message: 'System notification: Search functionality updated' },
+                    { id: 2, type: 'warning', message: 'Warning notification: Performance threshold reached' },
+                    { id: 3, type: 'success', message: 'Success notification: Data synchronized successfully' }
+                ];
+            }
+            
+            connectedCallback() {
+                this.render();
+                this.setupEventListeners();
+            }
+            
+            render() {
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .notification-center {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: white;
+                        }
+                        .notification {
+                            padding: 12px;
+                            margin: 8px 0;
+                            border-radius: 4px;
+                            border-left: 4px solid;
+                        }
+                        .notification.info {
+                            background: #e3f2fd;
+                            border-left-color: #2196f3;
+                        }
+                        .notification.warning {
+                            background: #fff3e0;
+                            border-left-color: #ff9800;
+                        }
+                        .notification.success {
+                            background: #e8f5e8;
+                            border-left-color: #4caf50;
+                        }
+                        .notification-title {
+                            font-weight: bold;
+                            margin-bottom: 4px;
+                        }
+                    </style>
+                    <div class="notification-center">
+                        <div class="notification-title">Notification Center</div>
+                        ${this.notifications.map(notif => `
+                            <div class="notification ${notif.type}" data-notification-id="${notif.id}">
+                                ${notif.message}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            setupEventListeners() {
+                // Listen for search events from other components
+                document.addEventListener('shadow-search', (event) => {
+                    this.highlightMatches(event.detail.query);
+                });
+            }
+            
+            highlightMatches(query) {
+                if (!query) return;
+                
+                const notifications = this.shadowRoot.querySelectorAll('.notification');
+                notifications.forEach(notif => {
+                    const text = notif.textContent;
+                    if (text.toLowerCase().includes(query.toLowerCase())) {
+                        notif.style.boxShadow = '0 2px 8px rgba(255, 193, 7, 0.5)';
+                    } else {
+                        notif.style.boxShadow = 'none';
+                    }
+                });
+            }
+        }
+        
+        class MessageList extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.messages = [
+                    { id: 1, sender: 'Alice', message: 'Can we schedule a meeting to discuss the search feature?', time: '10:30 AM' },
+                    { id: 2, sender: 'Bob', message: 'The new message filtering system is working great!', time: '11:15 AM' },
+                    { id: 3, sender: 'Carol', message: 'I found some issues with the message search functionality', time: '2:45 PM' }
+                ];
+            }
+            
+            connectedCallback() {
+                this.render();
+                this.setupEventListeners();
+            }
+            
+            render() {
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .message-list {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: white;
+                        }
+                        .message {
+                            padding: 12px;
+                            margin: 8px 0;
+                            border-radius: 4px;
+                            background: #f8f9fa;
+                            border: 1px solid #e9ecef;
+                        }
+                        .message-header {
+                            display: flex;
+                            justify-content: space-between;
+                            font-weight: bold;
+                            margin-bottom: 6px;
+                            font-size: 14px;
+                        }
+                        .message-body {
+                            color: #555;
+                        }
+                        .list-title {
+                            font-weight: bold;
+                            margin-bottom: 12px;
+                        }
+                    </style>
+                    <div class="message-list">
+                        <div class="list-title">Message List</div>
+                        ${this.messages.map(msg => `
+                            <div class="message" data-message-id="${msg.id}">
+                                <div class="message-header">
+                                    <span>${msg.sender}</span>
+                                    <span>${msg.time}</span>
+                                </div>
+                                <div class="message-body">${msg.message}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            setupEventListeners() {
+                document.addEventListener('shadow-search', (event) => {
+                    this.highlightMatches(event.detail.query);
+                });
+            }
+            
+            highlightMatches(query) {
+                if (!query) return;
+                
+                const messages = this.shadowRoot.querySelectorAll('.message');
+                messages.forEach(msg => {
+                    const text = msg.textContent;
+                    if (text.toLowerCase().includes(query.toLowerCase())) {
+                        msg.style.backgroundColor = '#fff3cd';
+                        msg.style.borderColor = '#ffc107';
+                    } else {
+                        msg.style.backgroundColor = '#f8f9fa';
+                        msg.style.borderColor = '#e9ecef';
+                    }
+                });
+            }
+        }
+        
+        class DataGrid extends HTMLElement {
+            constructor() {
+                super();
+                this.attachShadow({ mode: 'open' });
+                this.data = [
+                    { id: 1, name: 'John Doe', email: 'john@example.com', department: 'Engineering' },
+                    { id: 2, name: 'Jane Smith', email: 'jane@example.com', department: 'Marketing' },
+                    { id: 3, name: 'Mike Johnson', email: 'mike@example.com', department: 'Sales' }
+                ];
+            }
+            
+            connectedCallback() {
+                this.render();
+                this.setupEventListeners();
+            }
+            
+            render() {
+                this.shadowRoot.innerHTML = `
+                    <style>
+                        .data-grid {
+                            border: 1px solid #ddd;
+                            border-radius: 8px;
+                            padding: 16px;
+                            margin: 10px 0;
+                            background: white;
+                        }
+                        .grid-title {
+                            font-weight: bold;
+                            margin-bottom: 12px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                        }
+                        th, td {
+                            text-align: left;
+                            padding: 8px;
+                            border-bottom: 1px solid #ddd;
+                        }
+                        th {
+                            background-color: #f5f5f5;
+                            font-weight: bold;
+                        }
+                        tr.highlighted {
+                            background-color: #e3f2fd;
+                        }
+                    </style>
+                    <div class="data-grid">
+                        <div class="grid-title">Data Grid</div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Department</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${this.data.map(item => `
+                                    <tr data-row-id="${item.id}">
+                                        <td>${item.name}</td>
+                                        <td>${item.email}</td>
+                                        <td>${item.department}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+            
+            setupEventListeners() {
+                document.addEventListener('shadow-search', (event) => {
+                    this.highlightMatches(event.detail.query);
+                });
+            }
+            
+            highlightMatches(query) {
+                if (!query) return;
+                
+                const rows = this.shadowRoot.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const text = row.textContent;
+                    if (text.toLowerCase().includes(query.toLowerCase())) {
+                        row.classList.add('highlighted');
+                    } else {
+                        row.classList.remove('highlighted');
+                    }
+                });
+            }
+        }
+        
+        // Register custom elements
+        customElements.define('product-card', ProductCard);
+        customElements.define('user-profile', UserProfile);
+        customElements.define('content-panel', ContentPanel);
+        customElements.define('search-widget', SearchWidget);
+        customElements.define('notification-center', NotificationCenter);
+        customElements.define('message-list', MessageList);
+        customElements.define('data-grid', DataGrid);
+        
+        // Shadow DOM Search Implementation
+        class ShadowDOMSearch {
+            constructor() {
+                this.bindEvents();
+            }
+            
+            bindEvents() {
+                document.getElementById('basicShadowSearch').addEventListener('input', 
+                    this.debounce((e) => this.performBasicSearch(e.target.value), 300));
+                
+                document.getElementById('crossShadowSearch').addEventListener('input', 
+                    this.debounce((e) => this.performCrossSearch(e.target.value), 300));
+                
+                // Options change handlers
+                document.querySelectorAll('.search-controls input[type="checkbox"]').forEach(checkbox => {
+                    checkbox.addEventListener('change', () => this.handleOptionsChange());
+                });
+            }
+            
+            performBasicSearch(query) {
+                const startTime = performance.now();
+                const results = [];
+                let shadowRootCount = 0;
+                let traversedCount = 0;
+                
+                const searchAllShadows = document.getElementById('searchAllShadows')?.checked;
+                const includeLightDOM = document.getElementById('includeLightDOM')?.checked;
+                const highlightMatches = document.getElementById('highlightMatches')?.checked;
+                
+                if (!query.trim()) {
+                    this.clearHighlights();
+                    this.updateBasicStats(0, shadowRootCount, traversedCount);
+                    this.displayBasicResults([]);
+                    return;
+                }
+                
+                const processElement = (element, shadowRoot = null) => {
+                    traversedCount++;
+                    
+                    // Skip if not including light DOM and element is not in shadow
+                    if (!includeLightDOM && !shadowRoot) return;
+                    
+                    const textContent = element.textContent || '';
+                    if (textContent.toLowerCase().includes(query.toLowerCase())) {
+                        results.push({
+                            element,
+                            shadowRoot,
+                            text: textContent.substring(0, 100) + '...',
+                            componentType: element.tagName.toLowerCase()
+                        });
+                        
+                        if (highlightMatches) {
+                            this.highlightElement(element, query);
+                        }
+                    }
+                };
+                
+                // Traverse shadow DOM
+                this.traverseShadowDOM(document.body, (element) => {
+                    if (element.shadowRoot) {
+                        shadowRootCount++;
+                        if (searchAllShadows) {
+                            this.traverseElement(element.shadowRoot, processElement, element.shadowRoot);
+                        }
+                    }
+                    
+                    if (includeLightDOM) {
+                        processElement(element);
+                    }
+                });
+                
+                this.updateBasicStats(results.length, shadowRootCount, traversedCount);
+                this.displayBasicResults(results);
+                this.updatePerformance('basic-performance', performance.now() - startTime);
+            }
+            
+            performCrossSearch(query) {
+                const startTime = performance.now();
+                const enableCommunication = document.getElementById('enableCommunication')?.checked;
+                let eventsFinds = 0;
+                
+                if (enableCommunication && query.trim()) {
+                    // Fire cross-shadow search event
+                    const searchEvent = new CustomEvent('shadow-search', {
+                        detail: { query, timestamp: Date.now() }
+                    });
+                    document.dispatchEvent(searchEvent);
+                    eventsFinds = 1;
+                }
+                
+                // Perform regular shadow search
+                const results = this.searchAcrossShadows(query);
+                
+                this.updateCrossStats(results.length, eventsFinds);
+                this.displayCrossResults(results);
+                this.updatePerformance('basic-performance', performance.now() - startTime);
+            }
+            
+            searchAcrossShadows(query) {
+                const results = [];
+                
+                if (!query.trim()) return results;
+                
+                // Search specific communication-enabled components
+                const components = ['notification-center', 'message-list', 'data-grid'];
+                
+                components.forEach(componentTag => {
+                    const component = document.querySelector(componentTag);
+                    if (component && component.shadowRoot) {
+                        this.traverseElement(component.shadowRoot, (element) => {
+                            const textContent = element.textContent || '';
+                            if (textContent.toLowerCase().includes(query.toLowerCase())) {
+                                results.push({
+                                    element,
+                                    component: componentTag,
+                                    text: textContent.trim().substring(0, 80) + '...'
+                                });
+                            }
+                        });
+                    }
+                });
+                
+                return results;
+            }
+            
+            traverseShadowDOM(root, callback, visited = new WeakSet()) {
+                if (visited.has(root)) return;
+                visited.add(root);
+                
+                callback(root);
+                
+                // Traverse children
+                if (root.children) {
+                    for (const child of root.children) {
+                        this.traverseShadowDOM(child, callback, visited);
+                    }
+                }
+                
+                // Handle slot content
+                if (root.tagName === 'SLOT' && root.assignedElements) {
+                    for (const assigned of root.assignedElements()) {
+                        this.traverseShadowDOM(assigned, callback, visited);
+                    }
+                }
+            }
+            
+            traverseElement(root, callback, shadowRoot = null) {
+                if (root.nodeType === Node.ELEMENT_NODE) {
+                    callback(root, shadowRoot);
+                }
+                
+                for (const child of root.children || []) {
+                    this.traverseElement(child, callback, shadowRoot);
+                }
+            }
+            
+            highlightElement(element, query) {
+                // Simple highlighting - in production, use a more sophisticated approach
+                const textNodes = this.getTextNodes(element);
+                textNodes.forEach(node => {
+                    const text = node.textContent;
+                    const regex = new RegExp(`(${this.escapeRegExp(query)})`, 'gi');
+                    if (regex.test(text)) {
+                        const highlighted = text.replace(regex, '<span class="match-highlight">$1</span>');
+                        const wrapper = document.createElement('span');
+                        wrapper.innerHTML = highlighted;
+                        node.parentNode.replaceChild(wrapper, node);
+                    }
+                });
+            }
+            
+            getTextNodes(element) {
+                const textNodes = [];
+                const walker = document.createTreeWalker(
+                    element,
+                    NodeFilter.SHOW_TEXT,
+                    null,
+                    false
+                );
+                
+                let node;
+                while (node = walker.nextNode()) {
+                    if (node.textContent.trim()) {
+                        textNodes.push(node);
+                    }
+                }
+                
+                return textNodes;
+            }
+            
+            clearHighlights() {
+                // Remove existing highlights
+                document.querySelectorAll('.match-highlight').forEach(highlight => {
+                    const parent = highlight.parentNode;
+                    parent.replaceChild(document.createTextNode(highlight.textContent), highlight);
+                    parent.normalize();
+                });
+            }
+            
+            displayBasicResults(results) {
+                const container = document.getElementById('basicSearchResults');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<div class="result-item">No matches found in shadow DOM components.</div>';
+                    return;
+                }
+                
+                container.innerHTML = results.map(result => `
+                    <div class="result-item highlighted">
+                        <strong>Found in ${result.componentType}:</strong>
+                        ${result.shadowRoot ? '<span class="cross-shadow-result">🔒 Shadow Content</span>' : '💡 Light DOM'}
+                        <br/>
+                        ${result.text}
+                    </div>
+                `).join('');
+            }
+            
+            displayCrossResults(results) {
+                const container = document.getElementById('crossShadowResults');
+                
+                if (results.length === 0) {
+                    container.innerHTML = '<div class="result-item">No cross-shadow matches found.</div>';
+                    return;
+                }
+                
+                container.innerHTML = results.map(result => `
+                    <div class="result-item highlighted cross-shadow-result">
+                        <strong>Cross-Shadow Match in ${result.component}:</strong>
+                        <br/>
+                        ${result.text}
+                    </div>
+                `).join('');
+            }
+            
+            updateBasicStats(matches, shadowRoots, traversed) {
+                document.getElementById('basic-matches').textContent = matches;
+                document.getElementById('shadow-count').textContent = shadowRoots;
+                document.getElementById('traversed-count').textContent = traversed;
+            }
+            
+            updateCrossStats(matches, events) {
+                document.getElementById('cross-matches').textContent = matches;
+                document.getElementById('events-fired').textContent = events;
+            }
+            
+            updatePerformance(elementId, duration) {
+                document.getElementById(elementId).textContent = `${duration.toFixed(2)}ms`;
+            }
+            
+            handleOptionsChange() {
+                const basicQuery = document.getElementById('basicShadowSearch').value;
+                const crossQuery = document.getElementById('crossShadowSearch').value;
+                
+                if (basicQuery.trim()) {
+                    this.performBasicSearch(basicQuery);
+                }
+                if (crossQuery.trim()) {
+                    this.performCrossSearch(crossQuery);
+                }
+            }
+            
+            escapeRegExp(string) {
+                return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            }
+            
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        }
+        
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Wait a bit for custom elements to be defined and rendered
+            setTimeout(() => {
+                new ShadowDOMSearch();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

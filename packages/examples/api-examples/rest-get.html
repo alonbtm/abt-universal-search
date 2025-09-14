@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REST GET API Example - Universal Search Component</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .example-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .search-container {
+            margin: 20px 0;
+        }
+        .search-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        .search-dropdown {
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+            width: calc(100% - 2px);
+            z-index: 1000;
+            display: none;
+        }
+        .search-result {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .search-result:hover {
+            background: #f0f0f0;
+        }
+        .search-result:last-child {
+            border-bottom: none;
+        }
+        .result-label {
+            font-weight: 600;
+            color: #333;
+        }
+        .result-meta {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        .loading {
+            padding: 12px;
+            text-align: center;
+            color: #666;
+        }
+        .error {
+            padding: 12px;
+            color: #d32f2f;
+            background: #ffebee;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .config-display {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .demo-controls {
+            margin: 20px 0;
+        }
+        .demo-controls label {
+            display: block;
+            margin: 10px 0 5px;
+            font-weight: 600;
+        }
+        .demo-controls input, .demo-controls select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status.error {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <h1>REST GET API Integration Example</h1>
+    <p>This example demonstrates how to configure the Universal Search Component to work with REST GET endpoints using query parameters.</p>
+
+    <div class="example-section">
+        <h2>Live Demo - JSONPlaceholder Users API</h2>
+        <div class="search-container">
+            <div style="position: relative;">
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    class="search-input" 
+                    placeholder="Search users... (try 'Leanne' or 'Bret')"
+                    aria-label="Search users"
+                    autocomplete="off"
+                >
+                <div id="search-dropdown" class="search-dropdown" role="listbox" aria-label="Search results"></div>
+            </div>
+        </div>
+        <div id="status" class="status" style="display: none;"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Configuration</h2>
+        <div class="config-display" id="config-display"></div>
+    </div>
+
+    <div class="example-section">
+        <h2>Custom Endpoint Configuration</h2>
+        <div class="demo-controls">
+            <label for="endpoint-url">API Endpoint URL:</label>
+            <input type="url" id="endpoint-url" value="https://jsonplaceholder.typicode.com/users" placeholder="https://api.example.com/search">
+            
+            <label for="query-param">Query Parameter Name:</label>
+            <input type="text" id="query-param" value="name_like" placeholder="q">
+            
+            <label for="label-field">Response Label Field:</label>
+            <input type="text" id="label-field" value="name" placeholder="name">
+            
+            <label for="value-field">Response Value Field:</label>
+            <input type="text" id="value-field" value="id" placeholder="id">
+            
+            <button onclick="updateConfiguration()">Update Configuration</button>
+            <button onclick="testEndpoint()">Test Endpoint</button>
+        </div>
+    </div>
+
+    <div class="example-section">
+        <h2>Query Parameter Strategies</h2>
+        <p>Different APIs expect query parameters in different ways:</p>
+        <div class="config-display">
+// Strategy 1: Simple query parameter
+GET /api/users?q=john
+
+// Strategy 2: Named field search
+GET /api/users?name_like=john
+
+// Strategy 3: Multiple parameters
+GET /api/users?search=john&fields=name,email
+
+// Strategy 4: Structured query
+GET /api/users?filter[name]=john&include=profile</div>
+    </div>
+
+    <script>
+        // Universal Search Component Configuration
+        let currentConfig = {
+            dataSource: {
+                type: 'api',
+                api: {
+                    endpoint: 'https://jsonplaceholder.typicode.com/users',
+                    method: 'GET',
+                    queryParam: 'name_like',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    requestTransform: (query) => ({
+                        url: `${currentConfig.dataSource.api.endpoint}?${currentConfig.dataSource.api.queryParam}=${encodeURIComponent(query)}`,
+                        method: 'GET',
+                        headers: currentConfig.dataSource.api.headers
+                    }),
+                    responseTransform: (data) => {
+                        console.log(data);
+                        if (!Array.isArray(data)) return [];
+                        return data.map(user => ({
+                            label: user.name,
+                            value: user.id,
+                            metadata: {
+                                subtitle: user.email,
+                                category: 'User',
+                                details: `${user.username} - ${user.company?.name || 'No company'}`
+                            }
+                        }));
+                    }
+                }
+            },
+            queryHandling: {
+                minLength: 2,
+                debounceMs: 300,
+                triggerOn: 'change',
+                caseSensitive: false
+            },
+            ui: {
+                maxResults: 10,
+                placeholder: 'Search users...',
+                loadingText: 'Searching...',
+                noResultsText: 'No users found',
+                theme: 'light'
+            },
+            actionHandling: {
+                onSelect: (result) => {
+                    showStatus(`Selected: ${result.label} (ID: ${result.value})`, 'success');
+                    document.getElementById('search-input').value = result.label;
+                    hideDropdown();
+                },
+                onError: (error) => {
+                    showStatus(`Error: ${error.message}`, 'error');
+                },
+                onLoading: (isLoading) => {
+                    if (isLoading) {
+                        showDropdown([{ type: 'loading', content: 'Searching...' }]);
+                    }
+                }
+            }
+        };
+
+        // Search functionality
+        let debounceTimer;
+        let currentResults = [];
+
+        function displayConfig() {
+            const configElement = document.getElementById('config-display');
+            configElement.textContent = JSON.stringify(currentConfig, null, 2);
+        }
+
+        async function performSearch(query) {
+            if (query.length < currentConfig.queryHandling.minLength) {
+                hideDropdown();
+                return;
+            }
+
+            try {
+                currentConfig.actionHandling.onLoading(true);
+                
+                const requestConfig = currentConfig.dataSource.api.requestTransform(query);
+                
+                const response = await fetch(requestConfig.url, {
+                    method: requestConfig.method,
+                    headers: requestConfig.headers
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                const transformedResults = currentConfig.dataSource.api.responseTransform(data);
+                
+                currentResults = transformedResults.slice(0, currentConfig.ui.maxResults);
+                
+                if (currentResults.length === 0) {
+                    showDropdown([{ type: 'message', content: currentConfig.ui.noResultsText }]);
+                } else {
+                    showDropdown(currentResults);
+                }
+
+            } catch (error) {
+                console.error('Search error:', error);
+                currentConfig.actionHandling.onError(error);
+                hideDropdown();
+            }
+        }
+
+        function showDropdown(results) {
+            const dropdown = document.getElementById('search-dropdown');
+            dropdown.innerHTML = '';
+
+            results.forEach((result, index) => {
+                const resultElement = document.createElement('div');
+                
+                if (result.type === 'loading') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                } else if (result.type === 'message') {
+                    resultElement.className = 'loading';
+                    resultElement.textContent = result.content;
+                } else {
+                    resultElement.className = 'search-result';
+                    resultElement.role = 'option';
+                    resultElement.tabIndex = 0;
+                    resultElement.dataset.index = index;
+                    
+                    resultElement.innerHTML = `
+                        <div class="result-label">${escapeHtml(result.label)}</div>
+                        <div class="result-meta">${escapeHtml(result.metadata?.subtitle || '')}</div>
+                        ${result.metadata?.details ? `<div class="result-meta">${escapeHtml(result.metadata.details)}</div>` : ''}
+                    `;
+                    
+                    resultElement.addEventListener('click', () => {
+                        currentConfig.actionHandling.onSelect(result);
+                    });
+                }
+                
+                dropdown.appendChild(resultElement);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        function hideDropdown() {
+            document.getElementById('search-dropdown').style.display = 'none';
+        }
+
+        function showStatus(message, type) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function updateConfiguration() {
+            const endpoint = document.getElementById('endpoint-url').value;
+            const queryParam = document.getElementById('query-param').value;
+            const labelField = document.getElementById('label-field').value;
+            const valueField = document.getElementById('value-field').value;
+
+            currentConfig.dataSource.api.endpoint = endpoint;
+            currentConfig.dataSource.api.queryParam = queryParam;
+            
+            currentConfig.dataSource.api.requestTransform = (query) => ({
+                url: `${endpoint}?${queryParam}=${encodeURIComponent(query)}`,
+                method: 'GET',
+                headers: currentConfig.dataSource.api.headers
+            });
+
+            currentConfig.dataSource.api.responseTransform = (data) => {
+                if (!Array.isArray(data)) return [];
+                return data.map(item => ({
+                    label: item[labelField] || 'No label',
+                    value: item[valueField] || item.id || Math.random(),
+                    metadata: {
+                        subtitle: item.email || item.description || '',
+                        category: 'Item',
+                        details: JSON.stringify(item).substring(0, 100) + '...'
+                    }
+                }));
+            };
+
+            displayConfig();
+            showStatus('Configuration updated successfully', 'success');
+        }
+
+        async function testEndpoint() {
+            const endpoint = document.getElementById('endpoint-url').value;
+            const queryParam = document.getElementById('query-param').value;
+            
+            try {
+                showStatus('Testing endpoint...', 'success');
+                const testUrl = `${endpoint}?${queryParam}=test`;
+                const response = await fetch(testUrl);
+                
+                if (response.ok) {
+                    showStatus(`Endpoint accessible (${response.status})`, 'success');
+                } else {
+                    showStatus(`Endpoint returned ${response.status}: ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showStatus(`Endpoint test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Event listeners
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, currentConfig.queryHandling.debounceMs);
+        });
+
+        // Keyboard navigation
+        document.getElementById('search-input').addEventListener('keydown', (e) => {
+            const dropdown = document.getElementById('search-dropdown');
+            const results = dropdown.querySelectorAll('.search-result');
+            
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                // Implement keyboard navigation logic
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                // Handle selection
+            } else if (e.key === 'Escape') {
+                hideDropdown();
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-container')) {
+                hideDropdown();
+            }
+        });
+
+        // Initialize
+        displayConfig();
+    </script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: universal-search
+  labels:
+    app: universal-search
+    version: v1
+    component: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: universal-search
+  template:
+    metadata:
+      labels:
+        app: universal-search
+        version: v1
+        component: frontend
+    spec:
+      containers:
+      - name: universal-search
+        image: universal-search-production:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3000"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: universal-search-secrets
+              key: jwt-secret
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: universal-search-secrets
+              key: database-url
+        - name: REDIS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: universal-search-config
+              key: redis-url
+        - name: RATE_LIMIT_RPM
+          valueFrom:
+            configMapKeyRef:
+              name: universal-search-config
+              key: rate-limit-rpm
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1001
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: logs
+          mountPath: /app/logs
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 1001
+      serviceAccountName: universal-search
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: universal-search-service
+  labels:
+    app: universal-search
+spec:
+  selector:
+    app: universal-search
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: http
+    name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: universal-search
+  labels:
+    app: universal-search
