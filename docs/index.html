@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>abt-universal-search - Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            padding: 3rem;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #6b7280;
+            margin-bottom: 2rem;
+        }
+
+        .version {
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5b21b6;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #6366f1;
+            border-color: #6366f1;
+        }
+
+        .btn-secondary:hover {
+            background: #6366f1;
+            color: white;
+        }
+
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .link-card {
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            text-decoration: none;
+            color: #374151;
+            transition: all 0.2s;
+        }
+
+        .link-card:hover {
+            background: #f1f5f9;
+            border-color: #6366f1;
+            transform: translateY(-2px);
+        }
+
+        .link-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .link-desc {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🔍</div>
+        <h1>abt-universal-search</h1>
+        <p class="subtitle">Enterprise-Grade Universal Search System</p>
+        <div class="version">v1.0.0</div>
+
+        <div class="buttons">
+            <a href="demo.html" class="btn btn-primary">🚀 Live Demo</a>
+            <a href="https://www.npmjs.com/package/abt-universal-search" class="btn btn-secondary" target="_blank">📦 npm Package</a>
+        </div>
+
+        <div class="links">
+            <a href="CDN-USAGE-GUIDE.md" class="link-card">
+                <div class="link-title">📖 CDN Usage Guide</div>
+                <div class="link-desc">Complete guide for using via CDN</div>
+            </a>
+
+            <a href="https://github.com/alonbtm/abt-universal-search" class="link-card" target="_blank">
+                <div class="link-title">⚡ GitHub Repository</div>
+                <div class="link-desc">Source code and documentation</div>
+            </a>
+
+            <a href="https://www.npmjs.com/package/abt-universal-search" class="link-card" target="_blank">
+                <div class="link-title">📦 npm Package</div>
+                <div class="link-desc">Install via npm or yarn</div>
+            </a>
+
+            <a href="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/" class="link-card" target="_blank">
+                <div class="link-title">🌐 CDN Files</div>
+                <div class="link-desc">Browse CDN distribution</div>
+            </a>
+        </div>
+
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 0.875rem;">
+            <strong>Features:</strong> Cross-platform • Enterprise Security • Performance Optimized • PWA Ready • TypeScript
+        </div>
+    </div>
+</body>
+</html>

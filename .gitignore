@@ -7,6 +7,7 @@ node_modules
 
 # Ignore most docs but allow GitHub Pages files
 docs/*
+!docs/index.html
 !docs/demo.html
 !docs/CDN-USAGE-GUIDE.md
 
