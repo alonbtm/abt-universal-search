@@ -1,8 +1,12 @@
 node_modules
-docs
 .windsurf
 .claude
 .bmad-core
 .husky
 .github
+
+# Ignore most docs but allow GitHub Pages files
+docs/*
+!docs/demo.html
+!docs/CDN-USAGE-GUIDE.md
 

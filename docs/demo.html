@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>abt-universal-search - CDN Demo</title>
+
+    <!-- Preload critical resources for better performance -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/dist/index.umd.js" as="script">
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/styles/main.css" as="style">
+
+    <!-- Universal Search Styles via CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/styles/main.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/styles/themes/light.css" id="theme-css">
+
+    <style>
+        /* Demo page styling */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-bottom: 1rem;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .demo-section {
+            padding: 2rem;
+        }
+
+        .demo-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .theme-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .theme-button {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.875rem;
+        }
+
+        .theme-button:hover {
+            border-color: #6366f1;
+            background: #f8fafc;
+        }
+
+        .theme-button.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .search-demo {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .demo-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+
+        .demo-description {
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        #search-container-1,
+        #search-container-2,
+        #search-container-3 {
+            margin-bottom: 1rem;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6366f1;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .footer {
+            background: #1f2937;
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .demo-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .theme-selector {
+                justify-content: center;
+            }
+        }
+
+        /* Custom Universal Search Styling */
+        .universal-search {
+            --search-primary-color: #6366f1;
+            --search-border-radius: 8px;
+            --search-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .performance-display {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔍 abt-universal-search</h1>
+            <p>Enterprise-Grade Universal Search System</p>
+            <div class="version-badge">v1.0.0 via CDN</div>
+        </div>
+
+        <!-- Demo Section -->
+        <div class="demo-section">
+            <!-- Theme Controls -->
+            <div class="demo-controls">
+                <div class="theme-selector">
+                    <strong>Theme:</strong>
+                    <button class="theme-button active" onclick="switchTheme('light')">Light</button>
+                    <button class="theme-button" onclick="switchTheme('dark')">Dark</button>
+                    <button class="theme-button" onclick="switchTheme('high-contrast')">High Contrast</button>
+                </div>
+            </div>
+
+            <!-- Demo 1: Memory Data Source -->
+            <div class="search-demo">
+                <div class="demo-title">Demo 1: Memory Data Source</div>
+                <div class="demo-description">
+                    Search through a local dataset of products. Try searching for "phone", "laptop", or "camera".
+                </div>
+                <div id="search-container-1"></div>
+                <div id="performance-1" class="performance-display" style="display: none;"></div>
+            </div>
+
+            <!-- Demo 2: Advanced Configuration -->
+            <div class="search-demo">
+                <div class="demo-title">Demo 2: Advanced Configuration</div>
+                <div class="demo-description">
+                    Enhanced search with debouncing, case sensitivity, and custom styling. Try typing quickly!
+                </div>
+                <div id="search-container-2"></div>
+                <div id="performance-2" class="performance-display" style="display: none;"></div>
+            </div>
+
+            <!-- Demo 3: Enterprise Features -->
+            <div class="search-demo">
+                <div class="demo-title">Demo 3: Enterprise Features</div>
+                <div class="demo-description">
+                    Enterprise-grade search with security features, monitoring, and analytics enabled.
+                </div>
+                <div id="search-container-3"></div>
+                <div id="performance-3" class="performance-display" style="display: none;"></div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-searches">0</div>
+                    <div class="stat-label">Total Searches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="avg-response-time">0ms</div>
+                    <div class="stat-label">Avg Response Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="cache-hit-rate">0%</div>
+                    <div class="stat-label">Cache Hit Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="package-size">883KB</div>
+                    <div class="stat-label">Package Size (Compressed)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <strong>CDN Integration:</strong>
+                <a href="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/" target="_blank">jsDelivr</a> |
+                <a href="https://unpkg.com/abt-universal-search@1.0.0/" target="_blank">UNPKG</a>
+            </p>
+            <p style="margin-top: 1rem;">
+                <a href="https://github.com/alonbtm/abt-universal-search" target="_blank">GitHub Repository</a> |
+                <a href="https://www.npmjs.com/package/abt-universal-search" target="_blank">npm Package</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Universal Search Script via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/dist/index.umd.js"></script>
+
+    <script>
+        // Sample data for demonstrations
+        const sampleProducts = [
+            { id: 1, title: 'iPhone 15 Pro', description: 'Latest smartphone with advanced features', category: 'Electronics', price: 999, brand: 'Apple' },
+            { id: 2, title: 'MacBook Pro M3', description: 'Powerful laptop for professionals', category: 'Computers', price: 1999, brand: 'Apple' },
+            { id: 3, title: 'Sony WH-1000XM5', description: 'Noise-canceling wireless headphones', category: 'Audio', price: 399, brand: 'Sony' },
+            { id: 4, title: 'Canon EOS R5', description: 'Professional mirrorless camera', category: 'Photography', price: 3899, brand: 'Canon' },
+            { id: 5, title: 'Samsung Galaxy S24', description: 'Android smartphone with AI features', category: 'Electronics', price: 799, brand: 'Samsung' },
+            { id: 6, title: 'Dell XPS 13', description: 'Ultrabook with premium design', category: 'Computers', price: 1299, brand: 'Dell' },
+            { id: 7, title: 'AirPods Pro 2', description: 'Wireless earbuds with active noise cancellation', category: 'Audio', price: 249, brand: 'Apple' },
+            { id: 8, title: 'Nintendo Switch OLED', description: 'Portable gaming console', category: 'Gaming', price: 349, brand: 'Nintendo' },
+            { id: 9, title: 'iPad Pro 12.9"', description: 'Professional tablet with M2 chip', category: 'Tablets', price: 1099, brand: 'Apple' },
+            { id: 10, title: 'Surface Laptop 5', description: 'Microsoft premium laptop', category: 'Computers', price: 1699, brand: 'Microsoft' }
+        ];
+
+        const companies = [
+            { id: 1, name: 'Apple Inc.', industry: 'Technology', headquarters: 'Cupertino, CA', founded: 1976 },
+            { id: 2, name: 'Google LLC', industry: 'Technology', headquarters: 'Mountain View, CA', founded: 1998 },
+            { id: 3, name: 'Microsoft Corporation', industry: 'Technology', headquarters: 'Redmond, WA', founded: 1975 },
+            { id: 4, name: 'Amazon.com Inc.', industry: 'E-commerce', headquarters: 'Seattle, WA', founded: 1994 },
+            { id: 5, name: 'Tesla Inc.', industry: 'Automotive', headquarters: 'Austin, TX', founded: 2003 }
+        ];
+
+        // Global stats
+        let totalSearches = 0;
+        let totalResponseTime = 0;
+        let cacheHits = 0;
+
+        // Initialize search instances
+        let searchInstances = [];
+
+        function initializeSearches() {
+            try {
+                // Demo 1: Basic Memory Search
+                const search1 = new UniversalSearch({
+                    dataSource: {
+                        type: 'memory',
+                        data: sampleProducts,
+                        searchFields: ['title', 'description', 'category', 'brand']
+                    },
+                    ui: {
+                        container: '#search-container-1',
+                        placeholder: 'Search products... (try "phone", "laptop", "camera")',
+                        maxResults: 5,
+                        loadingText: 'Searching products...',
+                        noResultsText: 'No products found',
+                        theme: 'light'
+                    },
+                    queryHandling: {
+                        minLength: 2,
+                        debounceMs: 300,
+                        caseSensitive: false
+                    },
+                    debug: true
+                });
+
+                // Demo 2: Advanced Configuration
+                const search2 = new UniversalSearch({
+                    dataSource: {
+                        type: 'memory',
+                        data: companies,
+                        searchFields: ['name', 'industry', 'headquarters']
+                    },
+                    ui: {
+                        container: '#search-container-2',
+                        placeholder: 'Search companies... (try "tech", "california", "microsoft")',
+                        maxResults: 8,
+                        loadingText: 'Finding companies...',
+                        noResultsText: 'No companies match your search'
+                    },
+                    queryHandling: {
+                        minLength: 1,
+                        debounceMs: 150,
+                        caseSensitive: false,
+                        matchMode: 'partial',
+                        triggerOn: 'change'
+                    },
+                    performance: {
+                        enableVirtualScrolling: true,
+                        enableCaching: true
+                    }
+                });
+
+                // Demo 3: Enterprise Features
+                const search3 = new UniversalSearch({
+                    dataSource: {
+                        type: 'memory',
+                        data: [...sampleProducts, ...companies.map(c => ({...c, title: c.name, description: `${c.industry} company founded in ${c.founded}`}))],
+                        searchFields: ['title', 'name', 'description', 'industry', 'category']
+                    },
+                    ui: {
+                        container: '#search-container-3',
+                        placeholder: 'Enterprise search... (all data sources)',
+                        maxResults: 10,
+                        theme: 'enterprise'
+                    },
+                    queryHandling: {
+                        minLength: 2,
+                        debounceMs: 200,
+                        xssProtection: true,
+                        sqlInjectionProtection: true
+                    },
+                    performance: {
+                        enableCaching: true,
+                        enablePrefetch: true,
+                        performanceMonitoring: true
+                    },
+                    security: {
+                        enableRateLimiting: true,
+                        maxRequestsPerMinute: 60
+                    }
+                });
+
+                searchInstances = [search1, search2, search3];
+
+                // Initialize all searches
+                searchInstances.forEach((search, index) => {
+                    search.initialize();
+
+                    // Add event listeners for performance tracking
+                    search.on('search', (data) => {
+                        totalSearches++;
+                        updateStats();
+
+                        // Show performance info
+                        const perfDiv = document.getElementById(`performance-${index + 1}`);
+                        if (perfDiv) {
+                            perfDiv.style.display = 'block';
+                            perfDiv.innerHTML = `
+                                <strong>Search Performance:</strong><br>
+                                Query: "${data.query}"<br>
+                                Results: ${data.results.length}<br>
+                                Response Time: ${data.responseTime}ms<br>
+                                Timestamp: ${new Date().toLocaleTimeString()}
+                            `;
+                        }
+
+                        // Update global stats
+                        totalResponseTime += data.responseTime || 0;
+                        if (data.fromCache) cacheHits++;
+                    });
+                });
+
+                console.log('✅ All Universal Search instances initialized successfully!');
+
+            } catch (error) {
+                console.error('❌ Error initializing Universal Search:', error);
+
+                // Show fallback message
+                document.querySelectorAll('[id^="search-container-"]').forEach(container => {
+                    container.innerHTML = `
+                        <div style="padding: 2rem; text-align: center; color: #dc2626; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+                            <strong>⚠️ Search Initialization Failed</strong><br>
+                            <small>Error: ${error.message}</small><br>
+                            <small style="margin-top: 1rem; display: block;">Please check the browser console for more details.</small>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        // Theme switching functionality
+        function switchTheme(theme) {
+            const themeCss = document.getElementById('theme-css');
+            const newHref = `https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/styles/themes/${theme}.css`;
+
+            if (themeCss.href !== newHref) {
+                themeCss.href = newHref;
+            }
+
+            // Update active button
+            document.querySelectorAll('.theme-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update search instances theme
+            searchInstances.forEach(search => {
+                if (search && search.updateTheme) {
+                    search.updateTheme(theme);
+                }
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            document.getElementById('total-searches').textContent = totalSearches;
+
+            const avgResponseTime = totalSearches > 0 ? Math.round(totalResponseTime / totalSearches) : 0;
+            document.getElementById('avg-response-time').textContent = `${avgResponseTime}ms`;
+
+            const hitRate = totalSearches > 0 ? Math.round((cacheHits / totalSearches) * 100) : 0;
+            document.getElementById('cache-hit-rate').textContent = `${hitRate}%`;
+        }
+
+        // Initialize when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeSearches);
+        } else {
+            initializeSearches();
+        }
+
+        // Add some demo interactivity
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add loading animation for CDN
+            if (!window.UniversalSearch) {
+                document.body.style.opacity = '0.7';
+
+                const checkLoaded = setInterval(() => {
+                    if (window.UniversalSearch) {
+                        document.body.style.opacity = '1';
+                        clearInterval(checkLoaded);
+                    }
+                }, 100);
+            }
+
+            console.log('🎉 Universal Search CDN Demo loaded!');
+            console.log('📦 Package loaded from: https://cdn.jsdelivr.net/npm/abt-universal-search@1.0.0/');
+        });
+
+        // Error handling
+        window.addEventListener('error', (event) => {
+            if (event.filename && event.filename.includes('abt-universal-search')) {
+                console.error('CDN Loading Error:', event.error);
+
+                // Show error message
+                document.querySelectorAll('[id^="search-container-"]').forEach(container => {
+                    container.innerHTML = `
+                        <div style="padding: 1rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; color: #dc2626;">
+                            <strong>CDN Loading Error:</strong> Failed to load abt-universal-search from CDN.<br>
+                            <small>Please check your internet connection or try refreshing the page.</small>
+                        </div>
+                    `;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
