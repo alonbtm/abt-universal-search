@@ -1,9 +1,9 @@
 {
-  "name": "@universal-search/core",
+  "name": "abt-universal-search",
   "version": "1.0.0",
-  "description": "Core universal search component",
+  "description": "Enterprise-grade Universal Search System with cross-platform compatibility, performance optimization, and security hardening",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",
   "browser": "dist/index.umd.js",
   "types": "dist/index.d.ts",
@@ -72,11 +72,31 @@
   ],
   "keywords": [
     "search",
+    "universal-search",
+    "enterprise",
     "component",
-    "typescript"
+    "typescript",
+    "pwa",
+    "electron",
+    "cross-platform",
+    "performance",
+    "security",
+    "scalability",
+    "multi-datasource",
+    "caching",
+    "monitoring"
   ],
-  "author": "Development Team",
+  "author": "Alon Ben Tovim <alon@example.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alonbtm/abt-universal-search.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/alonbtm/abt-universal-search/issues"
+  },
+  "homepage": "https://github.com/alonbtm/abt-universal-search#readme",
   "dependencies": {
     "dompurify": "^3.2.6"
   }
